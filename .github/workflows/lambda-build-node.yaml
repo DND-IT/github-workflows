@@ -51,7 +51,7 @@ jobs:
           NODE_VERSION: ${{ inputs.node_version }}
           SOURCE_DIR: ${{ inputs.source_dir || vars.source_dir || 'src' }}
           ARTIFACT_RETENTION_DAYS: ${{ inputs.artifact_retention_days || vars.artifact_retention_days || 5}}
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4
+        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4
         with:
           name: ${{ steps.build.outputs.file_name }}-${{ env.NODE_VERSION }}
           path: ${{ env.SOURCE_DIR }}/${{ steps.build.outputs.file_path }}
