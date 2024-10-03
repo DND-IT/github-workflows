@@ -81,7 +81,6 @@ jobs:
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: ${{ env.ARTIFACT_PATH }}
-
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3
@@ -101,11 +100,15 @@ jobs:
 
       - name: Set docker image tags from input if set
         if: ${{ inputs.image_tag }} 
+        run: |
+          echo "Provisioning docker image tag ${{ inputs.image_tag }}"
         outputs:
           image_tags: ${{ inputs.image_tag }}
 
       - name: Set default docker image tags if input was NOT set
         if: ${{ !inputs.image_tag }}
+        run: |
+          echo "Docker image tag was not set --> using ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}"
         outputs: 
           image_tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}
 
