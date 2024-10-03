@@ -102,15 +102,15 @@ jobs:
         if: ${{ inputs.image_tag }} 
         run: |
           echo "Provisioning docker image tag ${{ inputs.image_tag }}"
-        outputs:
-          image_tags: ${{ inputs.image_tag }}
+        env: 
+          IMAGE_TAG: ${{ inputs.image_tag }}
 
       - name: Set default docker image tags if input was NOT set
         if: ${{ !inputs.image_tag }}
         run: |
           echo "Docker image tag was not set --> using ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}"
-        outputs: 
-          image_tags: ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}
+        env: 
+          IMAGE_TAG: ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}
 
       - name: Build and export
         uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6
@@ -130,7 +130,7 @@ jobs:
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
-          tags: ${{ outputs.input_tags }}
+          tags: ${{ env.IMAGE_TAG }}
           #tags: |
           #  ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}
           #  ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG)) || '' }}
