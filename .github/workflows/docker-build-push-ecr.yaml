@@ -106,8 +106,9 @@ jobs:
         id: set-image-tag
         run: |
           echo "Provisioning docker image tag ${{ inputs.image_tag }}"
-        outputs:
-          image_tag: ${{ inputs.image_tag }} || ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}
+          echo "image_tag=${{ inputs.image_tag }} >> $GITHUB_OUTPUT" 
+
+        # ${{ steps.login-ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ github.sha }}
 
       - name: Build and export
         uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6
