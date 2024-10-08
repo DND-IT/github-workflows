@@ -103,7 +103,7 @@ jobs:
         id: set-image-tag
         run: |
           INPUT=${{ inputs.image_tag }}
-          echo "$INPUT" | jq . > /dev/null 2>&1
+          echo $INPUT | jq . > /dev/null 2>&1
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
             echo "::set-output name=image_tag::$INPUT"
