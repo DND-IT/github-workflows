@@ -107,10 +107,10 @@ jobs:
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
             tags_as_csv=$(echo $INPUT | jq -r '. | @csv')
-            echo "image_tag=$tags_as_csv" >> $GITHUB_ENV
+            echo "IMAGE_TAG=$tags_as_csv" >> $GITHUB_ENV
           else
             echo "Input is a string. Passing it as is."
-            echo "image_tag=$INPUT" >> $GITHUB_ENV
+            echo "IMAGE_TAG=$INPUT" >> $GITHUB_ENV
           fi
         shell: bash
         env:
@@ -134,7 +134,7 @@ jobs:
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
-          tags: ${{ steps.set-image-tag.outputs.image_tag }}
+          tags: ${{ env.IMAGE_TAG }} || ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}
           #tags: |
           #  ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}
           #  ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG)) || '' }}
