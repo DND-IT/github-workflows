@@ -103,19 +103,18 @@ jobs:
         id: set-image-tag
         run: |
           INPUT=${{ inputs.image_tag }}
-          echo $INPUT | jq . > /dev/null 2>&1
+          echo $INPUT | jq -r '. | @csv'  > /dev/null 2>&1
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
-            echo "::set-output name=image_tag::$INPUT"
+            tags_as_csv=$(echo $INPUT | jq -r '. | @csv')
+            echo "image_tag=$tags_as_csv" >> $GITHUB_ENV
           else
-            echo "Input is a string - converting to JSON"
-            INPUT=$(echo $INPUT | jq -R .)
-            echo "::set-output name=image_tag::$INPUT"
+            echo "Input is a string. Passing it as is."
+            echo "image_tag=$INPUT" >> $GITHUB_ENV
           fi
         shell: bash
         env:
           INPUT: ${{ inputs.image_tag }}
-
 
       - name: Build and export
         uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6
