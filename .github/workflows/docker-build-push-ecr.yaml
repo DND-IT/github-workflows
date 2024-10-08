@@ -134,7 +134,7 @@ jobs:
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
-          tags: ${{ env.IMAGE_TAG }} || ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_TAG }}
           #tags: |
           #  ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}
           #  ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG)) || '' }}
