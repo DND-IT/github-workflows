@@ -44,6 +44,9 @@ on:
       docker_target:
         description: "Build target"
         type: string
+      docker_build_args:
+        description: "Build arguments to pass to the docker build as json encoded list"
+        type: string
       docker_platforms:
         description: "Platforms to build for. If empty docker will build for the current platform"
         type: string
@@ -120,6 +123,15 @@ jobs:
           fi
         shell: bash
 
+      - name: Set docker image tags from sha if not set
+        if: ${{ !inputs.image_tag }}
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+        run: |
+          echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}" >> $GITHUB_ENV
+        shell: bash
+
       - name: Set docker image labels from input if set
         if: ${{ inputs.image_labels }}
         run: |
@@ -135,14 +147,19 @@ jobs:
           fi
         shell: bash
 
-      - name: Set docker image tags from sha if not set
-        if: ${{ !inputs.image_tag }}
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+      - name: Set docker build args from input if set
+        if: ${{ inputs.docker_build_args }}
         run: |
-          echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}" >> $GITHUB_ENV
-        shell: bash
+          INPUT=${{ inputs.docker_build_args }}
+          echo $INPUT | jq -r '.'  > /dev/null 2>&1
+           if [ $? -eq 0 ]; then
+            echo "Input build args is valid JSON"
+            build_args_as_list=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
+            echo "DOCKER_BUILD_ARGS=$build_args_as_list" >> $GITHUB_ENV
+          else
+            echo "Input is a string. Passing it as is."
+            echo "DOCKER_BUILD_ARGS=$INPUT" >> $GITHUB_ENV
+          fi
 
       - name: Build and export
         uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6
@@ -161,3 +178,4 @@ jobs:
           target: ${{ env.DOCKER_TARGET }}
           tags: ${{ env.IMAGE_TAG }}
           labels: ${{ env.IMAGE_LABELS }}
+          build-args: ${{ env.DOCKER_BUILD_ARGS }}
