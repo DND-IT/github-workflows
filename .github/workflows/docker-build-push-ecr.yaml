@@ -26,7 +26,10 @@ on:
         description: "Name of the Docker image to build"
         type: string
       image_tag:
-        description: "Tag of the Docker image to build as string or as JSON encoded list"
+        description: "Tag of the Docker image to build as string (csv allowed) or as JSON encoded list"
+        type: string
+      image_labels:
+        description: "Labels to apply to the Docker image as string (csv allowed) or JSON encoded list"
         type: string
       docker_context:
         description: "Path to the build context"
@@ -112,8 +115,21 @@ jobs:
             echo "IMAGE_TAG=$INPUT" >> $GITHUB_ENV
           fi
         shell: bash
-        env:
-          INPUT: ${{ inputs.image_tag }}
+
+      - name: Set docker image labels from input if set
+        if: ${{ inputs.image_labels }}
+        run: |
+          INPUT=${{ inputs.image_labels }}
+          echo $INPUT | jq -r '. | @csv'  > /dev/null 2>&1
+           if [ $? -eq 0 ]; then
+            echo "Input is valid JSON"
+            labels_as_csv=$(echo $INPUT | jq -r '. | @csv')
+            echo "IMAGE_LABELS=$tags_as_csv" >> $GITHUB_ENV
+          else
+            echo "Input is a string. Passing it as is."
+            echo "IMAGE_LABELS=$INPUT" >> $GITHUB_ENV
+          fi
+        shell: bash
 
       - name: Set docker image tags from sha if not set
         if: ${{ !inputs.image_tag }}
@@ -140,3 +156,4 @@ jobs:
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
           tags: ${{ env.IMAGE_TAG }}
+          labels: ${{ env.IMAGE_LABELS }}
