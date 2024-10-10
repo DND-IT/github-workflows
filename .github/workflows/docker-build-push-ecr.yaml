@@ -26,7 +26,7 @@ on:
         description: "Name of the Docker image to build"
         type: string
       image_tag:
-        description: "Tag of the Docker image to build as JSON String"
+        description: "Tag of the Docker image to build as string or as JSON encoded list"
         type: string
       docker_context:
         description: "Path to the build context"
@@ -48,7 +48,7 @@ on:
         description: "Artifact target path"
         type: string
       runner_labels:
-        description: "Runner that the main job shoud run on as JSON String."
+        description: "Runner that the main job should run on as JSON encoded list."
         type: string
         default: " ['ubuntu-latest'] "
       
@@ -100,7 +100,6 @@ jobs:
 
       - name: Set docker image tags from input if set
         if: ${{ inputs.image_tag }}
-        id: set-image-tag
         run: |
           INPUT=${{ inputs.image_tag }}
           echo $INPUT | jq -r '. | @csv'  > /dev/null 2>&1
@@ -116,12 +115,18 @@ jobs:
         env:
           INPUT: ${{ inputs.image_tag }}
 
-      - name: Build and export
-        uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6
+      - name: Set docker image tags from sha if not set
+        if: ${{ !inputs.image_tag }}
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
-          # IMAGE_TAG: ${{ steps.set-image-tag.outputs.image_tag }}
+        run: |
+          echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Build and export
+        uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6
+        env:
           DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.' }}
           DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }} # upstream defaults to {DOCKER_CTX}/Dockerfile
           DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
@@ -135,6 +140,3 @@ jobs:
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
           tags: ${{ env.IMAGE_TAG }}
-          #tags: |
-          #  ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}
-          #  ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG)) || '' }}
