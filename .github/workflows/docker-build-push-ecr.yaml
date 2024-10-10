@@ -47,7 +47,6 @@ on:
       docker_platforms:
         description: "Platforms to build for. If empty docker will build for the current platform"
         type: string
-        example: "linux/amd64,linux/arm64"
       artifact_name:
         description: "Artifact name to be downloaded before building"
         type: string
