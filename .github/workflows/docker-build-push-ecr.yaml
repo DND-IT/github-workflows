@@ -134,7 +134,7 @@ jobs:
           context: ${{ env.DOCKER_CTX }}
           file: ${{ env.DOCKERFILE_PATH }}
           secrets: ${{ secrets.docker_secrets }}
-          # platforms: linux/amd64,linux/arm64 # TODO add support for multi-arch builds
+          platforms: linux/amd64,linux/arm64 # TODO add support for multi-arch builds
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
