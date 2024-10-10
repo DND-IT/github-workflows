@@ -29,8 +29,9 @@ on:
         description: "Tag of the Docker image to build as string (csv allowed) or as JSON encoded list"
         type: string
       image_labels:
-        description: "Labels to apply to the Docker image as string (csv allowed) or JSON encoded list"
+        description: "Labels to apply to the Docker image as JSON encoded list"
         type: string
+        example: "{'org.opencontainers.image.title': 'My Image'}"
       docker_context:
         description: "Path to the build context"
         type: string
