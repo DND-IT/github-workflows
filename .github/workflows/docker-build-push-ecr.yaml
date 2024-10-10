@@ -44,6 +44,10 @@ on:
       docker_target:
         description: "Build target"
         type: string
+      docker_platforms:
+        description: "Platforms to build for. If empty docker will build for the current platform"
+        type: string
+        example: "linux/amd64,linux/arm64"
       artifact_name:
         description: "Artifact name to be downloaded before building"
         type: string
@@ -54,7 +58,8 @@ on:
         description: "Runner that the main job should run on as JSON encoded list."
         type: string
         default: " ['ubuntu-latest'] "
-      
+
+
 jobs:
   prereq:
     runs-on: ubuntu-latest
@@ -123,7 +128,7 @@ jobs:
           echo $INPUT | jq -r '. | @csv'  > /dev/null 2>&1
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
-            labels_as_csv=$(echo $INPUT | jq -r '. | @csv')
+            labels_as_csv=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
             echo "IMAGE_LABELS=$tags_as_csv" >> $GITHUB_ENV
           else
             echo "Input is a string. Passing it as is."
@@ -150,7 +155,7 @@ jobs:
           context: ${{ env.DOCKER_CTX }}
           file: ${{ env.DOCKERFILE_PATH }}
           secrets: ${{ secrets.docker_secrets }}
-          platforms: linux/amd64,linux/arm64 # TODO add support for multi-arch builds
+          platforms: ${{ inputs.docker_platforms }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
