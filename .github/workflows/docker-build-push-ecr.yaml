@@ -128,7 +128,7 @@ jobs:
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
             labels_as_list=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
-            echo "IMAGE_LABELS=$tags_as_list" >> $GITHUB_ENV
+            echo "IMAGE_LABELS=$labels_as_list" >> $GITHUB_ENV
           else
             echo "Input is a string. Passing it as is."
             echo "IMAGE_LABELS=$INPUT" >> $GITHUB_ENV
