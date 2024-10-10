@@ -127,8 +127,8 @@ jobs:
           echo $INPUT | jq -r '.'  > /dev/null 2>&1
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
-            labels_as_csv=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
-            echo "IMAGE_LABELS=$tags_as_csv" >> $GITHUB_ENV
+            labels_as_list=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
+            echo "IMAGE_LABELS=$tags_as_list" >> $GITHUB_ENV
           else
             echo "Input is a string. Passing it as is."
             echo "IMAGE_LABELS=$INPUT" >> $GITHUB_ENV
