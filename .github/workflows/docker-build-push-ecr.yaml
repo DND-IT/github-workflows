@@ -124,7 +124,7 @@ jobs:
         if: ${{ inputs.image_labels }}
         run: |
           INPUT=${{ inputs.image_labels }}
-          echo $INPUT | jq -r '. | @csv'  > /dev/null 2>&1
+          echo $INPUT | jq -r '.'  > /dev/null 2>&1
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
             labels_as_csv=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
