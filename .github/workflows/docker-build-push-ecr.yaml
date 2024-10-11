@@ -162,8 +162,6 @@ jobs:
             echo "Input is a string. Passing it as is."
             echo "DOCKER_BUILD_ARGS=$INPUT" >> $GITHUB_OUTPUT
           fi
-        output:
-          docker_build_args: ${{ steps.set-docker-build-args.outputs.DOCKER_BUILD_ARGS }}
 
       - name: Build and export
         uses: docker/build-push-action@31159d49c0d4756269a0940a750801a1ea5d7003 # v6
@@ -182,4 +180,4 @@ jobs:
           target: ${{ env.DOCKER_TARGET }}
           tags: ${{ env.IMAGE_TAG }}
           labels: ${{ env.IMAGE_LABELS }}
-          build-args: ${{ steps.set-docker-build-args.outputs.docker_build_args }}
+          build-args: ${{ steps.set-docker-build-args.outputs.DOCKER_BUILD_ARGS }}
