@@ -156,7 +156,7 @@ jobs:
             echo "Input build args is valid JSON"
             # build_args_as_list=$(echo $INPUT  | jq -r '.' | jq -r 'to_entries | map("\(.value)")| @csv')
             # echo "DOCKER_BUILD_ARGS=$build_args_as_list" >> $GITHUB_ENV
-            args_as_list=${{ fromJSON(inputs.docker_build_args) }}
+            args_as_list='${{ fromJSON(inputs.docker_build_args) }}'
             echo "DOCKER_BUILD_ARGS=$args_as_list" >> $GITHUB_OUTPUT 
           else
             echo "Input is a string. Passing it as is."
