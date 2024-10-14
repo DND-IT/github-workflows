@@ -140,8 +140,8 @@ jobs:
           echo $INPUT | jq -r '.'  > /dev/null 2>&1
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
-            labels_as_list=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
-            echo "IMAGE_LABELS='$labels_as_list'" >> "$GITHUB_OUTPUT"
+            labels_as_list=$(echo $INPUT | jq -c '.' | jq -c 'to_entries | map("\(.key)=\(.value)") | .[]')
+            echo "IMAGE_LABELS=$labels_as_list" >> "$GITHUB_OUTPUT"
           else
             echo "Input is a string. Passing it as is."
             echo "IMAGE_LABELS=$INPUT" >> $GITHUB_OUTPUT
@@ -158,7 +158,7 @@ jobs:
             build_args_as_list=$(echo $INPUT  | jq -r '.' | jq -r 'to_entries | map("\(.value)")| @csv')
             # echo "DOCKER_BUILD_ARGS=$build_args_as_list" >> $GITHUB_ENV
             # args_as_list='${{ fromJSON(inputs.docker_build_args) }}'
-            echo "DOCKER_BUILD_ARGS='$args_as_list'" >> "$GITHUB_OUTPUT" 
+            echo "DOCKER_BUILD_ARGS=$args_as_list'" >> "$GITHUB_OUTPUT" 
           else
             echo "Input is a string. Passing it as is."
             echo "DOCKER_BUILD_ARGS=$INPUT" >> $GITHUB_OUTPUT
