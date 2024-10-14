@@ -134,16 +134,17 @@ jobs:
 
       - name: Set docker image labels from input if set
         if: ${{ inputs.image_labels }}
+        id: set-docker-labels
         run: |
           INPUT=${{ inputs.image_labels }}
           echo $INPUT | jq -r '.'  > /dev/null 2>&1
            if [ $? -eq 0 ]; then
             echo "Input is valid JSON"
             labels_as_list=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | .[]')
-            echo "IMAGE_LABELS=$labels_as_list" >> $GITHUB_ENV
+            echo "IMAGE_LABELS=$labels_as_list" >> $GITHUB_OUTPUT
           else
             echo "Input is a string. Passing it as is."
-            echo "IMAGE_LABELS=$INPUT" >> $GITHUB_ENV
+            echo "IMAGE_LABELS=$INPUT" >> $GITHUB_OUTPUT
           fi
         shell: bash
 
@@ -179,5 +180,5 @@ jobs:
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
           tags: ${{ env.IMAGE_TAG }}
-          labels: ${{ env.IMAGE_LABELS }}
+          labels: ${{ steps.set-docker-labels.outputs.IMAGE_LABELS }}
           build-args: ${{ steps.set-docker-build-args.outputs.DOCKER_BUILD_ARGS }}
