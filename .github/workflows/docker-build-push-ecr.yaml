@@ -142,7 +142,7 @@ jobs:
             echo "Input is valid JSON"
             labels_as_list=$(echo $INPUT | jq -r '.' | jq -r 'to_entries | map("\(.key)=\(.value)") | @tsv')
             # echo "IMAGE_LABELS=$labels_as_list" >> "$GITHUB_OUTPUT"
-            echo "IMAGE_LABELS='org.opencontainers.image.authors=Feed Team org.opencontainers.image.created=2024-10-10T08:18:22.002Z' >> "$GITHUB_OUTPUT"
+            echo "IMAGE_LABELS='org.opencontainers.image.authors=Feed Team org.opencontainers.image.created=2024-10-10T08:18:22.002Z'" >> "$GITHUB_OUTPUT"
           else
             echo "Input is a string. Passing it as is."
             echo "IMAGE_LABELS=$INPUT" >> $GITHUB_OUTPUT
