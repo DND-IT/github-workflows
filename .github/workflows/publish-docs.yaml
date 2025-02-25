@@ -8,6 +8,8 @@ on:
       - README.md
       - mkdocs.yaml
       - .github/workflows/publish-docs.yaml
+      
+  workflow_dispatch:
 
 env:
   PYTHON_VERSION: 3.x
