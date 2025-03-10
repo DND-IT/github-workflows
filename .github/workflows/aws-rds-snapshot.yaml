@@ -70,7 +70,7 @@ jobs:
             --db-instance-identifier "${{ inputs.source_rds_identifier }}"
           
           _ARN=$(aws rds describe-db-snapshots \
-                    --db-snapshot-identifier "${{ ${{ steps.snapshot-identifier.outputs.id }} }}" | \
+                    --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" | \
                       jq '.DBSnapshots[].DBSnapshotArn'
           )
 
