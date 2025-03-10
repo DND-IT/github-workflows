@@ -1,0 +1,80 @@
+name: AWS RDS Snapshot
+# Take an AWS RDS snapshot and, optionally, share with other(s) AWS account(s)
+
+on:
+  workflow_call:
+    inputs:
+      source_aws_region:
+        description: "AWS region"
+        type: string
+        required: true
+      source_aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+        required: true
+      source_rds_identifier:
+        description: "AWS RDS Identifier to take snapshot"
+        type: string
+        required: true
+      source_snapshot_name:
+        description: "Meaningful name for the RDS snapshot"
+        type: string
+        required: true
+
+      share_snapshot_destination_aws_account_id:
+        description: "AWS AccountID. For multiple accounts use JSON format e.g. { \"ACCOUNT_A_ID\", \"ACCOUNT_B_ID\" }"
+        type: string
+      
+      aws_tags:
+        description: Tags to put on the created secret in the form '[{"Key":"key1", "Value":"value1"},{"Key":"key2", "Value":"value2"}] (default to no tags)'
+        type: string
+    
+    outputs:
+      source_snapshot_arn:
+        description: "The second output string"
+        value: ${{ jobs.take-snapshot.outputs.snapshot_arn }}
+
+jobs:
+  take-snapshot:
+    name: Take RDS Snapshot from ${{ inputs.source_rds_database }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    outputs:
+      snapshot_arn: ${{ steps.snapshot.outputs.snapshot_arn }}
+    steps:
+      - name: Configure Source AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        with:
+          role-to-assume: ${{ inputs.source_aws_oidc_role_arn }}
+          aws-region: ${{ inputs.source_aws_region }}
+
+      - name: Verify RDS Identifier
+        run: |
+          aws rds describe-db-instances \
+            --db-instance-identifier "${{ inputs.source_rds_identifier }}" | \
+              jq '.DBInstances[].TagList'
+      
+      - name: Create Snapshot
+        id: snapshot
+        run: |
+          aws rds create-db-snapshot \
+            --db-snapshot-identifier "${{ inputs.source_snapshot_name }}" \
+            --db-instance-identifier "${{ inputs.source_rds_identifier }}"
+          
+          _ARN=$(aws rds describe-db-snapshots \
+                    --db-snapshot-identifier "${{ inputs.source_snapshot_name }}" | \
+                      jq '.DBSnapshots[].DBSnapshotArn'
+          )
+
+          echo "snapshot_arn=${_ARN}" >> $GITHUB_OUTPUT
+      
+      - name: Share Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
+        if: ${{ inputs.share_snapshot_destination_aws_account_id != '' }}
+        run: |
+          aws rds modify-db-snapshot-attribute \
+            --db-snapshot-identifier "${{ inputs.source_snapshot_name }}" \
+            --attribute-name restore \
+            --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
