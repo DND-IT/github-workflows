@@ -66,7 +66,7 @@ jobs:
         id: snapshot
         run: |
           aws rds create-db-snapshot \
-            --db-snapshot-identifier "${{ ${{ steps.snapshot-identifier.outputs.id }} }}" \
+            --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" \
             --db-instance-identifier "${{ inputs.source_rds_identifier }}"
           
           _ARN=$(aws rds describe-db-snapshots \
@@ -80,6 +80,6 @@ jobs:
         if: ${{ inputs.share_snapshot_destination_aws_account_id != '' }}
         run: |
           aws rds modify-db-snapshot-attribute \
-            --db-snapshot-identifier "${{ ${{ steps.snapshot-identifier.outputs.id }} }}" \
+            --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" \
             --attribute-name restore \
             --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
