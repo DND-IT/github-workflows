@@ -56,16 +56,21 @@ jobs:
           aws rds describe-db-instances \
             --db-instance-identifier "${{ inputs.source_rds_identifier }}" | \
               jq '.DBInstances[].TagList'
+
+      - name: Prepare Snapshot Identifier
+        id: snapshot-identifier
+        run: |
+          echo "ID="${{ inputs.source_snapshot_name }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
       
       - name: Create Snapshot
         id: snapshot
         run: |
           aws rds create-db-snapshot \
-            --db-snapshot-identifier "${{ inputs.source_snapshot_name }}" \
+            --db-snapshot-identifier "${{ ${{ steps.snapshot-identifier.outputs.id }} }}" \
             --db-instance-identifier "${{ inputs.source_rds_identifier }}"
           
           _ARN=$(aws rds describe-db-snapshots \
-                    --db-snapshot-identifier "${{ inputs.source_snapshot_name }}" | \
+                    --db-snapshot-identifier "${{ ${{ steps.snapshot-identifier.outputs.id }} }}" | \
                       jq '.DBSnapshots[].DBSnapshotArn'
           )
 
@@ -75,6 +80,6 @@ jobs:
         if: ${{ inputs.share_snapshot_destination_aws_account_id != '' }}
         run: |
           aws rds modify-db-snapshot-attribute \
-            --db-snapshot-identifier "${{ inputs.source_snapshot_name }}" \
+            --db-snapshot-identifier "${{ ${{ steps.snapshot-identifier.outputs.id }} }}" \
             --attribute-name restore \
             --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
