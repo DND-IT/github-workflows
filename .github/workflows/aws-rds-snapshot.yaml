@@ -92,15 +92,15 @@ jobs:
           _ARN=$(
             aws rds describe-db-snapshots \
               --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" | \
-                  jq '.DBSnapshots[].DBSnapshotArn'
+                  jq -r '.DBSnapshots[].DBSnapshotArn'
           )
 
           echo "snapshot_arn=${_ARN}" >> $GITHUB_OUTPUT
 
-          echo "#### Snapshot ARN
+          echo '#### Snapshot ARN
           ```
-          ${_ARN}
-          ```" >> $GITHUB_STEP_SUMMARY
+          '"${_ARN}"'
+          ```' >> $GITHUB_STEP_SUMMARY
 
   share-snapshot:
     name: Share RDS Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
