@@ -26,9 +26,11 @@ on:
         type: string
       share_snapshot_retries:
         description: How many times the step will retry sharing the snapshot. Consider adjusting this number if you know how much time your snapshot usually takes.
+        type: string
         default: 5
       share_snapshot_wait_interval_seconds:
         description: How long the step will wait until retrying sharing the snapshot. Consider adjusting this number if you know how much time your snapshot usually takes.
+        type: string
         default: 30
       
       aws_tags:
