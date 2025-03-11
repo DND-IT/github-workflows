@@ -95,33 +95,40 @@ jobs:
           )
 
           echo "snapshot_arn=${_ARN}" >> $GITHUB_OUTPUT
-    share-snapshot:
-      if: ${{ inputs.share_snapshot_destination_aws_account_id != '' }}
-      steps:
-      - name: Share Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
-        run: |
-          echo "Snapshots should be in Available state to be shared, it usually take a while"
-          
-          echo "Waiting 1 minute before first try..."
-          # sleep 60
+  
+  share-snapshot:
+    name: Share RDS Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    if: ${{ inputs.share_snapshot_destination_aws_account_id != '' }}
+    steps:
+    - name: Share Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
+      run: |
+        echo "Snapshots should be in Available state to be shared, it usually take a while"
+        
+        echo "Waiting 1 minute before first try..."
+        # sleep 60
 
-          for retries in {1..${{ inputs.share_snapshot_retries }}}
-          do
-            _PROGRESS=$(aws rds describe-db-snapshots --db-snapshot-identifier "${{ jobs.take-snapshot.outputs.snapshot_id }}" | jq '.DBSnapshots[].PercentProgress')
-            echo "Current Progress: ${_PROGRESS}%"
+        for retries in {1..${{ inputs.share_snapshot_retries }}}
+        do
+          _PROGRESS=$(aws rds describe-db-snapshots --db-snapshot-identifier "${{ jobs.take-snapshot.outputs.snapshot_id }}" | jq '.DBSnapshots[].PercentProgress')
+          echo "Current Progress: ${_PROGRESS}%"
 
-            if [[ "$_PROGRESS" -eq 100 ]]
-            then
-              aws rds modify-db-snapshot-attribute \
-                --db-snapshot-identifier "${{ jobs.take-snapshot.outputs.snapshot_id }}" \
-                --attribute-name restore \
-                --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
-            elif [[ "$retries" -eq ${{ inputs.share_snapshot_retries }} ]]
-            then
-              echo "Maximum retries reached. Stopping execution."
-              exit 2
-            else
-              echo "Waiting ${{ inputs.share_snapshot_wait_interval_seconds }} before next try...  $retries/${{ inputs.share_snapshot_retries }}"
-              sleep ${{ inputs.share_snapshot_wait_interval_seconds }}
-            done
+          if [[ "$_PROGRESS" -eq 100 ]]
+          then
+            aws rds modify-db-snapshot-attribute \
+              --db-snapshot-identifier "${{ jobs.take-snapshot.outputs.snapshot_id }}" \
+              --attribute-name restore \
+              --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
+          elif [[ "$retries" -eq ${{ inputs.share_snapshot_retries }} ]]
+          then
+            echo "Maximum retries reached. Stopping execution."
+            exit 2
+          else
+            echo "Waiting ${{ inputs.share_snapshot_wait_interval_seconds }} before next try...  $retries/${{ inputs.share_snapshot_retries }}"
+            sleep ${{ inputs.share_snapshot_wait_interval_seconds }}
           done
+        done
