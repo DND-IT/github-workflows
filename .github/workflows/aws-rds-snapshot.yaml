@@ -89,13 +89,19 @@ jobs:
             --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" \
             --db-instance-identifier "${{ inputs.source_rds_identifier }}"
           
-          _ARN=$(aws rds describe-db-snapshots \
-                    --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" | \
-                      jq '.DBSnapshots[].DBSnapshotArn'
+          _ARN=$(
+            aws rds describe-db-snapshots \
+              --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" | \
+                  jq '.DBSnapshots[].DBSnapshotArn'
           )
 
           echo "snapshot_arn=${_ARN}" >> $GITHUB_OUTPUT
-  
+
+          echo "#### Snapshot ARN
+          ```
+          ${_ARN}
+          ```" >> $GITHUB_STEP_SUMMARY
+
   share-snapshot:
     name: Share RDS Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
     runs-on: ubuntu-latest
@@ -118,9 +124,9 @@ jobs:
           echo "Snapshots should be in Available state to be shared, it usually take a while"
           
           echo "Waiting 1 minute before first try..."
-          # sleep 60
+          sleep 60
 
-          for retries in {1..${{ inputs.share_snapshot_retries }}}
+          for retries in {0..${{ inputs.share_snapshot_retries }}}
           do
             _PROGRESS=$(aws rds describe-db-snapshots --db-snapshot-identifier "${{ needs.take-snapshot.outputs.snapshot_id }}" | jq '.DBSnapshots[].PercentProgress')
             echo "Current Progress: ${_PROGRESS}%"
@@ -138,7 +144,8 @@ jobs:
               echo "Maximum retries reached. Stopping execution."
               exit 2
             else
-              echo "Waiting ${{ inputs.share_snapshot_wait_interval_seconds }} before next try...  $retries/${{ inputs.share_snapshot_retries }}"
+              echo "Snapshot not ready."
+              echo "Waiting ${{ inputs.share_snapshot_wait_interval_seconds }} seconds before retry... $((retries+1))/${{ inputs.share_snapshot_retries }}"
               sleep ${{ inputs.share_snapshot_wait_interval_seconds }}
             fi
           done
