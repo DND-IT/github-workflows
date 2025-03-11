@@ -114,13 +114,13 @@ jobs:
 
         for retries in {1..${{ inputs.share_snapshot_retries }}}
         do
-          _PROGRESS=$(aws rds describe-db-snapshots --db-snapshot-identifier "${{ jobs.take-snapshot.outputs.snapshot_id }}" | jq '.DBSnapshots[].PercentProgress')
+          _PROGRESS=$(aws rds describe-db-snapshots --db-snapshot-identifier "${{ needs.take-snapshot.outputs.snapshot_id }}" | jq '.DBSnapshots[].PercentProgress')
           echo "Current Progress: ${_PROGRESS}%"
 
           if [[ "$_PROGRESS" -eq 100 ]]
           then
             aws rds modify-db-snapshot-attribute \
-              --db-snapshot-identifier "${{ jobs.take-snapshot.outputs.snapshot_id }}" \
+              --db-snapshot-identifier "${{ needs.take-snapshot.outputs.snapshot_id }}" \
               --attribute-name restore \
               --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
           elif [[ "$retries" -eq ${{ inputs.share_snapshot_retries }} ]]
