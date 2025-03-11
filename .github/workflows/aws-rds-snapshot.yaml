@@ -38,6 +38,9 @@ on:
         type: string
 
     outputs:
+      source_snapshot_identifier:
+        description:
+        value: ${{ jobs.take-snapshot.outputs.snapshot_id }}
       source_snapshot_arn:
         description: "The second output string"
         value: ${{ jobs.take-snapshot.outputs.snapshot_arn }}
