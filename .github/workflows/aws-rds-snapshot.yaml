@@ -44,7 +44,7 @@ on:
 
 jobs:
   take-snapshot:
-    name: Take RDS Snapshot from ${{ inputs.source_rds_database }}
+    name: Take RDS Snapshot from ${{ inputs.source_rds_identifier }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write
