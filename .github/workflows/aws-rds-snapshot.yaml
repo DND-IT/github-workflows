@@ -85,7 +85,7 @@ jobs:
           aws rds create-db-snapshot \
             --db-snapshot-identifier "${_ID}" \
             --db-instance-identifier "${{ inputs.source_rds_identifier }}" \
-            --tags '${{ inputs.aws_tags }}'
+            --tags "${{ inputs.aws_tags }}"
           
           _ARN=$(
             aws rds describe-db-snapshots \
