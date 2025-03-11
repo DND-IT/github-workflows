@@ -32,11 +32,11 @@ on:
         description: How long the step will wait until retrying sharing the snapshot. Consider adjusting this number if you know how much time your snapshot usually takes.
         type: string
         default: 30
-      
+
       aws_tags:
         description: Tags to put on the created secret in the form '[{"Key":"key1", "Value":"value1"},{"Key":"key2", "Value":"value2"}] (default to no tags)'
         type: string
-    
+
     outputs:
       source_snapshot_arn:
         description: "The second output string"
@@ -51,7 +51,7 @@ jobs:
       contents: read
       pull-requests: write
     outputs:
-      snapshot_id:  ${{ steps.snapshot.outputs.snapshot_id }}
+      snapshot_id: ${{ steps.snapshot.outputs.snapshot_id }}
       snapshot_arn: ${{ steps.snapshot.outputs.snapshot_arn }}
     steps:
       - name: Validate Inputs
@@ -76,7 +76,7 @@ jobs:
           aws rds describe-db-instances \
             --db-instance-identifier "${{ inputs.source_rds_identifier }}" | \
               jq '.DBInstances[].TagList'
-      
+
       - name: Create Snapshot
         id: snapshot
         run: |
@@ -86,7 +86,7 @@ jobs:
             --db-snapshot-identifier "${_ID}" \
             --db-instance-identifier "${{ inputs.source_rds_identifier }}" \
             --tags ${{ inputs.aws_tags }}
-          
+
           _ARN=$(
             aws rds describe-db-snapshots \
               --db-snapshot-identifier "${_ID}" | \
@@ -117,11 +117,11 @@ jobs:
         with:
           role-to-assume: ${{ inputs.source_aws_oidc_role_arn }}
           aws-region: ${{ inputs.source_aws_region }}
-      
+
       - name: Share Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
         run: |
           echo "Snapshots should be in Available state to be shared, it usually take a while"
-          
+
           echo "Waiting 1 minute before first try..."
           sleep 60
 
