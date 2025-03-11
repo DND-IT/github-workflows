@@ -24,6 +24,12 @@ on:
       share_snapshot_destination_aws_account_id:
         description: "AWS AccountID. For multiple accounts use JSON format e.g. { \"ACCOUNT_A_ID\", \"ACCOUNT_B_ID\" }"
         type: string
+      share_snapshot_retries:
+        description: How many times the step will retry sharing the snapshot. Consider adjusting this number if you know how much time your snapshot usually takes.
+        default: 5
+      share_snapshot_wait_interval_seconds:
+        description: How long the step will wait until retrying sharing the snapshot. Consider adjusting this number if you know how much time your snapshot usually takes.
+        default: 30
       
       aws_tags:
         description: Tags to put on the created secret in the form '[{"Key":"key1", "Value":"value1"},{"Key":"key2", "Value":"value2"}] (default to no tags)'
@@ -79,7 +85,28 @@ jobs:
       - name: Share Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
         if: ${{ inputs.share_snapshot_destination_aws_account_id != '' }}
         run: |
-          aws rds modify-db-snapshot-attribute \
-            --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" \
-            --attribute-name restore \
-            --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
+          echo "Snapshots should be in Available state to be shared, it usually take a while"
+          
+          echo "Waiting 1 minute before first try..."
+          sleep 60
+
+          for retries in {1..${{ inputs.share_snapshot_retries }}}
+          do
+            _PROGRESS=$(aws rds describe-db-snapshots --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" | jq '.DBSnapshots[].PercentProgress')
+            echo "Current Progress: ${_PROGRESS}%"
+
+            if [[ "$_PROGRESS" -eq 100 ]]
+            then
+              aws rds modify-db-snapshot-attribute \
+                --db-snapshot-identifier "${{ steps.snapshot-identifier.outputs.id }}" \
+                --attribute-name restore \
+                --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
+            elif [[ "$retries" -eq ${{ inputs.share_snapshot_retries }} ]]
+            then
+              echo "Maximum retries reached. Stopping execution."
+              exit 2
+            else
+              echo "Waiting ${{ inputs.share_snapshot_wait_interval_seconds }} before next try...  $retries/${{ inputs.share_snapshot_retries }}"
+              sleep ${{ inputs.share_snapshot_wait_interval_seconds }}
+            done
+          done
