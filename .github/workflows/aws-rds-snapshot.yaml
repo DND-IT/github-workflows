@@ -60,7 +60,7 @@ jobs:
       - name: Prepare Snapshot Identifier
         id: snapshot-identifier
         run: |
-          echo "ID="${{ inputs.source_snapshot_name }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+          echo "ID=${{ inputs.source_snapshot_name }}-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
       
       - name: Create Snapshot
         id: snapshot
