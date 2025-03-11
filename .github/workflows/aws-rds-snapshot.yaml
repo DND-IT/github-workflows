@@ -99,6 +99,8 @@ jobs:
   share-snapshot:
     name: Share RDS Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
     runs-on: ubuntu-latest
+    needs:
+      - take-snapshot
     permissions:
       id-token: write
       contents: read
@@ -123,6 +125,8 @@ jobs:
               --db-snapshot-identifier "${{ needs.take-snapshot.outputs.snapshot_id }}" \
               --attribute-name restore \
               --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
+            
+            break
           elif [[ "$retries" -eq ${{ inputs.share_snapshot_retries }} ]]
           then
             echo "Maximum retries reached. Stopping execution."
@@ -130,5 +134,5 @@ jobs:
           else
             echo "Waiting ${{ inputs.share_snapshot_wait_interval_seconds }} before next try...  $retries/${{ inputs.share_snapshot_retries }}"
             sleep ${{ inputs.share_snapshot_wait_interval_seconds }}
-          done
+          fi
         done
