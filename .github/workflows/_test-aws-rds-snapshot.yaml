@@ -35,7 +35,7 @@ permissions:
 
 jobs:
   account-a-snapshot:
-    uses: '.github/workflows/aws-rds-snapshot.yaml'
+    uses: '.github/workflows/aws-rds-snapshot.yaml@FUM-3138'
     environment: sandbox
     with:
       source_aws_region: "eu-central-1"
