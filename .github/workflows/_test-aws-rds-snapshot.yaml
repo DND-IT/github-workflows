@@ -34,9 +34,18 @@ permissions:
   pull-requests: write
 
 jobs:
+  # unwrap-env:
+  #   name: Check Shared snapshot in Account B
+  #   runs-on: ubuntu-latest
+  #   environment: sandbox
+  #   steps:
+  #     - name:
+
+
   account-a-snapshot:
+    needs:
+      - unwrap-env
     uses: './.github/workflows/aws-rds-snapshot.yaml'
-    environment: sandbox
     with:
       source_aws_region: "eu-central-1"
       source_aws_oidc_role_arn: ${{ vars.AWS_ACCOUNT_A_OIDC_ROLE }}
@@ -52,7 +61,7 @@ jobs:
       - account-a-snapshot
     name: Check Shared snapshot in Account B
     runs-on: ubuntu-latest
-    environment: sandbox
+    # environment: sandbox
     steps:
 
       - name: Configure Account B AWS credentials
@@ -79,7 +88,7 @@ jobs:
       - check-account-b
     name: Cleanup Snapshot in Account A
     runs-on: ubuntu-latest
-    environment: sandbox
+    # environment: sandbox
     steps:
 
       - name: Configure Account A AWS credentials
