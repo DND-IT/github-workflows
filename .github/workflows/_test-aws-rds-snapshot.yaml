@@ -35,8 +35,6 @@ permissions:
 
 jobs:
   account-a-snapshot:
-    needs:
-      - unwrap-env
     uses: './.github/workflows/aws-rds-snapshot.yaml'
     with:
       source_aws_region: "eu-central-1"
