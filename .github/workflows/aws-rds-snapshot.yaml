@@ -46,6 +46,13 @@ on:
         value: ${{ jobs.take-snapshot.outputs.snapshot_arn }}
 
 jobs:
+  ##
+  # Automates the process of taking an Amazon RDS snapshot.
+  # It validates user inputs, verifies the RDS instance, and 
+  # creates a snapshot with optional tags. 
+  # The snapshot ID and ARN are captured as outputs, and the 
+  # process ensures reliability by waiting  for the snapshot to 
+  # become available.
   take-snapshot:
     name: Take RDS Snapshot from ${{ inputs.source_rds_identifier }}
     runs-on: ubuntu-latest
@@ -58,14 +65,16 @@ jobs:
       snapshot_arn: ${{ steps.snapshot.outputs.snapshot_arn }}
     steps:
       - name: Validate Inputs
+        # The regex was choose to solve empty and only-whitespace variables
+        # while -z is not covering both checks 
         run: |
           if [[ "${{ inputs.source_rds_identifier }}" =~ ^[[:blank:]]*$ ]]; then
             echo "'source_rds_identifier' cannot be empty"
-            exit 2
+            exit 1
           fi
           if [[ "${{ inputs.source_snapshot_name }}" =~ ^[[:blank:]]*$ ]]; then
             echo "'source_snapshot_name' cannot be empty"
-            exit 2
+            exit 1
           fi
 
       - name: Configure Source AWS credentials
@@ -104,6 +113,12 @@ jobs:
           '"${_ARN}"'
           ```' >> $GITHUB_STEP_SUMMARY
 
+  ##
+  # Share RDS snapshots with another AWS account. To prevent sharing 
+  # before the snapshot is ready, it verifies the 'available' state. 
+  # A retry strategy is used to avoid wasted run credits and job 
+  # timeouts caused by snapshot creation delays."
+  #
   share-snapshot:
     name: Share RDS Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
     runs-on: ubuntu-latest
@@ -144,7 +159,7 @@ jobs:
             elif [[ "$retries" -eq ${{ inputs.share_snapshot_retries }} ]]
             then
               echo "Maximum retries reached. Stopping execution."
-              exit 2
+              exit 1
             else
               echo "Snapshot not ready."
               echo "Waiting ${{ inputs.share_snapshot_wait_interval_seconds }} seconds before retry... $((retries+1))/${{ inputs.share_snapshot_retries }}"
