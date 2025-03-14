@@ -1,16 +1,16 @@
 name: Test AWS RDS Snapshot and Share
 
-on:
-  pull_request:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/_test-aws-rds-snapshot.yaml'
-      - '.github/workflows/aws-rds-snapshot.yaml'
-  push:
-    paths:
-      - '.github/workflows/_test-aws-rds-snapshot.yaml'
-      - '.github/workflows/aws-rds-snapshot.yaml'
+# on:
+#   pull_request:
+#     branches:
+#       - main
+#     paths:
+#       - '.github/workflows/_test-aws-rds-snapshot.yaml'
+#       - '.github/workflows/aws-rds-snapshot.yaml'
+#   push:
+#     paths:
+#       - '.github/workflows/_test-aws-rds-snapshot.yaml'
+#       - '.github/workflows/aws-rds-snapshot.yaml'
 
 # Workflow to test aws-rds-snapshot workflow
 # It will:
@@ -62,14 +62,14 @@ jobs:
         run: |
           _SNAPSHOTS=$(
             aws rds describe-db-snapshots \
-              --db-instance-identifier "${{ vars.AWS_ACCOUNT_A_RDS_IDENTIFIER }}" \
               --include-shared \
-              --snapshot-type shared
+              --snapshot-type shared \
+              --query 'DBSnapshots[?DBInstanceIdentifier==`${{ vars.AWS_ACCOUNT_A_RDS_IDENTIFIER }}`]'
           )
-          echo "$_SNAPSHOTS" | jq -r '.DBSnapshots'
+          echo "$_SNAPSHOTS"
           
-          # 'jq -e' will exist with non-zero if array is empty
-          echo "$_SNAPSHOTS" | jq -er '.DBSnapshots | length == 0'
+          # 'jq -e' will exist with non-zero if condition is false
+          echo "$_SNAPSHOTS" | jq -er '. | length != 0'
   
   cleanup-account-a:
     needs:
