@@ -12,6 +12,14 @@ name: Test AWS RDS Snapshot and Share
 #       - '.github/workflows/_test-aws-rds-snapshot.yaml'
 #       - '.github/workflows/aws-rds-snapshot.yaml'
 
+## !!! 
+## This workflow file was not fully tested due to the lack 
+## of integration with multiple AWS accounts and the absence 
+## of a running RDS instance when it was developed. 
+## Instead, it was thoroughly tested in a shared workflow 
+## for a different project.
+## !!!
+
 # Workflow to test aws-rds-snapshot workflow
 # It will:
 #   - trigger the workflow on account A
