@@ -1,0 +1,168 @@
+name: AWS RDS Snapshot
+# Take an AWS RDS snapshot and, optionally, share with other(s) AWS account(s)
+
+on:
+  workflow_call:
+    inputs:
+      source_aws_region:
+        description: "AWS region"
+        type: string
+        required: true
+      source_aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+        required: true
+      source_rds_identifier:
+        description: "AWS RDS Identifier to take snapshot"
+        type: string
+        required: true
+      source_snapshot_name:
+        description: "Meaningful name for the RDS snapshot"
+        type: string
+        required: true
+
+      share_snapshot_destination_aws_account_id:
+        description: "AWS AccountID. For multiple accounts use JSON format e.g. { \"ACCOUNT_A_ID\", \"ACCOUNT_B_ID\" }"
+        type: string
+      share_snapshot_retries:
+        description: How many times the step will retry sharing the snapshot. Consider adjusting this number if you know how much time your snapshot usually takes.
+        type: string
+        default: 5
+      share_snapshot_wait_interval_seconds:
+        description: How long the step will wait until retrying sharing the snapshot. Consider adjusting this number if you know how much time your snapshot usually takes.
+        type: string
+        default: 30
+
+      aws_tags:
+        description: Tags to put on the created secret in the form '[{"Key":"key1", "Value":"value1"},{"Key":"key2", "Value":"value2"}] (default to no tags)'
+        type: string
+
+    outputs:
+      source_snapshot_identifier:
+        description:
+        value: ${{ jobs.take-snapshot.outputs.snapshot_id }}
+      source_snapshot_arn:
+        description: "The second output string"
+        value: ${{ jobs.take-snapshot.outputs.snapshot_arn }}
+
+jobs:
+  ##
+  # Automates the process of taking an Amazon RDS snapshot.
+  # It validates user inputs, verifies the RDS instance, and 
+  # creates a snapshot with optional tags. 
+  # The snapshot ID and ARN are captured as outputs, and the 
+  # process ensures reliability by waiting  for the snapshot to 
+  # become available.
+  take-snapshot:
+    name: Take RDS Snapshot from ${{ inputs.source_rds_identifier }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    outputs:
+      snapshot_id: ${{ steps.snapshot.outputs.snapshot_id }}
+      snapshot_arn: ${{ steps.snapshot.outputs.snapshot_arn }}
+    steps:
+      - name: Validate Inputs
+        # The regex was choose to solve empty and only-whitespace variables
+        # while -z is not covering both checks 
+        run: |
+          if [[ "${{ inputs.source_rds_identifier }}" =~ ^[[:blank:]]*$ ]]; then
+            echo "'source_rds_identifier' cannot be empty"
+            exit 1
+          fi
+          if [[ "${{ inputs.source_snapshot_name }}" =~ ^[[:blank:]]*$ ]]; then
+            echo "'source_snapshot_name' cannot be empty"
+            exit 1
+          fi
+
+      - name: Configure Source AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        with:
+          role-to-assume: ${{ inputs.source_aws_oidc_role_arn }}
+          aws-region: ${{ inputs.source_aws_region }}
+
+      - name: Verify RDS Identifier
+        run: |
+          aws rds describe-db-instances \
+            --db-instance-identifier "${{ inputs.source_rds_identifier }}" | \
+              jq '.DBInstances[].TagList'
+
+      - name: Create Snapshot
+        id: snapshot
+        run: |
+          _ID=${{ inputs.source_snapshot_name }}-$(date +%Y%m%d-%H%M%S)
+
+          aws rds create-db-snapshot \
+            --db-snapshot-identifier "${_ID}" \
+            --db-instance-identifier "${{ inputs.source_rds_identifier }}" \
+            --tags ${{ inputs.aws_tags }}
+
+          _ARN=$(
+            aws rds describe-db-snapshots \
+              --db-snapshot-identifier "${_ID}" | \
+                  jq -r '.DBSnapshots[].DBSnapshotArn'
+          )
+
+          echo "snapshot_arn=${_ARN}" >> $GITHUB_OUTPUT
+          echo "snapshot_id=${_ID}" >> $GITHUB_OUTPUT
+
+          echo '#### Snapshot ARN
+          ```
+          '"${_ARN}"'
+          ```' >> $GITHUB_STEP_SUMMARY
+
+  ##
+  # Share RDS snapshots with another AWS account. To prevent sharing 
+  # before the snapshot is ready, it verifies the 'available' state. 
+  # A retry strategy is used to avoid wasted run credits and job 
+  # timeouts caused by snapshot creation delays."
+  #
+  share-snapshot:
+    name: Share RDS Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
+    runs-on: ubuntu-latest
+    needs:
+      - take-snapshot
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    if: ${{ inputs.share_snapshot_destination_aws_account_id != '' }}
+    steps:
+      - name: Configure Source AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        with:
+          role-to-assume: ${{ inputs.source_aws_oidc_role_arn }}
+          aws-region: ${{ inputs.source_aws_region }}
+
+      - name: Share Snapshot with ${{ inputs.share_snapshot_destination_aws_account_id }}
+        run: |
+          echo "Snapshots should be in Available state to be shared, it usually take a while"
+
+          echo "Waiting 1 minute before first try..."
+          sleep 60
+
+          for retries in {0..${{ inputs.share_snapshot_retries }}}
+          do
+            _PROGRESS=$(aws rds describe-db-snapshots --db-snapshot-identifier "${{ needs.take-snapshot.outputs.snapshot_id }}" | jq '.DBSnapshots[].PercentProgress')
+            echo "Current Progress: ${_PROGRESS}%"
+
+            if [[ "$_PROGRESS" -eq 100 ]]
+            then
+              aws rds modify-db-snapshot-attribute \
+                --db-snapshot-identifier "${{ needs.take-snapshot.outputs.snapshot_id }}" \
+                --attribute-name restore \
+                --values-to-add "${{ inputs.share_snapshot_destination_aws_account_id }}"
+              
+              break
+            elif [[ "$retries" -eq ${{ inputs.share_snapshot_retries }} ]]
+            then
+              echo "Maximum retries reached. Stopping execution."
+              exit 1
+            else
+              echo "Snapshot not ready."
+              echo "Waiting ${{ inputs.share_snapshot_wait_interval_seconds }} seconds before retry... $((retries+1))/${{ inputs.share_snapshot_retries }}"
+              sleep ${{ inputs.share_snapshot_wait_interval_seconds }}
+            fi
+          done
