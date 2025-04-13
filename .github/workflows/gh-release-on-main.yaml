@@ -7,6 +7,11 @@ on:
         description: "File path containing the extra metadata to append to the release version, if not specified the standard semver is applied"
         type: string
         default: ""
+      update_version_aliases:
+        description: "Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release."
+        type: boolean
+        default: true
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -87,7 +92,7 @@ jobs:
           generate_release_notes: true
 
       - name: Update major and minor version tags
-        if: steps.version_increment.outputs.RELEASE == 'true'
+        if: steps.version_increment.outputs.RELEASE == 'true' && inputs.update_version_aliases == 'true'
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"

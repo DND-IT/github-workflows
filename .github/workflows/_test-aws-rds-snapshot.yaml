@@ -1,22 +1,23 @@
 name: Test AWS RDS Snapshot and Share
 
-# on:
-#   pull_request:
-#     branches:
-#       - main
-#     paths:
-#       - '.github/workflows/_test-aws-rds-snapshot.yaml'
-#       - '.github/workflows/aws-rds-snapshot.yaml'
-#   push:
-#     paths:
-#       - '.github/workflows/_test-aws-rds-snapshot.yaml'
-#       - '.github/workflows/aws-rds-snapshot.yaml'
+on:
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - '.github/workflows/_test-aws-rds-snapshot.yaml'
+  #     - '.github/workflows/aws-rds-snapshot.yaml'
+  # push:
+  #   paths:
+  #     - '.github/workflows/_test-aws-rds-snapshot.yaml'
+  #     - '.github/workflows/aws-rds-snapshot.yaml'
+  workflow_dispatch:
 
-## !!! 
-## This workflow file was not fully tested due to the lack 
-## of integration with multiple AWS accounts and the absence 
-## of a running RDS instance when it was developed. 
-## Instead, it was thoroughly tested in a shared workflow 
+## !!!
+## This workflow file was not fully tested due to the lack
+## of integration with multiple AWS accounts and the absence
+## of a running RDS instance when it was developed.
+## Instead, it was thoroughly tested in a shared workflow
 ## for a different project.
 ## !!!
 
@@ -53,7 +54,7 @@ jobs:
       share_snapshot_retries: 5
       share_snapshot_wait_interval_seconds: 25
       aws_tags: '"Key=Trigger,Value=GithubActions" "Key=Repository,Value=DND-IT/github-workflows"'
-  
+
   check-account-b:
     needs:
       - account-a-snapshot
@@ -75,10 +76,10 @@ jobs:
               --query 'DBSnapshots[?DBInstanceIdentifier==`${{ vars.AWS_ACCOUNT_A_RDS_IDENTIFIER }}`]'
           )
           echo "$_SNAPSHOTS"
-          
+
           # 'jq -e' will exist with non-zero if condition is false
           echo "$_SNAPSHOTS" | jq -er '. | length != 0'
-  
+
   cleanup-account-a:
     needs:
       - check-account-b
