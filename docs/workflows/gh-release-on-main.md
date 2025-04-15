@@ -28,6 +28,7 @@ The options are:
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `metadata_file` | <p>File path containing the extra metadata to append to the release version, if not specified the standard semver is applied</p> | `string` | `false` | `""` |
+| `update_version_aliases` | <p>Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release.</p> | `boolean` | `false` | `true` |
 <!-- action-docs-inputs source=".github/workflows/gh-release-on-main.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/gh-release-on-main.yaml" -->
@@ -48,6 +49,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
+
+      update_version_aliases:
+      # Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: true
 ```
 <!-- action-docs-usage source=".github/workflows/gh-release-on-main.yaml" project="tx-pts-dai/github-workflows/.github/workflows/gh-release-on-main.yaml" version="v2" -->
 
