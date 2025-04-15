@@ -92,7 +92,7 @@ jobs:
           generate_release_notes: true
 
       - name: Update major and minor version tags
-        if: steps.version_increment.outputs.RELEASE == 'true' && inputs.update_version_aliases == 'true'
+        if: steps.version_increment.outputs.RELEASE == 'true' && inputs.update_version_aliases
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
