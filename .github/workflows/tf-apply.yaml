@@ -96,7 +96,7 @@ jobs:
           GH_ARTIFACT_NAME: ${{ inputs.gh_artifact_name || vars.gh_artifact_name }}
           GH_ARTIFACT_PATTERN: ${{ inputs.gh_artifact_pattern || vars.gh_artifact_pattern }}
           GH_ARTIFACT_MERGE_MULTIPLE: ${{ inputs.gh_artifact_merge_multiple || vars.gh_artifact_merge_multiple || false }}
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4
         if: env.GH_ARTIFACT_PATH != '' || env.GH_ARTIFACT_NAME != ''
         with:
           path: ${{ env.GH_ARTIFACT_PATH }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: Terraform Apply
         id: tf_apply
-        uses: dflook/terraform-apply@61432ffb5b94226bdfc9cd68a1702a2c40e0db8b # v1
+        uses: dflook/terraform-apply@65f3817a939c123a753fcf72a13e74d6a01bfadf # v1
         env:
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
