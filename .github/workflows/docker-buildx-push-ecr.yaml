@@ -42,12 +42,8 @@ on:
         description: "Build target"
         type: string
       docker_platforms:
-        description: "Build Platforms"
-        type: choice
-        options:
-          - "linux/amd64"
-          - "linux/arm64"
-          - "linux/amd64,linux/arm64"
+        description: "Build Platforms. Allowed values: `linux/amd64`, `linux/arm64` and `linux/amd64,linux/arm64`"
+        type: string
         default: linux/amd64
       artifact_name:
         description: "Artifact name to be downloaded before building"
@@ -70,6 +66,13 @@ jobs:
     steps:
       - id: set
         run: |
+          if [[ "${{ inputs.docker_platforms }}" != "linux/amd64" && \
+                "${{ inputs.docker_platforms }}" != "linux/arm64" && \
+                "${{ inputs.docker_platforms }}" != "linux/amd64,linux/arm64" ]]; then
+            echo "Invalid docker_platforms value: ${{ inputs.docker_platforms }}"
+            exit 1
+          fi
+
           PLATFORMS="${{ inputs.docker_platforms }}"
           JSON=$(echo "$PLATFORMS" | jq -R 'split(",")')
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
