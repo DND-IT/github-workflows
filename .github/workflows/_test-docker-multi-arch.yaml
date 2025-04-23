@@ -5,7 +5,7 @@ on:
     paths:
       - ".github/workflows/_test-docker-multi-arch.yaml"
       - "tests/docker-multi-arch/**"
-      - "tests/terraform/docker-ecr/**"
+      - "tests/terraform/docker-buildc-ecr/**"
 
 jobs:
   ## Setups
@@ -13,10 +13,10 @@ jobs:
     uses: ./.github/workflows/tf-apply.yaml
     with:
       environment: sandbox
-      tf_dir: tests/terraform/docker-ecr
+      tf_dir: tests/terraform/docker-buildx-ecr
       tf_backend_configs: ""
-      tf_backend_config_files: tests/terraform/docker-ecr/environments/sandbox.s3.tfbackend
-      tf_var_files: tests/terraform/docker-ecr/environments/sandbox.tfvars
+      tf_backend_config_files: tests/terraform/docker-buildx-ecr/environments/sandbox.s3.tfbackend
+      tf_var_files: tests/terraform/docker-buildx-ecr/environments/sandbox.tfvars
 
   ## Tests
   test_docker_buildx_push_ecr:
@@ -40,7 +40,7 @@ jobs:
   #   uses: ./.github/workflows/tf-cleanup.yaml
   #   with:
   #     environment: sandbox
-  #     tf_dir: tests/terraform/docker-ecr
+  #     tf_dir: tests/terraform/docker-buildx-ecr
   #     tf_backend_configs: ""
-  #     tf_backend_config_files: tests/terraform/docker-ecr/environments/sandbox.s3.tfbackend
-  #     tf_var_files: tests/terraform/docker-ecr/environments/sandbox.tfvars
+  #     tf_backend_config_files: tests/terraform/docker-buildx-ecr/environments/sandbox.s3.tfbackend
+  #     tf_var_files: tests/terraform/docker-buildx-ecr/environments/sandbox.tfvars

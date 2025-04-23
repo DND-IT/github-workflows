@@ -8,7 +8,6 @@ on:
       - "tests/docker/**"
 
 jobs:
-  ## Tests
   test_docker_build_push_ecr:
     uses: ./.github/workflows/docker-build-push-ecr.yaml
     with:
