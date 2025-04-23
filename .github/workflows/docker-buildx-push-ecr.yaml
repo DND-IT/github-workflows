@@ -74,7 +74,7 @@ jobs:
           fi
 
           PLATFORMS="${{ inputs.docker_platforms }}"
-          JSON=$(echo "$PLATFORMS" | jq -R 'split(",")')
+          JSON=$(echo "$PLATFORMS" | jq -cR 'split(",")')
           echo "matrix=$JSON"
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
 
