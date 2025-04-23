@@ -76,6 +76,7 @@ jobs:
           PLATFORMS="${{ inputs.docker_platforms }}"
           JSON=$(echo "$PLATFORMS" | jq -cR 'split(",")')
           echo "matrix=$JSON"
+          
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
 
   build:
@@ -126,6 +127,13 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
 
+      - name: Sanitize Platform for ImageTag
+        id: sanitized_platform
+        run: |
+          _VAL=$(echo ${{ matrix.platform }} | sed 's/linux\///')
+
+          echo "platform=$_VAL" >> "$GITHUB_OUTPUT"
+
       - name: Build and push image
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         env:
@@ -135,45 +143,63 @@ jobs:
           DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.' }}
           DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }} # upstream defaults to {DOCKER_CTX}/Dockerfile
           DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
+          PLATFORM: ${{ steps.sanitized_platform.outputs.platform }}
         with:
           context: ${{ env.DOCKER_CTX }}
           file: ${{ env.DOCKERFILE_PATH }}
           secrets: ${{ secrets.docker_secrets }}
-          platforms: ${{ matrix.platform }}
+          platforms: ${{ env.PLATFORM }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
           tags: |
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-${{ matrix.platform }}
-            ${{ env.IMAGE_TAG && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, matrix.platform) }}
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-${{ env.PLATFORM }}
+            ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.PLATFORM)) || '' }}
 
-  manifest:
-    needs: build
-    runs-on: ubuntu-latest
-    if: inputs.docker_push
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+  # manifest:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   if: ${{ inputs.docker_push }}
+  #   steps:
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
+  #     - name: Log in to Amazon ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
 
-      - name: Create and push multi-arch manifest
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
-          IMAGE_TAG: ${{ inputs.image_tag }}
-        run: |
-          docker buildx imagetools create \
-            -t ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-linux/amd64 \
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-linux/arm64
+  #     - name: Create and push multi-arch manifest
+  #       env:
+  #         REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #         REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+  #         IMAGE_TAG: ${{ inputs.image_tag }}
+  #       run: |
 
-          if [ "${{ env.IMAGE_TAG }}" != "" ]; then
-            docker buildx imagetools create \
-              -t ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }} \
-              ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}-linux/amd64 \
-              ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}-linux/arm64
-          fi
+
+
+
+  #         _TAG_AMD=""
+  #         _TAG_ARM=""
+  #         if [ "${{ inputs.docker_platforms }}" =~ "amd64" ]; then
+  #           _TAG_AMD=""
+  #         fi
+  #         if [ "${{ inputs.docker_platforms }}" =~ "arm64" ]; then
+  #           _TAG_AMD=""
+  #         fi
+
+  #         docker buildx imagetools create -t $_TAG $_TAG_AMD $_TAG_ARM
+          
+
+
+  #         docker buildx imagetools create \
+  #           -t ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }} \
+  #           ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-linux/amd64 \
+  #           ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-linux/arm64
+
+  #         if [ "${{ env.IMAGE_TAG }}" != "" ]; then
+  #           docker buildx imagetools create \
+  #             -t ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }} \
+  #             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}-linux/amd64 \
+  #             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}-linux/arm64
+  #         fi
