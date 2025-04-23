@@ -153,9 +153,9 @@ jobs:
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-${{ env.PLATFORM }}
-            ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.PLATFORM)) || '' }}
+          # tags: |
+          #   ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-${{ env.PLATFORM }}
+          #   ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.PLATFORM)) || '' }}
 
   # manifest:
   #   needs: build
@@ -203,3 +203,7 @@ jobs:
   #             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}-linux/amd64 \
   #             ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}-linux/arm64
   #         fi
+      
+  #     - name: Inspect image
+  #       run: |
+  #         docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
