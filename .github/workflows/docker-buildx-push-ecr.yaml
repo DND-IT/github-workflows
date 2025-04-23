@@ -133,6 +133,19 @@ jobs:
           _VAL=$(echo ${{ matrix.platform }} | sed 's/linux\///')
 
           echo "platform=$_VAL" >> "$GITHUB_OUTPUT"
+      
+      - name: Debugging
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.' }}
+          DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }} # upstream defaults to {DOCKER_CTX}/Dockerfile
+          DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
+          PLATFORM: ${{ steps.sanitized_platform.outputs.platform }}
+        run: |
+          echo "${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-${{ env.PLATFORM }}""
+          echo "${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.PLATFORM)) || '' }}"
 
       - name: Build(${{ matrix.platform }}) and push(${{ inputs.docker_push }}) to ECR
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
@@ -153,9 +166,9 @@ jobs:
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
-          # tags: |
-          #   ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-${{ env.PLATFORM }}
-          #   ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.PLATFORM)) || '' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-${{ env.PLATFORM }}
+            ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.PLATFORM)) || '' }}
 
   # manifest:
   #   needs: build
