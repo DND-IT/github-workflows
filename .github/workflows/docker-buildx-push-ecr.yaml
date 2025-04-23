@@ -204,5 +204,15 @@ jobs:
           fi
       
       - name: Inspect image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY_IMAGE }}:${{ steps.meta.outputs.version }}
+          _IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
+
+          docker buildx imagetools inspect "$_IMAGE_PATH:${{ github.sha }}"
+
+          if [ "${{ env.IMAGE_TAG }}" != "" ]; then
+            docker buildx imagetools inspect "$_IMAGE_PATH:${{ env.IMAGE_TAG }}"
+          fi
