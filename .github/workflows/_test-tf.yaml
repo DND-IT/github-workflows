@@ -5,8 +5,8 @@ on:
     paths:
       - '.github/workflows/_test-tf.yaml'
       - '.github/workflows/tf-*.yaml'
-      - 'tests/terraform/**'
-      - '!tests/terraform/docker-buildx-ecr/**'
+      - 'tests/terraform/**'                      # Include all terraform test changes
+      - '!tests/terraform/docker-buildx-ecr/**'   # Exclude docker-buildx-ecr
 
 jobs:
   test_tf_feature:
