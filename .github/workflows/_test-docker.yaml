@@ -14,6 +14,7 @@ jobs:
     with:
       environment: sandbox
       tf_dir: tests/terraform/docker-ecr
+      tf_backend_configs: ""
       tf_backend_config_files: tests/terraform/docker-ecr/environments/sandbox.s3.tfbackend
       tf_var_files: tests/terraform/docker-ecr/environments/sandbox.tfvars
 
@@ -105,5 +106,6 @@ jobs:
   #   with:
   #     environment: sandbox
   #     tf_dir: tests/terraform/docker-ecr
+  #     tf_backend_configs: ""
   #     tf_backend_config_files: tests/terraform/docker-ecr/environments/sandbox.s3.tfbackend
   #     tf_var_files: tests/terraform/docker-ecr/environments/sandbox.tfvars

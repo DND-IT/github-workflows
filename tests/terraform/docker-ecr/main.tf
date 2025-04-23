@@ -20,6 +20,7 @@ module "workflow_test_docker_buildx_ecr" {
         selection = {
           tagStatus   = "tagged",
           countType   = "sinceImagePushed",
+          countUnit   = "days",
           countNumber = 1
         },
         action = {
