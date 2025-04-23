@@ -29,6 +29,17 @@ jobs:
       docker_context: tests/docker
       docker_push: false
 
+  test_docker_buildx_push_ecr:
+    uses: ./.github/workflows/docker-buildx-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-buildx-push
+      image_tag: ${{ github.sha }}
+      docker_context: tests/docker
+      docker_push: true # required to validate the ECR manifest
+
   test_docker_build:
     uses: ./.github/workflows/docker-build.yaml
     with:
