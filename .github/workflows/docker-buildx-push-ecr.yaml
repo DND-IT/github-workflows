@@ -161,10 +161,15 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: ${{ inputs.docker_push }}
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
         env:
@@ -177,7 +182,7 @@ jobs:
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
-      
+
       - name: Create and push multi-arch manifest
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
