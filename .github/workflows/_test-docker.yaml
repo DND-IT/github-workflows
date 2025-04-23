@@ -48,7 +48,6 @@ jobs:
       aws_region: ${{ vars.aws_region }}
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
-      image_tag: ${{ github.sha }}
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/amd64,linux/arm64"
