@@ -18,7 +18,7 @@ module "workflow_test_docker_buildx_ecr" {
         rulePriority = 1,
         description  = "Remove Images older than 1 day",
         selection = {
-          tagStatus   = "tagged",
+          tagStatus   = "any",
           countType   = "sinceImagePushed",
           countUnit   = "days",
           countNumber = 1
