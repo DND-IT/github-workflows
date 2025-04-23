@@ -32,7 +32,7 @@ jobs:
       docker_platforms: "linux/amd64,linux/arm64"
 
   ## Cleanups
-  ## TODO: enable after tests finished
+  # TODO: enable after tests finished
   # cleanup_docker_ecr:
   #   needs: 
   #     - setup_docker_ecr
