@@ -8,6 +8,16 @@ on:
       - "tests/docker/**"
 
 jobs:
+  ## Setups
+  setup_docker_ecr:
+    uses: ./.github/workflows/tf-apply.yaml
+    with:
+      environment: sandbox
+      tf_dir: tests/terraform/docker-ecr
+      tf_backend_config_files: tests/terraform/docker-ecr/environments/sandbox.s3.tfbackend
+      tf_var_files: tests/terraform/docker-ecr/environments/sandbox.tfvars
+
+  ## Tests
   test_docker_build_push_ecr:
     uses: ./.github/workflows/docker-build-push-ecr.yaml
     with:
@@ -30,6 +40,7 @@ jobs:
       docker_push: false
 
   test_docker_buildx_push_ecr:
+    needs: setup_docker_ecr
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
     with:
       aws_account_id: ${{ vars.aws_account_id }}
@@ -37,7 +48,7 @@ jobs:
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
       image_tag: ${{ github.sha }}
-      docker_context: tests/docker
+      docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
 
   test_docker_build:
@@ -83,3 +94,16 @@ jobs:
       docker_context: tests/docker
       docker_push: false
       artifact_name: docker-artifacts
+
+  ## Cleanups
+  ## TODO: enable after tests finished
+  # cleanup_docker_ecr:
+  #   needs: 
+  #     - setup_docker_ecr
+  #     - test_docker_buildx_push_ecr
+  #   uses: ./.github/workflows/tf-cleanup.yaml
+  #   with:
+  #     environment: sandbox
+  #     tf_dir: tests/terraform/docker-ecr
+  #     tf_backend_config_files: tests/terraform/docker-ecr/environments/sandbox.s3.tfbackend
+  #     tf_var_files: tests/terraform/docker-ecr/environments/sandbox.tfvars
