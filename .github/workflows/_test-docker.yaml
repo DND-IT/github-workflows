@@ -51,6 +51,7 @@ jobs:
       image_tag: ${{ github.sha }}
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
+      docker_platforms: "linux/amd64,linux/arm64"
 
   test_docker_build:
     uses: ./.github/workflows/docker-build.yaml
