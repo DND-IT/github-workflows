@@ -9,6 +9,15 @@ on:
       - "tests/terraform/docker-buildc-ecr/**"
 
 jobs:
+  ## Generate unique tag suffix
+  generate_tag_suffix:
+    runs-on: ubuntu-latest
+    outputs:
+      tag_suffix: ${{ steps.gen.outputs.tag_suffix }}
+    steps:
+      - id: gen
+        run: echo "tag_suffix=$(uuidgen | cut -c1-6)" >> $GITHUB_OUTPUT
+
   ## Setups
   setup_docker_ecr:
     uses: ./.github/workflows/tf-apply.yaml
@@ -29,7 +38,7 @@ jobs:
       aws_region: ${{ vars.aws_region }}
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
-      image_tag: build-amd
+      image_tag: build-amd-${{ needs.generate_tag_suffix.outputs.tag_suffix }}
       image_push_sha_tag: false  # prevents conflict on the buildx_both job
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
@@ -43,7 +52,7 @@ jobs:
       aws_region: ${{ vars.aws_region }}
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
-      image_tag: build-arm
+      image_tag: build-arm-${{ needs.generate_tag_suffix.outputs.tag_suffix }}
       image_push_sha_tag: false  # prevents conflict on the buildx_both job
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
@@ -60,7 +69,7 @@ jobs:
       aws_region: ${{ vars.aws_region }}
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
-      image_tag: build-both
+      image_tag: build-both-${{ needs.generate_tag_suffix.outputs.tag_suffix }}
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/amd64,linux/arm64"
