@@ -215,10 +215,12 @@ jobs:
           }
 
           if [ "$PUSH_SHA_TAG" = "true" ]; then
+            echo "docker buildx imagetools create -t $IMAGE_PATH:$SHA ${SHA_IMAGES[@]}"
             docker buildx imagetools create -t "$IMAGE_PATH:$SHA" "${SHA_IMAGES[@]}"
           fi
 
           if [[ -n "$TAG" ]]; then
+            echo "docker buildx imagetools create -t $IMAGE_PATH:$TAG ${TAG_IMAGES[@]}"
             docker buildx imagetools create -t "$IMAGE_PATH:$TAG" "${TAG_IMAGES[@]}"
           fi
       

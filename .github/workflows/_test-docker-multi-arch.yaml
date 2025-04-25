@@ -30,7 +30,7 @@ jobs:
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
       image_tag: build-amd
-      # image_push_sha_tag: false  # prevents conflict on the buildx_both job
+      image_push_sha_tag: false  # prevents conflict on the buildx_both job
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/amd64"
@@ -44,7 +44,7 @@ jobs:
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
       image_tag: build-arm
-      # image_push_sha_tag: false  # prevents conflict on the buildx_both job
+      image_push_sha_tag: false  # prevents conflict on the buildx_both job
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/arm64"
