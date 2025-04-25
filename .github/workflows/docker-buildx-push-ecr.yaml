@@ -197,7 +197,7 @@ jobs:
         run: |
           IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
           SHA="${{ github.sha }}"
-          SKIP_SHA_TAG: ${{ inputs.image_skip_sha_tag }}
+          SKIP_SHA_TAG="${{ inputs.image_skip_sha_tag }}"
           TAG="${{ env.IMAGE_TAG }}"
           PLATFORMS="${{ inputs.docker_platforms }}"
 
@@ -229,7 +229,7 @@ jobs:
           IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
-          SKIP_SHA_TAG: ${{ inputs.image_skip_sha_tag }}
+          SKIP_SHA_TAG="${{ inputs.image_skip_sha_tag }}"
 
           if [ "$SKIP_SHA_TAG" = "true" ]; then
             docker buildx imagetools inspect "$IMAGE_PATH:${{ github.sha }}"
