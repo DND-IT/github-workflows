@@ -28,6 +28,10 @@ on:
       image_tag:
         description: "Tag of the Docker image to build"
         type: string
+      image_skip_sha_tag:
+        description: "Push Image SHA as Tag to ECR"
+        type: boolean
+        default: false
       docker_context:
         description: "Path to the build context"
         type: string
@@ -141,6 +145,7 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
           IMAGE_TAG: ${{ inputs.image_tag }}
+          SKIP_SHA_TAG: ${{ inputs.image_skip_sha_tag }}
           DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.' }}
           DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }} # upstream defaults to {DOCKER_CTX}/Dockerfile
           DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
@@ -155,7 +160,7 @@ jobs:
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
           tags: |
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}-${{ env.ARCH }}
+            ${{ (env.SKIP_SHA_TAG == false && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, ${{ github.sha }}, env.ARCH)) || '' }}
             ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.ARCH)) || '' }}
 
   manifest:
@@ -192,6 +197,7 @@ jobs:
         run: |
           IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
           SHA="${{ github.sha }}"
+          SKIP_SHA_TAG: ${{ inputs.image_skip_sha_tag }}
           TAG="${{ env.IMAGE_TAG }}"
           PLATFORMS="${{ inputs.docker_platforms }}"
 
@@ -208,7 +214,9 @@ jobs:
             TAG_IMAGES+=("$IMAGE_PATH:$TAG-arm64")
           }
 
-          docker buildx imagetools create -t "$IMAGE_PATH:$SHA" "${SHA_IMAGES[@]}"
+          if [ "$SKIP_SHA_TAG" = "true" ]; then
+            docker buildx imagetools create -t "$IMAGE_PATH:$SHA" "${SHA_IMAGES[@]}"
+          fi
 
           if [[ -n "$TAG" ]]; then
             docker buildx imagetools create -t "$IMAGE_PATH:$TAG" "${TAG_IMAGES[@]}"
@@ -220,10 +228,13 @@ jobs:
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
           IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          _IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
+          IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
+          SKIP_SHA_TAG: ${{ inputs.image_skip_sha_tag }}
 
-          docker buildx imagetools inspect "$_IMAGE_PATH:${{ github.sha }}"
+          if [ "$SKIP_SHA_TAG" = "true" ]; then
+            docker buildx imagetools inspect "$IMAGE_PATH:${{ github.sha }}"
+          fi
 
           if [ "${{ env.IMAGE_TAG }}" != "" ]; then
-            docker buildx imagetools inspect "$_IMAGE_PATH:${{ env.IMAGE_TAG }}"
+            docker buildx imagetools inspect "$IMAGE_PATH:${{ env.IMAGE_TAG }}"
           fi
