@@ -4,6 +4,7 @@ on:
       - main
     paths:
       - ".github/workflows/_test-docker-multi-arch.yaml"
+      - ".github/workflows/docker-buildx-push-ecr.yaml"
       - "tests/docker-multi-arch/**"
       - "tests/terraform/docker-buildc-ecr/**"
 
