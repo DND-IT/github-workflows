@@ -20,6 +20,7 @@ jobs:
 
   ## Setups
   setup_docker_ecr:
+    needs: generate_tag_suffix
     uses: ./.github/workflows/tf-apply.yaml
     with:
       environment: sandbox
