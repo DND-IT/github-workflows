@@ -19,7 +19,7 @@ jobs:
       tf_var_files: tests/terraform/docker-buildx-ecr/environments/sandbox.tfvars
 
   ## Tests
-  test_docker_buildx_push_ecr:
+  test_docker_buildx_amd64_push_ecr:
     needs: setup_docker_ecr
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
     with:
@@ -27,6 +27,33 @@ jobs:
       aws_region: ${{ vars.aws_region }}
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
+      image_tag: build-amd
+      docker_context: tests/docker-multi-arch
+      docker_push: true # required to validate the ECR manifest
+      docker_platforms: "linux/amd64"
+  
+  test_docker_buildx_arm64_push_ecr:
+    needs: setup_docker_ecr
+    uses: ./.github/workflows/docker-buildx-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-buildx-push
+      image_tag: build-arm
+      docker_context: tests/docker-multi-arch
+      docker_push: true # required to validate the ECR manifest
+      docker_platforms: "linux/arm64"
+  
+  test_docker_buildx_both_push_ecr:
+    needs: setup_docker_ecr
+    uses: ./.github/workflows/docker-buildx-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-buildx-push
+      image_tag: build-both
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/amd64,linux/arm64"
