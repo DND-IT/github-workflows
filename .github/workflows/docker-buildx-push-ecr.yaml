@@ -190,7 +190,7 @@ jobs:
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
           IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          _IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
+          IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
           SHA="${{ github.sha }}"
           TAG="${{ env.IMAGE_TAG }}"
           PLATFORMS="${{ inputs.docker_platforms }}"
