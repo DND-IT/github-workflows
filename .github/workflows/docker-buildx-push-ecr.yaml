@@ -160,7 +160,7 @@ jobs:
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
           tags: |
-            ${{ (env.PUSH_SHA_TAG == true && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, github.sha, env.ARCH)) || '' }}
+            ${{ (env.PUSH_SHA_TAG == "true" && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, github.sha, env.ARCH)) || '' }}
             ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.ARCH)) || '' }}
 
   manifest:
