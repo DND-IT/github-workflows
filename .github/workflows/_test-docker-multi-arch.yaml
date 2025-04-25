@@ -11,7 +11,6 @@ on:
 jobs:
   ## Setups
   setup_docker_ecr:
-    needs: generate_tag_suffix
     uses: ./.github/workflows/tf-apply.yaml
     with:
       environment: sandbox
@@ -69,7 +68,9 @@ jobs:
   # cleanup_docker_ecr:
   #   needs: 
   #     - setup_docker_ecr
-  #     - test_docker_buildx_push_ecr
+  #     - test_docker_buildx_amd64_push_ecr
+  #     - test_docker_buildx_arm64_push_ecr
+  #     - test_docker_buildx_both_push_ecr
   #   uses: ./.github/workflows/tf-cleanup.yaml
   #   with:
   #     environment: sandbox
