@@ -22,13 +22,13 @@ This workflow creates a release based on the tag.
 
 <!-- action-docs-outputs source=".github/workflows/gh-release.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/gh-release.yaml" project="tx-pts-dai/github-workflows/.github/workflows/gh-release.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/gh-release.yaml" project="dnd-it/github-workflows/.github/workflows/gh-release.yaml" version="v2" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: tx-pts-dai/github-workflows/.github/workflows/gh-release.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/gh-release.yaml@v2
     with:
       tag:
       # The tag to release
@@ -37,7 +37,7 @@ jobs:
       # Required: true
       # Default: ""
 ```
-<!-- action-docs-usage source=".github/workflows/gh-release.yaml" project="tx-pts-dai/github-workflows/.github/workflows/gh-release.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/gh-release.yaml" project="dnd-it/github-workflows/.github/workflows/gh-release.yaml" version="v2" -->
 
 # Example
 

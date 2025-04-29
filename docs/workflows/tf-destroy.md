@@ -33,13 +33,13 @@ This workflow destroys Terraform resources.
 
 <!-- action-docs-outputs source=".github/workflows/tf-destroy.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/tf-destroy.yaml" project="tx-pts-dai/github-workflows/.github/workflows/tf-destroy.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/tf-destroy.yaml" project="dnd-it/github-workflows/.github/workflows/tf-destroy.yaml" version="v2" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: tx-pts-dai/github-workflows/.github/workflows/tf-destroy.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/tf-destroy.yaml@v2
     with:
       environment:
       # Environment to deploy.
@@ -125,7 +125,7 @@ jobs:
       # Required: false
       # Default: ""
 ```
-<!-- action-docs-usage source=".github/workflows/tf-destroy.yaml" project="tx-pts-dai/github-workflows/.github/workflows/tf-destroy.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/tf-destroy.yaml" project="dnd-it/github-workflows/.github/workflows/tf-destroy.yaml" version="v2" -->
 
 # Example
 

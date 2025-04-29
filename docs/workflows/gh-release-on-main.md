@@ -35,13 +35,13 @@ The options are:
 
 <!-- action-docs-outputs source=".github/workflows/gh-release-on-main.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/gh-release-on-main.yaml" project="tx-pts-dai/github-workflows/.github/workflows/gh-release-on-main.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/gh-release-on-main.yaml" project="dnd-it/github-workflows/.github/workflows/gh-release-on-main.yaml" version="v2" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: tx-pts-dai/github-workflows/.github/workflows/gh-release-on-main.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/gh-release-on-main.yaml@v2
     with:
       metadata_file:
       # File path containing the extra metadata to append to the release version, if not specified the standard semver is applied
@@ -57,7 +57,7 @@ jobs:
       # Required: false
       # Default: true
 ```
-<!-- action-docs-usage source=".github/workflows/gh-release-on-main.yaml" project="tx-pts-dai/github-workflows/.github/workflows/gh-release-on-main.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/gh-release-on-main.yaml" project="dnd-it/github-workflows/.github/workflows/gh-release-on-main.yaml" version="v2" -->
 
 ## Example
 

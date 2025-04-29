@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         environment: [dev, int, prod]
-    uses: tx-pts-dai/github-workflows/.github/workflows/tf-plan.yaml@v1
+    uses: dnd-it/github-workflows/.github/workflows/tf-plan.yaml@v1
     with:
       environment: ${{ matrix.environment }}
       tf_dir: deploy
@@ -33,7 +33,7 @@ jobs:
       max-parallel: 1
       matrix:
         environment: [dev, int, prod]
-    uses: tx-pts-dai/github-workflows/.github/workflows/tf-apply.yaml@v1
+    uses: dnd-it/github-workflows/.github/workflows/tf-apply.yaml@v1
     with:
       environment: ${{ matrix.environment }}
       tf_dir: deploy

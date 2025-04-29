@@ -26,13 +26,13 @@ This workflow builds a Lambda Layer and the artifact is uploaded to the GitHub a
 
 <!-- action-docs-outputs source=".github/workflows/lambda-build-node.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/lambda-build-node.yaml" project="tx-pts-dai/github-workflows/.github/workflows/lambda-build-node.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/lambda-build-node.yaml" project="dnd-it/github-workflows/.github/workflows/lambda-build-node.yaml" version="v2" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: tx-pts-dai/github-workflows/.github/workflows/lambda-build-node.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/lambda-build-node.yaml@v2
     with:
       environment:
       # Environment to deploy.
@@ -69,7 +69,7 @@ jobs:
       # Required: false
       # Default: ""
 ```
-<!-- action-docs-usage source=".github/workflows/lambda-build-node.yaml" project="tx-pts-dai/github-workflows/.github/workflows/lambda-build-node.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/lambda-build-node.yaml" project="dnd-it/github-workflows/.github/workflows/lambda-build-node.yaml" version="v2" -->
 
 ## Example
 
