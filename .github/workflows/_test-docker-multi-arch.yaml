@@ -34,7 +34,6 @@ jobs:
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/amd64"
-  
   test_docker_buildx_arm64_push_ecr:
     needs: setup_docker_ecr
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
@@ -48,9 +47,8 @@ jobs:
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/arm64"
-  
   test_docker_buildx_both_push_ecr:
-    needs: 
+    needs:
       - setup_docker_ecr
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
     with:
