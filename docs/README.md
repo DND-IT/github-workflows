@@ -1,6 +1,6 @@
 # Documentation
 
-This directory contains documentation for the [Github Workflows](https://github.com/tx-pts-dai/github-workflows).
+This directory contains documentation for the [Github Workflows](https://github.com/dnd-it/github-workflows).
 
 ## Local Development
 

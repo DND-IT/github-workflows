@@ -28,13 +28,13 @@ All packages defined in the `package.json` file will be installed and packaged i
 
 <!-- action-docs-outputs source=".github/workflows/lambda-nodejs.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/lambda-nodejs.yaml" project="tx-pts-dai/github-workflows/.github/workflows/lambda-nodejs.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/lambda-nodejs.yaml" project="dnd-it/github-workflows/.github/workflows/lambda-nodejs.yaml" version="v2" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: tx-pts-dai/github-workflows/.github/workflows/lambda-nodejs.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/lambda-nodejs.yaml@v2
     with:
       node_version:
       # NodeJS version
@@ -71,7 +71,7 @@ jobs:
       # Required: false
       # Default: 30
 ```
-<!-- action-docs-usage source=".github/workflows/lambda-nodejs.yaml" project="tx-pts-dai/github-workflows/.github/workflows/lambda-nodejs.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/lambda-nodejs.yaml" project="dnd-it/github-workflows/.github/workflows/lambda-nodejs.yaml" version="v2" -->
 
 ## Example
 
@@ -86,7 +86,7 @@ on:
 
 jobs:
   build:
-    uses: tx-pts-dai/github-workflows/.github/workflows/lambda-nodejs.yaml@v1
+    uses: dnd-it/github-workflows/.github/workflows/lambda-nodejs.yaml@v1
     with:
       node_version: "20"
       source_dir: src/lambda

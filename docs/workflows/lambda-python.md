@@ -29,13 +29,13 @@ Usefull to deploy an AWS lambda function or layer.
 
 <!-- action-docs-outputs source=".github/workflows/lambda-python.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/lambda-python.yaml" project="tx-pts-dai/github-workflows/.github/workflows/lambda-python.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/lambda-python.yaml" project="dnd-it/github-workflows/.github/workflows/lambda-python.yaml" version="v2" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: tx-pts-dai/github-workflows/.github/workflows/lambda-python.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/lambda-python.yaml@v2
     with:
       python_version:
       # Python version. Check https://github.com/actions/setup-python for valid values
@@ -72,7 +72,7 @@ jobs:
       # Required: false
       # Default: 30
 ```
-<!-- action-docs-usage source=".github/workflows/lambda-python.yaml" project="tx-pts-dai/github-workflows/.github/workflows/lambda-python.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/lambda-python.yaml" project="dnd-it/github-workflows/.github/workflows/lambda-python.yaml" version="v2" -->
 
 ## Example
 
@@ -87,7 +87,7 @@ on:
 
 jobs:
   build:
-    uses: tx-pts-dai/github-workflows/.github/workflows/lambda-python.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/lambda-python.yaml@v2
     with:
       python_version: "3.12"
       source_dir: lambdas/first_lambda

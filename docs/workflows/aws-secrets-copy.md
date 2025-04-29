@@ -29,13 +29,13 @@ This workflow copies an AWS secret from one account to another.
 
 <!-- action-docs-outputs source=".github/workflows/aws-secrets-copy.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/aws-secrets-copy.yaml" project="tx-pts-dai/github-workflows/.github/workflows/aws-secrets-copy.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/aws-secrets-copy.yaml" project="dnd-it/github-workflows/.github/workflows/aws-secrets-copy.yaml" version="v2" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: tx-pts-dai/github-workflows/.github/workflows/aws-secrets-copy.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/aws-secrets-copy.yaml@v2
     with:
       source_aws_region:
       # AWS region
@@ -93,7 +93,7 @@ jobs:
       # Required: false
       # Default: ""
 ```
-<!-- action-docs-usage source=".github/workflows/aws-secrets-copy.yaml" project="tx-pts-dai/github-workflows/.github/workflows/aws-secrets-copy.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/aws-secrets-copy.yaml" project="dnd-it/github-workflows/.github/workflows/aws-secrets-copy.yaml" version="v2" -->
 
 ## Example
 

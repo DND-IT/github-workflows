@@ -25,7 +25,7 @@ jobs:
         stack: [platform]
         deployment: [v0, v1]
         environment: [dev, prod]
-    uses: tx-pts-dai/github-workflows/.github/workflows/tf-plan.yaml@v1
+    uses: dnd-it/github-workflows/.github/workflows/tf-plan.yaml@v1
     with:
       environment: ${{ matrix.stack }}-${{ matrix.deployment}}-${{ matrix.environment }}
 
@@ -38,6 +38,6 @@ jobs:
         stack: [platform]
         deployment: [v0, v1]
         environment: [dev, prod]
-    uses: tx-pts-dai/github-workflows/.github/workflows/tf-apply.yaml@v1
+    uses: dnd-it/github-workflows/.github/workflows/tf-apply.yaml@v1
     with:
       environment: ${{ matrix.stack }}-${{ matrix.deployment}}-${{ matrix.environment }}

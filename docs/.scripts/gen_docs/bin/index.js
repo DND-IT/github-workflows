@@ -8,7 +8,7 @@ const yaml = require('js-yaml');
 const workflowsPath = path.resolve('.github', 'workflows');
 const staticWorkflowsPath = '.github/workflows';
 const outputDir = path.resolve('docs', 'workflows');
-const githubOrg = 'tx-pts-dai';
+const githubOrg = 'dnd-it';
 const githubRepo = 'github-workflows';
 const currentMajorVersion = 'v2';
 

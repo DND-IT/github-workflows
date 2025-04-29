@@ -3,9 +3,9 @@ site_name: Github Reusable Workflows
 site_description: A collection of reusable GitHub Actions workflows
 docs_dir: docs/
 site_author: DAI
-site_url: https://tx-pts-dai.github.io/github-workflows/
+site_url: https://dnd-it.github.io/github-workflows/
 repo_name: github-workflows
-repo_url: https://github.com/tx-pts-dai/github-workflows
+repo_url: https://github.com/dnd-it/github-workflows
 
 theme:
   name: material
@@ -48,7 +48,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/tx-pts-dai/github-workflows
+      link: https://github.com/dnd-it/github-workflows
   analytics:
     provider: google
     property: G-J2L3YBBVQJ
