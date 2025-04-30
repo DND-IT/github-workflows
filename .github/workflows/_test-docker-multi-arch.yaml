@@ -29,7 +29,7 @@ jobs:
       aws_region: ${{ vars.aws_region }}
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
-      image_tag: build-amd
+      image_tag: build_amd
       image_push_sha_tag: false  # prevents conflict on the buildx_both job
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
@@ -42,7 +42,7 @@ jobs:
       aws_region: ${{ vars.aws_region }}
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
-      image_tag: build-arm
+      image_tag: build_arm
       image_push_sha_tag: false  # prevents conflict on the buildx_both job
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
@@ -56,7 +56,7 @@ jobs:
       aws_region: ${{ vars.aws_region }}
       aws_role_name: ${{ vars.aws_role_name }}
       image_name: test-docker-buildx-push
-      image_tag: build-both
+      image_tag: build_both
       docker_context: tests/docker-multi-arch
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/amd64,linux/arm64"
