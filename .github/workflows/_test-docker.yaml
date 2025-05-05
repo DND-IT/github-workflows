@@ -4,7 +4,8 @@ on:
       - main
     paths:
       - ".github/workflows/_test-docker.yaml"
-      - ".github/workflows/docker-*.yaml"
+      - ".github/workflows/docker-*.yaml"                 # Include all docker-*.yaml changes
+      - "!.github/workflows/docker-buildx-push-ecr.yaml"  # Exclude docker-buildx-push-ecr
       - "tests/docker/**"
 
 jobs:

@@ -1,0 +1,78 @@
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_test-docker-multi-arch.yaml"
+      - ".github/workflows/docker-buildx-push-ecr.yaml"
+      - "tests/docker-multi-arch/**"
+      - "tests/terraform/docker-buildc-ecr/**"
+
+jobs:
+  ## Setups
+  setup_docker_ecr:
+    uses: ./.github/workflows/tf-apply.yaml
+    with:
+      environment: sandbox
+      tf_dir: tests/terraform/docker-buildx-ecr
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=github-workflow-tests-docker-ecr.tfstate
+      tf_var_files: tests/terraform/docker-buildx-ecr/environments/sandbox.tfvars
+
+  ## Tests
+  test_docker_buildx_amd64_push_ecr:
+    needs: setup_docker_ecr
+    uses: ./.github/workflows/docker-buildx-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-buildx-push
+      image_tag: build_amd
+      image_push_sha_tag: false  # prevents conflict on the buildx_both job
+      docker_context: tests/docker-multi-arch
+      docker_push: true # required to validate the ECR manifest
+      docker_platforms: "linux/amd64"
+  test_docker_buildx_arm64_push_ecr:
+    needs: setup_docker_ecr
+    uses: ./.github/workflows/docker-buildx-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-buildx-push
+      image_tag: build_arm
+      image_push_sha_tag: false  # prevents conflict on the buildx_both job
+      docker_context: tests/docker-multi-arch
+      docker_push: true # required to validate the ECR manifest
+      docker_platforms: "linux/arm64"
+  test_docker_buildx_both_push_ecr:
+    needs:
+      - setup_docker_ecr
+    uses: ./.github/workflows/docker-buildx-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-buildx-push
+      image_tag: build_both
+      docker_context: tests/docker-multi-arch
+      docker_push: true # required to validate the ECR manifest
+      docker_platforms: "linux/amd64,linux/arm64"
+
+  ## Cleanups
+  # TODO: enable after tests finished
+  # cleanup_docker_ecr:
+  #   needs: 
+  #     - setup_docker_ecr
+  #     - test_docker_buildx_amd64_push_ecr
+  #     - test_docker_buildx_arm64_push_ecr
+  #     - test_docker_buildx_both_push_ecr
+  #   uses: ./.github/workflows/tf-cleanup.yaml
+  #   with:
+  #     environment: sandbox
+  #     tf_dir: tests/terraform/docker-buildx-ecr
+  #     tf_backend_configs: ""
+  #     tf_backend_config_files: tests/terraform/docker-buildx-ecr/environments/sandbox.s3.tfbackend
+  #     tf_var_files: tests/terraform/docker-buildx-ecr/environments/sandbox.tfvars

@@ -1,0 +1,241 @@
+name: Docker Multi-Arch Build and Push to ECR
+
+on:
+  workflow_call:
+    secrets:
+      docker_secrets:
+        description: "Comma-delimited list of Github secrets to pass to docker build workflow"
+        required: false
+    inputs:
+      environment:
+        description: "Environment to run the build in"
+        type: string
+      aws_account_id:
+        description: "AWS Account ID"
+        type: string
+      aws_region:
+        description: "AWS Region"
+        type: string
+      aws_role_name:
+        description: "AWS Role Name"
+        type: string
+      aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+      image_name:
+        description: "Name of the Docker image to build"
+        type: string
+      image_tag:
+        description: "Tag of the Docker image to build"
+        type: string
+      image_push_sha_tag:
+        description: "Push Image SHA as Tag to ECR"
+        type: boolean
+        default: true
+      docker_context:
+        description: "Path to the build context"
+        type: string
+      dockerfile_path:
+        description: "Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile"
+        type: string
+      docker_push:
+        description: "Push Image to ECR"
+        type: boolean
+        default: true
+      docker_target:
+        description: "Build target"
+        type: string
+      docker_platforms:
+        description: "Build Platforms. Allowed values: `linux/amd64`, `linux/arm64` and `linux/amd64,linux/arm64`"
+        type: string
+        default: linux/amd64
+      artifact_name:
+        description: "Artifact name to be downloaded before building"
+        type: string
+      artifact_path:
+        description: "Artifact target path"
+        type: string
+      artifact_pattern:
+        description: "A glob pattern to the artifacts that should be downloaded. Ignored if name is specified."
+        type: string
+      artifact_merge_multiple:
+        description: "When multiple artifacts are matched, this changes the behavior of the destination directories. If true, the downloaded artifacts will be in the same directory specified by path. If false, the downloaded artifacts will be extracted into individual named directories within the specified path. Optional. Default is 'false'."
+        type: boolean
+
+jobs:
+  set-matrix:
+    runs-on: ubuntu-24.04-arm
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          if [[ "${{ inputs.docker_platforms }}" != "linux/amd64" && \
+                "${{ inputs.docker_platforms }}" != "linux/arm64" && \
+                "${{ inputs.docker_platforms }}" != "linux/amd64,linux/arm64" ]]; then
+            echo "Invalid docker_platforms value: ${{ inputs.docker_platforms }}. Allowed values: 'linux/amd64', 'linux/arm64' and 'linux/amd64,linux/arm64'"
+            exit 1
+          fi
+
+          _MATRIX='[]'
+
+          if [[ "${{ inputs.docker_platforms }}" == *"linux/amd64"* ]]; then
+            _MATRIX=$(echo "$_MATRIX" | jq -c '. += [{"os": "ubuntu-24.04", "arch": "amd64", "platform": "linux/amd64"}]')
+          fi
+          if [[ "${{ inputs.docker_platforms }}" == *"linux/arm64"* ]]; then
+            _MATRIX=$(echo "$_MATRIX" | jq -c '. += [{"os": "ubuntu-24.04-arm", "arch": "arm64", "platform": "linux/arm64"}]')
+          fi
+
+          echo "matrix=$_MATRIX"
+
+          echo "matrix=$_MATRIX" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: set-matrix
+    runs-on: ${{ matrix.os }}
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+          # Result e.g.:
+          # - os: ubuntu-24.04
+          #   arch: amd64
+          #   platform: linux/amd64
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Download Artifacts
+        env:
+          ARTIFACT_PATH: ${{ inputs.artifact_path || vars.artifact_path }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name || vars.artifact_name }}
+          ARTIFACT_PATTERN: ${{ inputs.artifact_pattern || vars.artifact_pattern }}
+          ARTIFACT_MERGE_MULTIPLE: ${{ inputs.artifact_merge_multiple || vars.artifact_merge_multiple || false}}
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        if: env.ARTIFACT_PATH != '' || env.ARTIFACT_NAME != ''
+        with:
+          path: ${{ env.ARTIFACT_PATH }}
+          name: ${{ env.ARTIFACT_NAME }}
+          pattern: ${{ env.ARTIFACT_PATTERN }}
+          merge-multiple: ${{ env.ARTIFACT_MERGE_MULTIPLE }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+          AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
+      - name: Build(${{ matrix.platform }}) and push(${{ inputs.docker_push }}) to ECR
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          PUSH_SHA_TAG: ${{ inputs.image_push_sha_tag }}
+          DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.' }}
+          DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }} # upstream defaults to {DOCKER_CTX}/Dockerfile
+          DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
+          ARCH: ${{ matrix.arch }}
+        with:
+          context: ${{ env.DOCKER_CTX }}
+          file: ${{ env.DOCKERFILE_PATH }}
+          secrets: ${{ secrets.docker_secrets }}
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: ${{ inputs.docker_push }}
+          target: ${{ env.DOCKER_TARGET }}
+          tags: |
+            ${{ (env.PUSH_SHA_TAG == 'true' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, github.sha, env.ARCH)) || '' }}
+            ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.ARCH)) || '' }}
+
+  manifest:
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    if: ${{ inputs.docker_push }}
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+          AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
+
+      - name: Create and push multi-arch manifest
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
+          SHA="${{ github.sha }}"
+          PUSH_SHA_TAG="${{ inputs.image_push_sha_tag }}"
+          TAG="${{ env.IMAGE_TAG }}"
+          PLATFORMS="${{ inputs.docker_platforms }}"
+
+          declare -a SHA_IMAGES=()
+          declare -a TAG_IMAGES=()
+
+          [[ "$PLATFORMS" == *"linux/amd64"* ]] && {
+            SHA_IMAGES+=("$IMAGE_PATH:$SHA-amd64")
+            TAG_IMAGES+=("$IMAGE_PATH:$TAG-amd64")
+          }
+
+          [[ "$PLATFORMS" == *"linux/arm64"* ]] && {
+            SHA_IMAGES+=("$IMAGE_PATH:$SHA-arm64")
+            TAG_IMAGES+=("$IMAGE_PATH:$TAG-arm64")
+          }
+
+          if [ "$PUSH_SHA_TAG" = "true" ]; then
+            echo "docker buildx imagetools create -t $IMAGE_PATH:$SHA ${SHA_IMAGES[@]}"
+            docker buildx imagetools create -t "$IMAGE_PATH:$SHA" "${SHA_IMAGES[@]}"
+          fi
+
+          if [[ -n "$TAG" ]]; then
+            echo "docker buildx imagetools create -t $IMAGE_PATH:$TAG ${TAG_IMAGES[@]}"
+            docker buildx imagetools create -t "$IMAGE_PATH:$TAG" "${TAG_IMAGES[@]}"
+          fi
+
+      - name: Inspect image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
+          PUSH_SHA_TAG="${{ inputs.image_push_sha_tag }}"
+
+          if [ "$PUSH_SHA_TAG" = "true" ]; then
+            docker buildx imagetools inspect "$IMAGE_PATH:${{ github.sha }}"
+          fi
+
+          if [ "${{ env.IMAGE_TAG }}" != "" ]; then
+            docker buildx imagetools inspect "$IMAGE_PATH:${{ env.IMAGE_TAG }}"
+          fi
