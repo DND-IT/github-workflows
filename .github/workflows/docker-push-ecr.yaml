@@ -24,7 +24,7 @@ on:
       image_tag:
         description: "Tag of the Docker image to build"
         type: string
-        default: ${{ github.sha }}
+        default: ${{ github.event.pull_request.head.sha || github.sha }}
 jobs:
   push:
     name: Push to ECR
@@ -37,10 +37,10 @@ jobs:
       - name: Download artifact
         env:
           IMAGE_NAME: ${{ inputs.image_name || vars.image_name || github.event.repository.name}}
-          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
         with:
-          name: ${{ env.IMAGE_NAME }}-${{ github.sha }}
+          name: ${{ env.IMAGE_NAME }}-${{ env.GITHUB_SHA }}
           path: /tmp
 
       - name: Configure AWS credentials
@@ -60,7 +60,7 @@ jobs:
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name}}
-          SOURCE_TAG: ${{ github.sha }}
+          SOURCE_TAG: ${{ github.event.pull_request.head.sha || github.sha }}
           IMAGE_TAG: ${{ inputs.image_tag }}
           BRANCH: ${{ github.ref_name }}
         run: |

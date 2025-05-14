@@ -138,13 +138,14 @@ jobs:
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
+
       - name: Build(${{ matrix.platform }}) and push(${{ inputs.docker_push }}) to ECR
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
           IMAGE_TAG: ${{ inputs.image_tag }}
-          PUSH_SHA_TAG: ${{ inputs.image_push_sha_tag }}
+          DEFAULT_IMAGE_TAG: ${{ github.event.pull_request.head.sha || github.sha }}
           DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.' }}
           DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }} # upstream defaults to {DOCKER_CTX}/Dockerfile
           DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
@@ -159,7 +160,7 @@ jobs:
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
           tags: |
-            ${{ (env.PUSH_SHA_TAG == 'true' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, github.sha, env.ARCH)) || '' }}
+            ${{ (inputs.image_push_sha_tag && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.DEFAULT_IMAGE_TAG, env.ARCH)) || '' }}
             ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG, env.ARCH)) || '' }}
 
   manifest:
@@ -193,9 +194,10 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
           IMAGE_TAG: ${{ inputs.image_tag }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
-          SHA="${{ github.sha }}"
+          SHA="${{ env.SHA }}"
           PUSH_SHA_TAG="${{ inputs.image_push_sha_tag }}"
           TAG="${{ env.IMAGE_TAG }}"
           PLATFORMS="${{ inputs.docker_platforms }}"
@@ -228,12 +230,13 @@ jobs:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
           IMAGE_TAG: ${{ inputs.image_tag }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           IMAGE_PATH="${{ env.REGISTRY }}/${{ env.REPOSITORY }}"
           PUSH_SHA_TAG="${{ inputs.image_push_sha_tag }}"
 
           if [ "$PUSH_SHA_TAG" = "true" ]; then
-            docker buildx imagetools inspect "$IMAGE_PATH:${{ github.sha }}"
+            docker buildx imagetools inspect "$IMAGE_PATH:${{ env.SHA }}"
           fi
 
           if [ "${{ env.IMAGE_TAG }}" != "" ]; then
