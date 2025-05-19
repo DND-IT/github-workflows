@@ -4,6 +4,8 @@ title: Update Helm Image Tag in Values.yaml
 
 ## Description
 
+Simple workflow to update the image tag in a files. It creates a pull request with the changes.
+
 <!-- action-docs-inputs source=".github/workflows/gitops-image-tag.yaml" -->
 ### Inputs
 
