@@ -25,5 +25,4 @@ jobs:
     with:
       helm_chart_path: 'tests/helm'
       environments_path: 'tests/helm/envs'
-      common_values_path: 'tests/helm/values.yaml'
       debug: true

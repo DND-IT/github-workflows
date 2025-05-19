@@ -7,10 +7,6 @@ on:
         description: 'Path to the Helm chart directory'
         type: string
         default: 'deploy/app'
-      common_values_path:
-        description: 'Path to the common values.yaml file'
-        type: string
-        default: 'deploy/app/values.yaml'
       environments_path:
         description: 'Path to the directory containing environment-specific values'
         type: string
@@ -43,14 +39,17 @@ on:
 env:
   HELM_CHART_PATH: ${{ inputs.helm_chart_path }}
   ENVIRONMENTS_PATH: ${{ inputs.environments_path }}
-  COMMON_VALUES_PATH: ${{ inputs.common_values_path }}
   OUTPUT_PATH: ${{ inputs.output_path }}
+  HELM_RELEASE_NAME: ${{ inputs.helm_release_name }}
 
 jobs:
-  detect-changes:
+  diff:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     outputs:
-      common_changed: ${{ steps.changed-files.outputs.common_values_any_changed }}
+      chart_changed: ${{ steps.changed-files.outputs.chart_values_any_changed }}
       env_values_changed: ${{ steps.changed-files.outputs.env_values_any_changed }}
       env_values_files: ${{ steps.filter-envs.outputs.env_values_files }}
       env_list: ${{ steps.filter-envs.outputs.env_list }}
@@ -64,8 +63,9 @@ jobs:
         uses: tj-actions/changed-files@v46
         with:
           files_yaml: |
-            common_values:
-              - ${{ env.COMMON_VALUES_PATH }}
+            chart_values:
+              - ${{ env.HELM_CHART_PATH }}/values.yaml
+              - ${{ env.HELM_CHART_PATH }}/Chart.yaml
             env_values:
               - ${{ env.ENVIRONMENTS_PATH }}/**/*.yaml
 
@@ -83,8 +83,8 @@ jobs:
             ENV_LIST=$(echo "$ENV_VALUES_FILES" | xargs -n1 dirname | xargs -n1 basename | sort -u | tr '\n' ' ')
           fi
 
-          # If common values changed, we need to check all environments
-          if [ "${{ steps.changed-files.outputs.common_values_any_changed }}" == "true" ]; then
+          # If chart values changed, we need to check all environments
+          if [ "${{ steps.changed-files.outputs.chart_values_any_changed }}" == "true" ]; then
             # Get all environments by listing directories
             ALL_ENVS=$(find ${{ env.ENVIRONMENTS_PATH }} -maxdepth 1 -type d | xargs -n1 basename | grep -v "^${ENVIRONMENTS_PATH##*/}$" | tr '\n' ' ')
             if [ -n "$ALL_ENVS" ]; then
@@ -98,30 +98,13 @@ jobs:
       - name: Show debug info
         if: inputs.debug == 'true'
         run: |
-          echo "Common values changed: ${{ steps.changed-files.outputs.common_values_any_changed }}"
+          echo "Chart values changed: ${{ steps.changed-files.outputs.chart_values_any_changed }}"
           echo "Environment values changed: ${{ steps.changed-files.outputs.env_values_any_changed }}"
           echo "Changed environment files: ${{ steps.changed-files.outputs.env_values_all_changed_files }}"
           echo "Environments to check: ${{ steps.filter-envs.outputs.env_list }}"
 
-  diff:
-    needs: detect-changes
-    if: needs.detect-changes.outputs.common_changed == 'true' || needs.detect-changes.outputs.env_values_changed == 'true'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Debug outputs
-        run: |
-          echo "Common values changed: ${{ needs.detect-changes.outputs.common_changed }}"
-          echo "Environment values changed: ${{ needs.detect-changes.outputs.env_values_changed }}"
-          echo "Environments to check: ${{ needs.detect-changes.outputs.env_list }}"
-
       - uses: actions/checkout@v4
-        with:
-          path: pull-request
-
-      - uses: actions/checkout@v4
+        if: steps.changed-files.outputs.chart_values_any_changed == 'true' || steps.changed-files.outputs.env_values_any_changed == 'true'
         with:
           ref: ${{ inputs.base_branch }}
           path: target-branch
@@ -129,72 +112,60 @@ jobs:
       - name: Set up Helm
         run: |
           helm repo add ${{ inputs.helm_repo_name }} ${{ inputs.helm_repo_url }}
+          helm dependency build ${{ env.HELM_CHART_PATH}}
+          helm dependency build target-branch/${{ env.HELM_CHART_PATH}}
 
       - name: Process environments
         id: process-envs
         run: |
           mkdir -p ${{ env.OUTPUT_PATH }}
-          echo "### Helm Deployment Changes" > ${{ env.OUTPUT_PATH }}/all_diffs.md
+          echo "## Helm Deployment Changes" > ${{ env.OUTPUT_PATH }}/all_diffs.md
           echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
 
           HAS_CHANGES=false
 
-          for ENV in ${{ needs.detect-changes.outputs.env_list }}; do
+          for ENV in ${{ steps.filter-envs.outputs.env_list }}; do
             echo "Processing environment: $ENV"
 
             # Check if environment directory exists in both branches
-            if [ ! -d "pull-request/${{ env.ENVIRONMENTS_PATH }}/$ENV" ] || [ ! -d "target-branch/${{ env.ENVIRONMENTS_PATH }}/$ENV" ]; then
+            if [ ! -d "${{ env.ENVIRONMENTS_PATH }}/$ENV" ] || [ ! -d "target-branch/${{ env.ENVIRONMENTS_PATH }}/$ENV" ]; then
               echo "Warning: Environment directory $ENV does not exist in one or both branches, skipping"
               continue
             fi
 
             # Generate rendered output for PR branch with environment values
-            helm dependency build pull-request/${{ env.HELM_CHART_PATH}}
-            helm template release-name pull-request/${{ env.HELM_CHART_PATH}} \
-              -f pull-request/${{ env.ENVIRONMENTS_PATH }}/$ENV/values.yaml \
-              > pull-request/rendered-$ENV.yaml
+
+            helm template ${{ env.HELM_RELEASE_NAME}} ${{ env.HELM_CHART_PATH}} \
+              -f ${{ env.ENVIRONMENTS_PATH }}/$ENV/values.yaml \
+              > rendered-$ENV.yaml
 
             # Generate rendered output for target branch with environment values
-            helm dependency build target-branch/${{ env.HELM_CHART_PATH}}
-            helm template release-name target-branch/${{ env.HELM_CHART_PATH}} \
+            helm template ${{ env.HELM_RELEASE_NAME}} target-branch/${{ env.HELM_CHART_PATH}} \
               -f target-branch/${{ env.ENVIRONMENTS_PATH }}/$ENV/values.yaml \
               > target-branch/rendered-$ENV.yaml
 
             # Generate diff for this environment
-            diff -u target-branch/rendered-$ENV.yaml pull-request/rendered-$ENV.yaml > ${{ env.OUTPUT_PATH }}/diff-$ENV.txt || true
+            diff -u target-branch/rendered-$ENV.yaml rendered-$ENV.yaml > ${{ env.OUTPUT_PATH }}/diff-$ENV.txt || true
 
             # Check if diff exists and add to summary
             if [ -s ${{ env.OUTPUT_PATH }}/diff-$ENV.txt ]; then
               HAS_CHANGES=true
-              echo "## Environment: $ENV" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "Changes detected for $ENV environment:" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo "### Environment: $ENV" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
               echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
 
-              # Use proper diff formatting to ensure GitHub renders colors
-              echo '```diff' >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              grep -v "^---" ${{ env.OUTPUT_PATH }}/diff-$ENV.txt | grep -v "^+++" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo '```' >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-
-              echo "<details><summary>View full diff for $ENV</summary>" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo "<details><summary>Changes detected for $ENV environment:</summary>" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
               echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
               echo '```diff' >> ${{ env.OUTPUT_PATH }}/all_diffs.md
               cat ${{ env.OUTPUT_PATH }}/diff-$ENV.txt >> ${{ env.OUTPUT_PATH }}/all_diffs.md
               echo '```' >> ${{ env.OUTPUT_PATH }}/all_diffs.md
               echo "</details>" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
               echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-            else
-              echo "## Environment: $ENV" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "No changes detected for $ENV environment" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
             fi
           done
 
           echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
 
-      - name: Post diff as comment
+      - name: Post diff as comment on PR
         if: steps.process-envs.outputs.has_changes == 'true'
         run: |
           gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md --edit-last || \

@@ -120,7 +120,7 @@ on:
       - deploy/app/**
 
 jobs:
-  test_tf_feature:
+  helm-diff:
     uses: ./.github/workflows/gitops-helm-diff.yaml
     with:
       debug: true
