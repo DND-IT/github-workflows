@@ -1,0 +1,29 @@
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/_test-gitops.yaml'
+      - '.github/workflows/gitops-*.yaml'
+      - 'tests/helm/**'                      # Include all terraform test changes
+
+jobs:
+  edit_helm_values:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Edit Helm values
+        run: |
+          yq -i e ".webapp.image_tag = \"baz\"" ./tests/helm/values.yaml
+          yq -i e ".webapp.replicas = \"2\"" ./tests/helm/envs/sandbox/values.yaml
+
+  test_tf_feature:
+    needs: edit_helm_values
+    uses: ./.github/workflows/gitops-helm-diff.yaml
+    with:
+      helm_chart_path: 'tests/helm'
+      environments_path: 'tests/helm/envs'
+      common_values_path: 'tests/helm/values.yaml'
+      debug: true
