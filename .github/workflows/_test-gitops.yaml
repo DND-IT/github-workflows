@@ -5,7 +5,7 @@ on:
     paths:
       - '.github/workflows/_test-gitops.yaml'
       - '.github/workflows/gitops-*.yaml'
-      - 'tests/helm/**'                      # Include all terraform test changes
+      - 'tests/helm/**'
 
 jobs:
   edit_helm_values:
@@ -19,10 +19,17 @@ jobs:
           yq -i e ".webapp.image_tag = \"baz\"" ./tests/helm/values.yaml
           yq -i e ".webapp.replicas = \"2\"" ./tests/helm/envs/sandbox/values.yaml
 
-  test_tf_feature:
+  test_helm_feature:
     needs: edit_helm_values
     uses: ./.github/workflows/gitops-helm-diff.yaml
     with:
       helm_chart_path: 'tests/helm'
       environments_path: 'tests/helm/envs'
+      debug: true
+
+  test_kustomize_feature:
+    uses: ./.github/workflows/gitops-kustomize-diff.yaml
+    with:
+      kustomize_path: 'tests/kustomize'
+      environments_path: 'tests/kustomize/envs'
       debug: true

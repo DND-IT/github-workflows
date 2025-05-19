@@ -12,14 +12,12 @@ This GitHub Action generates a diff of Helm chart templates between the current 
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `helm_chart_path` | <p>Path to the Helm chart directory</p> | `string` | `false` | `deploy/app` |
-| `common_values_path` | <p>Path to the common values.yaml file</p> | `string` | `false` | `deploy/app/values.yaml` |
 | `environments_path` | <p>Path to the directory containing environment-specific values</p> | `string` | `false` | `deploy/app/envs` |
 | `output_path` | <p>Path to the output directory for diffs</p> | `string` | `false` | `output` |
 | `base_branch` | <p>Base branch for comparison</p> | `string` | `false` | `${{ github.event.pull_request.base.ref }}` |
-| `helm_release_name` | <p>Name to use for the Helm release when templating</p> | `string` | `false` | `release-name` |
+| `helm_release_name` | <p>Name to use for the Helm release when templating</p> | `string` | `false` | `app` |
 | `helm_repo_url` | <p>URL of the Helm repository to add</p> | `string` | `false` | `https://dnd-it.github.io/helm-charts` |
 | `helm_repo_name` | <p>Name to give to the Helm repository</p> | `string` | `false` | `dnd-it` |
-| `additional_helm_flags` | <p>Additional flags to pass to helm template command</p> | `string` | `false` | `""` |
 | `debug` | <p>Enable debug output</p> | `string` | `false` | `false` |
 <!-- action-docs-inputs source=".github/workflows/gitops-helm-diff.yaml" -->
 
@@ -41,13 +39,6 @@ jobs:
       # Type: string
       # Required: false
       # Default: deploy/app
-
-      common_values_path:
-      # Path to the common values.yaml file
-      #
-      # Type: string
-      # Required: false
-      # Default: deploy/app/values.yaml
 
       environments_path:
       # Path to the directory containing environment-specific values
@@ -75,7 +66,7 @@ jobs:
       #
       # Type: string
       # Required: false
-      # Default: release-name
+      # Default: app
 
       helm_repo_url:
       # URL of the Helm repository to add
@@ -90,13 +81,6 @@ jobs:
       # Type: string
       # Required: false
       # Default: dnd-it
-
-      additional_helm_flags:
-      # Additional flags to pass to helm template command
-      #
-      # Type: string
-      # Required: false
-      # Default: ""
 
       debug:
       # Enable debug output
@@ -121,7 +105,7 @@ on:
 
 jobs:
   helm-diff:
-    uses: ./.github/workflows/gitops-helm-diff.yaml
+    uses: dnd-it/github-workflows/.github/workflows/.github/workflows/gitops-helm-diff.yaml@v2
     with:
       debug: true
 

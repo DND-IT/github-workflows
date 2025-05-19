@@ -1,0 +1,156 @@
+name: Kustomize Diff Preview
+
+on:
+  workflow_call:
+    inputs:
+      kustomize_path:
+        description: 'Path to the root Kustomize directory. Its assumed that base directory is nested under this path.'
+        type: string
+        default: 'deploy/app'
+      environments_path:
+        description: 'Path to the directory containing environment-specific overlays'
+        type: string
+        default: 'deploy/app/envs'
+      output_path:
+        description: 'Path to the output directory for diffs'
+        type: string
+        default: 'output'
+      base_branch:
+        description: 'Base branch for comparison'
+        type: string
+        default: ${{ github.event.pull_request.base.ref }}
+      kustomize_args:
+        description: 'Additional arguments to pass to kustomize build command'
+        type: string
+        default: '--enable-helm --load-restrictor LoadRestrictionsNone'
+      debug:
+        description: 'Enable debug output'
+        type: string
+        default: 'false'
+
+env:
+  KUSTOMIZE_PATH: ${{ inputs.kustomize_path }}
+  ENVIRONMENTS_PATH: ${{ inputs.environments_path }}
+  OUTPUT_PATH: ${{ inputs.output_path }}
+
+jobs:
+  diff:
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    outputs:
+      base_changed: ${{ steps.changed-files.outputs.base_kustomize_any_changed }}
+      env_overlays_changed: ${{ steps.changed-files.outputs.env_overlays_any_changed }}
+      env_overlays_files: ${{ steps.filter-envs.outputs.env_overlays_files }}
+      env_list: ${{ steps.filter-envs.outputs.env_list }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v46
+        with:
+          files_yaml: |
+            base_kustomize:
+              - ${{ env.KUSTOMIZE_PATH }}/base/**/*
+            env_overlays:
+              - ${{ env.ENVIRONMENTS_PATH }}/**/*.yaml
+              - ${{ env.ENVIRONMENTS_PATH }}/**/kustomization.yaml
+
+      - name: Filter changed environments
+        id: filter-envs
+        env:
+          ENV_OVERLAYS_FILES: ${{ steps.changed-files.outputs.env_overlays_all_changed_files }}
+        run: |
+          # Get list of all changed env overlay files
+          echo "env_overlays_files=$ENV_OVERLAYS_FILES" >> $GITHUB_OUTPUT
+
+          # Extract environment names from paths, capturing the first directory name after the environments path
+          ENV_LIST=""
+          if [ -n "$ENV_OVERLAYS_FILES" ]; then
+            ENV_LIST=$(echo "$ENV_OVERLAYS_FILES" | xargs -n1 dirname | sed -E "s|^${ENVIRONMENTS_PATH}/([^/]+)/.*|\1|" | sort -u |tr '\n' ' ')
+          fi
+
+          # If base kustomize files changed, we need to check all environments
+          if [ "${{ steps.changed-files.outputs.base_kustomize_any_changed }}" == "true" ]; then
+            # Get all environments by listing directories
+            ALL_ENVS=$(find ${{ env.ENVIRONMENTS_PATH }} -maxdepth 1 -type d | xargs -n1 basename | grep -v "^${ENVIRONMENTS_PATH##*/}$" | tr '\n' ' ')
+            if [ -n "$ALL_ENVS" ]; then
+              ENV_LIST="$ALL_ENVS"
+            fi
+          fi
+
+          echo "env_list=$ENV_LIST" >> $GITHUB_OUTPUT
+          echo "Environments to diff: $ENV_LIST"
+
+      - name: Show debug info
+        if: inputs.debug == 'true'
+        run: |
+          echo "Base kustomize changed: ${{ steps.changed-files.outputs.base_kustomize_any_changed }}"
+          echo "Environment overlays changed: ${{ steps.changed-files.outputs.env_overlays_any_changed }}"
+          echo "Changed environment files: ${{ steps.changed-files.outputs.env_overlays_all_changed_files }}"
+          echo "Environments to check: ${{ steps.filter-envs.outputs.env_list }}"
+
+      - uses: actions/checkout@v4
+        if: steps.changed-files.outputs.base_kustomize_any_changed == 'true' || steps.changed-files.outputs.env_overlays_any_changed == 'true'
+        with:
+          ref: ${{ inputs.base_branch }}
+          path: target-branch
+
+      - name: Process environments
+        id: process-envs
+        run: |
+          mkdir -p ${{ env.OUTPUT_PATH }}
+          echo "## Kustomize Deployment Changes" > ${{ env.OUTPUT_PATH }}/all_diffs.md
+          echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+
+          KUSTOMIZE_ARGS="${{ inputs.kustomize_args }}"
+          HAS_CHANGES=false
+
+          for ENV in ${{ steps.filter-envs.outputs.env_list }}; do
+            echo "Processing environment: $ENV"
+
+            # Check if environment directory exists in both branches
+            if [ ! -d "${{ env.ENVIRONMENTS_PATH }}/$ENV" ] || [ ! -d "target-branch/${{ env.ENVIRONMENTS_PATH }}/$ENV" ]; then
+              echo "Warning: Environment directory $ENV does not exist in one or both branches, skipping"
+              continue
+            fi
+
+            # Generate rendered output for PR branch with environment overlays
+
+            kustomize build $KUSTOMIZE_ARGS ${{ env.ENVIRONMENTS_PATH }}/$ENV > rendered-$ENV.yaml
+
+            # Generate rendered output for target branch with environment overlays
+            kustomize build $KUSTOMIZE_ARGS target-branch/${{ env.ENVIRONMENTS_PATH }}/$ENV > target-branch/rendered-$ENV.yaml
+
+            # Generate diff for this environment
+            diff -u target-branch/rendered-$ENV.yaml rendered-$ENV.yaml > ${{ env.OUTPUT_PATH }}/diff-$ENV.txt || true
+
+            # Check if diff exists and add to summary
+            if [ -s ${{ env.OUTPUT_PATH }}/diff-$ENV.txt ]; then
+              HAS_CHANGES=true
+              echo "### Environment: $ENV" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+
+              echo "<details><summary>Changes detected for $ENV environment:</summary>" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo '```diff' >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              cat ${{ env.OUTPUT_PATH }}/diff-$ENV.txt >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo '```' >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo "</details>" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+            fi
+          done
+
+          echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
+
+      - name: Post diff as comment on PR
+        if: steps.process-envs.outputs.has_changes == 'true'
+        run: |
+          gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md --edit-last || \
+          gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
