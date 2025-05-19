@@ -1,0 +1,16 @@
+apiVersion: v2
+name: app
+description: A Helm chart for Kubernetes
+version: 0.1.0
+dependencies:
+  - name: webapp
+    repository: https://dnd-it.github.io/helm-charts
+    version: 1.8.0
+    tags:
+      - webapp
+  - name: valkey
+    version: 2.2.3
+    repository: oci://registry-1.docker.io/bitnamicharts
+    condition: valkey.enabled
+    tags:
+      - valkey
