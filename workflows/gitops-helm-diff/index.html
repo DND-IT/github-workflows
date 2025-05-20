@@ -12,26 +12,28 @@
         <meta name="author" content="DAI">
       
       
-        <link rel="canonical" href="https://dnd-it.github.io/github-workflows/">
+        <link rel="canonical" href="https://dnd-it.github.io/github-workflows/workflows/gitops-helm-diff/">
       
       
+        <link rel="prev" href="../gh-release/">
       
-        <link rel="next" href="getting-started/">
+      
+        <link rel="next" href="../gitops-image-tag/">
       
       
-      <link rel="icon" href="images/favicon.png">
+      <link rel="icon" href="../../images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
     
     
       
-        <title>Overview - Github Reusable Workflows</title>
+        <title>Helm Diff Preview - Github Reusable Workflows</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.35f28582.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.35f28582.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
   
@@ -91,7 +93,7 @@
       
     
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
   
@@ -127,7 +129,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#github-actions-reusable-workflows" class="md-skip">
+        <a href="#description" class="md-skip">
           Skip to content
         </a>
       
@@ -143,9 +145,9 @@
 
 <header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="Github Reusable Workflows" class="md-header__button md-logo" aria-label="Github Reusable Workflows" data-md-component="logo">
+    <a href="../.." title="Github Reusable Workflows" class="md-header__button md-logo" aria-label="Github Reusable Workflows" data-md-component="logo">
       
-  <img src="images/logo.png" alt="logo">
+  <img src="../../images/logo.png" alt="logo">
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -162,7 +164,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Overview
+              Helm Diff Preview
             
           </span>
         </div>
@@ -261,13 +263,11 @@
         
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="." class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../.." class="md-tabs__link">
           
   
     
@@ -287,7 +287,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="getting-started/" class="md-tabs__link">
+        <a href="../../getting-started/" class="md-tabs__link">
           
   
     
@@ -303,11 +303,13 @@
         
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
-        <a href="workflows/" class="md-tabs__link">
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
           
   
     
@@ -327,7 +329,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="examples/" class="md-tabs__link">
+        <a href="../../examples/" class="md-tabs__link">
           
   
     
@@ -345,7 +347,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="faq/" class="md-tabs__link">
+      <a href="../../faq/" class="md-tabs__link">
         
   
     
@@ -385,9 +387,9 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="Github Reusable Workflows" class="md-nav__button md-logo" aria-label="Github Reusable Workflows" data-md-component="logo">
+    <a href="../.." title="Github Reusable Workflows" class="md-nav__button md-logo" aria-label="Github Reusable Workflows" data-md-component="logo">
       
-  <img src="images/logo.png" alt="logo">
+  <img src="../../images/logo.png" alt="logo">
 
     </a>
     Github Reusable Workflows
@@ -411,8 +413,6 @@
       
   
   
-    
-  
   
   
     
@@ -425,22 +425,19 @@
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_1" >
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="." class="md-nav__link md-nav__link--active">
+            <a href="../.." class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -452,7 +449,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_1">
             <span class="md-nav__icon md-icon"></span>
             Overview
@@ -500,7 +497,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="getting-started/" class="md-nav__link ">
+            <a href="../../getting-started/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -533,7 +530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="getting-started/inputs/" class="md-nav__link">
+      <a href="../../getting-started/inputs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -554,7 +551,7 @@
   
   
     <li class="md-nav__item">
-      <a href="getting-started/tam-cli/" class="md-nav__link">
+      <a href="../../getting-started/tam-cli/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -579,6 +576,8 @@
       
   
   
+    
+  
   
   
     
@@ -629,19 +628,22 @@
     
     
       
+        
+        
+      
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
         
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="workflows/" class="md-nav__link ">
+            <a href="../" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -652,13 +654,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_3" id="__nav_3_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
             Workflows
@@ -674,7 +676,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/aws-rds-snapshot/" class="md-nav__link">
+      <a href="../aws-rds-snapshot/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -695,7 +697,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/aws-secrets-copy/" class="md-nav__link">
+      <a href="../aws-secrets-copy/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -716,7 +718,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/docker-build-push-ecr/" class="md-nav__link">
+      <a href="../docker-build-push-ecr/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -737,7 +739,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/docker-build/" class="md-nav__link">
+      <a href="../docker-build/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -758,7 +760,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/docker-buildx-push-ecr/" class="md-nav__link">
+      <a href="../docker-buildx-push-ecr/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -779,7 +781,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/docker-push-ecr/" class="md-nav__link">
+      <a href="../docker-push-ecr/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -800,7 +802,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/gh-release-on-main/" class="md-nav__link">
+      <a href="../gh-release-on-main/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -821,7 +823,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/gh-release/" class="md-nav__link">
+      <a href="../gh-release/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -839,10 +841,28 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="workflows/gitops-helm-diff/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Helm Diff Preview
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
@@ -851,6 +871,75 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      Description
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Description">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inputs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      FAQ
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -863,7 +952,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/gitops-image-tag/" class="md-nav__link">
+      <a href="../gitops-image-tag/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -884,7 +973,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/gitops-kustomize-diff/" class="md-nav__link">
+      <a href="../gitops-kustomize-diff/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -905,7 +994,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/lambda-build-node/" class="md-nav__link">
+      <a href="../lambda-build-node/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -926,7 +1015,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/lambda-nodejs/" class="md-nav__link">
+      <a href="../lambda-nodejs/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -947,7 +1036,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/lambda-python/" class="md-nav__link">
+      <a href="../lambda-python/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -968,7 +1057,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/tf-apply/" class="md-nav__link">
+      <a href="../tf-apply/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -989,7 +1078,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/tf-cleanup/" class="md-nav__link">
+      <a href="../tf-cleanup/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1010,7 +1099,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/tf-destroy/" class="md-nav__link">
+      <a href="../tf-destroy/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1031,7 +1120,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/tf-feature/" class="md-nav__link">
+      <a href="../tf-feature/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1052,7 +1141,7 @@
   
   
     <li class="md-nav__item">
-      <a href="workflows/tf-plan/" class="md-nav__link">
+      <a href="../tf-plan/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1111,7 +1200,7 @@
           
           
           <div class="md-nav__link md-nav__container">
-            <a href="examples/" class="md-nav__link ">
+            <a href="../../examples/" class="md-nav__link ">
               
   
   <span class="md-ellipsis">
@@ -1144,7 +1233,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/docker-terraform/" class="md-nav__link">
+      <a href="../../examples/docker-terraform/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1165,7 +1254,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/lambda-build/" class="md-nav__link">
+      <a href="../../examples/lambda-build/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1186,7 +1275,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/multiple-releases/" class="md-nav__link">
+      <a href="../../examples/multiple-releases/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1207,7 +1296,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/terraform-multiple/" class="md-nav__link">
+      <a href="../../examples/terraform-multiple/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1228,7 +1317,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/terraform-single/" class="md-nav__link">
+      <a href="../../examples/terraform-single/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1256,7 +1345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="faq/" class="md-nav__link">
+      <a href="../../faq/" class="md-nav__link">
         
   
   <span class="md-ellipsis">
@@ -1294,54 +1383,51 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#github-actions-reusable-workflows" class="md-nav__link">
+  <a href="#description" class="md-nav__link">
     <span class="md-ellipsis">
-      Github Actions - Reusable Workflows
+      Description
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Description">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Inputs
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
-    <span class="md-ellipsis">
-      Features
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#goals" class="md-nav__link">
-    <span class="md-ellipsis">
-      Goals
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#when-to-use-reusable-workflows" class="md-nav__link">
-    <span class="md-ellipsis">
-      When to use reusable workflows
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#when-not-to-use-reusable-workflows" class="md-nav__link">
-    <span class="md-ellipsis">
-      When not to use reusable workflows
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
+        
+          <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       Usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      FAQ
     </span>
   </a>
   
@@ -1365,57 +1451,175 @@
   
 
 
-  <h1>Overview</h1>
+  <h1>Helm Diff Preview</h1>
 
-<!-- BEGIN INCLUDE ../README.md '&lt;!--intro-start--&gt;' '&lt;!--intro-end--&gt;' -->
+<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
+<p>This GitHub Action generates a diff of Helm chart templates between the current branch and the base branch of a pull request. It uses the <code>helm template</code> command to render the templates and compares them using <code>diff</code>. The action is designed to be used in a GitHub Actions workflow, particularly for pull requests.</p>
+<!-- action-docs-inputs source=".github/workflows/gitops-helm-diff.yaml" -->
+<h3 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>name</th>
+<th>description</th>
+<th>type</th>
+<th>required</th>
+<th>default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>helm_chart_path</code></td>
+<td><p>Path to the Helm chart directory</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>deploy/app</code></td>
+</tr>
+<tr>
+<td><code>environments_path</code></td>
+<td><p>Path to the directory containing environment-specific values</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>deploy/app/envs</code></td>
+</tr>
+<tr>
+<td><code>output_path</code></td>
+<td><p>Path to the output directory for diffs</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>output</code></td>
+</tr>
+<tr>
+<td><code>base_branch</code></td>
+<td><p>Base branch for comparison</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>${{ github.event.pull_request.base.ref }}</code></td>
+</tr>
+<tr>
+<td><code>helm_release_name</code></td>
+<td><p>Name to use for the Helm release when templating</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>app</code></td>
+</tr>
+<tr>
+<td><code>helm_repo_url</code></td>
+<td><p>URL of the Helm repository to add</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>https://dnd-it.github.io/helm-charts</code></td>
+</tr>
+<tr>
+<td><code>helm_repo_name</code></td>
+<td><p>Name to give to the Helm repository</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>dnd-it</code></td>
+</tr>
+<tr>
+<td><code>debug</code></td>
+<td><p>Enable debug output</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>false</code></td>
+</tr>
+</tbody>
+</table>
+<!-- action-docs-inputs source=".github/workflows/gitops-helm-diff.yaml" -->
 
-<!-- TODO: change to release badge -->
+<!-- action-docs-outputs source=".github/workflows/gitops-helm-diff.yaml" -->
 
-<p><img alt="GitHub Workflow Status" src="https://github.com/dnd-it/github-workflows/actions/workflows/gh-release-on-main.yaml/badge.svg" /></p>
-<p>Github Actions is a powerful tool for automating workflows in your repository. This repository contains a collection of GitHub workflows that are reusable across projects.</p>
-<p>Reusable workflows will not suit all projects, but they can be a good starting point for projects that have similar requirements.</p>
-<p>The state of these workflows are considered to be in alpha, and are subject to change to suit the needs of projects managed by DAI.</p>
-<h2 id="github-actions-reusable-workflows">Github Actions - Reusable Workflows<a class="headerlink" href="#github-actions-reusable-workflows" title="Permanent link">&para;</a></h2>
-<p><a href="https://docs.github.com/en/actions/sharing-automations/reusing-workflows">Official Docs</a></p>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Terraform orchestration</li>
-<li>Docker image management</li>
-<li>Lambda builds</li>
-<li>AWS secrets cloning across AWS accounts.</li>
-</ul>
-<h2 id="goals">Goals<a class="headerlink" href="#goals" title="Permanent link">&para;</a></h2>
-<p>The main goal is to have a single source of truth for all standard workflows, so that they can be easily maintained.</p>
-<h2 id="when-to-use-reusable-workflows">When to use reusable workflows<a class="headerlink" href="#when-to-use-reusable-workflows" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Terraform orchestration</li>
-<li>Simple docker workflows</li>
-<li>Running repeatable tasks across multiple projects e.g. Ad hoc scripts</li>
-</ul>
-<h2 id="when-not-to-use-reusable-workflows">When not to use reusable workflows<a class="headerlink" href="#when-not-to-use-reusable-workflows" title="Permanent link">&para;</a></h2>
-<ul>
-<li>When you need to customize the workflow for your specific use case.</li>
-<li>Most of the time application builds and tests are unique to the project and should be maintained in the project repository.</li>
-<li>Secrets are required to be stored in the project repository. (We recommend using AWS Secrets Manager for workflow secrets)</li>
-</ul>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>Create a <code>.github/workflows</code> directory in your repository and create workflows that reference the workflows in this repository.</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>name: My Workflow
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>on: push
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>jobs:
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  my-job:
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    uses: &lt;org&gt;/&lt;repo&gt;/.github/workflows/&lt;workflow-name&gt;.yaml@&lt;ref&gt;
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    with:
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>      my-input: my-value
+<!-- action-docs-outputs source=".github/workflows/gitops-helm-diff.yaml" -->
+
+<!-- action-docs-usage source=".github/workflows/gitops-helm-diff.yaml" project="dnd-it/github-workflows/.github/workflows/gitops-helm-diff.yaml" version="v2" -->
+<h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">job1</span><span class="p">:</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/gitops-helm-diff.yaml@v2</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">helm_chart_path</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="c1"># Path to the Helm chart directory</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="c1"># Default: deploy/app</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">environments_path</span><span class="p">:</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="c1"># Path to the directory containing environment-specific values</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="c1"># Default: deploy/app/envs</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="nt">output_path</span><span class="p">:</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">      </span><span class="c1"># Path to the output directory for diffs</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span><span class="c1"># Default: output</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">      </span><span class="nt">base_branch</span><span class="p">:</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">      </span><span class="c1"># Base branch for comparison</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="c1"># Default: ${{ github.event.pull_request.base.ref }}</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">helm_release_name</span><span class="p">:</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">      </span><span class="c1"># Name to use for the Helm release when templating</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">      </span><span class="c1"># Default: app</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">      </span><span class="nt">helm_repo_url</span><span class="p">:</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">      </span><span class="c1"># URL of the Helm repository to add</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">      </span><span class="c1"># Default: https://dnd-it.github.io/helm-charts</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="w">      </span><span class="nt">helm_repo_name</span><span class="p">:</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">      </span><span class="c1"># Name to give to the Helm repository</span>
+</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="w">      </span><span class="c1"># Default: dnd-it</span>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="w">      </span><span class="nt">debug</span><span class="p">:</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="w">      </span><span class="c1"># Enable debug output</span>
+</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a><span class="w">      </span><span class="c1"># Default: false</span>
 </span></code></pre></div>
-<p>For more complete examples see the <a href="examples/">examples</a> page.</p>
-<!-- END INCLUDE -->
+<!-- action-docs-usage source=".github/workflows/gitops-helm-diff.yaml" project="dnd-it/github-workflows/.github/workflows/gitops-helm-diff.yaml" version="v2" -->
+
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
+<p>```yaml
+name: Helm Diff Example</p>
+<p>on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - deploy/app/**</p>
+<p>jobs:
+  helm-diff:
+    uses: dnd-it/github-workflows/.github/workflows/.github/workflows/gitops-helm-diff.yaml@v2
+    with:
+      debug: true</p>
+<h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
 
 
 
 
 
 
+
+  
+  
 
 
 
@@ -1473,10 +1677,10 @@
     </div>
     
     
-    <script id="__config" type="application/json">{"base": ".", "features": ["navigation.tabs.sticky", "navigation.tabs", "content.code.copy", "navigation.indexes"], "search": "assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs.sticky", "navigation.tabs", "content.code.copy", "navigation.indexes"], "search": "../../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="assets/javascripts/bundle.56dfad97.min.js"></script>
+      <script src="../../assets/javascripts/bundle.56dfad97.min.js"></script>
       
     
   </body>
