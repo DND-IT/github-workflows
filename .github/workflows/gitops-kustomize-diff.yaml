@@ -1,14 +1,14 @@
-name: Helm Diff Preview
+name: Kustomize Diff Preview
 
 on:
   workflow_call:
     inputs:
-      helm_chart_path:
-        description: 'Path to the Helm chart directory'
+      kustomize_path:
+        description: 'Path to the root Kustomize directory. Its assumed that base directory is nested under this path.'
         type: string
         default: 'deploy/app'
       environments_path:
-        description: 'Path to the directory containing environment-specific values'
+        description: 'Path to the directory containing environment-specific overlays'
         type: string
         default: 'deploy/app/envs'
       output_path:
@@ -19,28 +19,19 @@ on:
         description: 'Base branch for comparison'
         type: string
         default: ${{ github.event.pull_request.base.ref }}
-      helm_release_name:
-        description: 'Name to use for the Helm release when templating'
+      kustomize_args:
+        description: 'Additional arguments to pass to kustomize build command'
         type: string
-        default: 'app'
-      helm_repo_url:
-        description: 'URL of the Helm repository to add'
-        type: string
-        default: 'https://dnd-it.github.io/helm-charts'
-      helm_repo_name:
-        description: 'Name to give to the Helm repository'
-        type: string
-        default: 'dnd-it'
+        default: '--enable-helm --load-restrictor LoadRestrictionsNone'
       debug:
         description: 'Enable debug output'
         type: string
         default: 'false'
 
 env:
-  HELM_CHART_PATH: ${{ inputs.helm_chart_path }}
+  KUSTOMIZE_PATH: ${{ inputs.kustomize_path }}
   ENVIRONMENTS_PATH: ${{ inputs.environments_path }}
   OUTPUT_PATH: ${{ inputs.output_path }}
-  HELM_RELEASE_NAME: ${{ inputs.helm_release_name }}
 
 jobs:
   diff:
@@ -49,9 +40,9 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     outputs:
-      chart_changed: ${{ steps.changed-files.outputs.chart_values_any_changed }}
-      env_values_changed: ${{ steps.changed-files.outputs.env_values_any_changed }}
-      env_values_files: ${{ steps.filter-envs.outputs.env_values_files }}
+      base_changed: ${{ steps.changed-files.outputs.base_kustomize_any_changed }}
+      env_overlays_changed: ${{ steps.changed-files.outputs.env_overlays_any_changed }}
+      env_overlays_files: ${{ steps.filter-envs.outputs.env_overlays_files }}
       env_list: ${{ steps.filter-envs.outputs.env_list }}
     steps:
       - uses: actions/checkout@v4
@@ -63,28 +54,28 @@ jobs:
         uses: tj-actions/changed-files@v46
         with:
           files_yaml: |
-            chart_values:
-              - ${{ env.HELM_CHART_PATH }}/values.yaml
-              - ${{ env.HELM_CHART_PATH }}/Chart.yaml
-            env_values:
+            base_kustomize:
+              - ${{ env.KUSTOMIZE_PATH }}/base/**/*
+            env_overlays:
               - ${{ env.ENVIRONMENTS_PATH }}/**/*.yaml
+              - ${{ env.ENVIRONMENTS_PATH }}/**/kustomization.yaml
 
       - name: Filter changed environments
         id: filter-envs
         env:
-          ENV_VALUES_FILES: ${{ steps.changed-files.outputs.env_values_all_changed_files }}
+          ENV_OVERLAYS_FILES: ${{ steps.changed-files.outputs.env_overlays_all_changed_files }}
         run: |
-          # Get list of all changed env value files
-          echo "env_values_files=$ENV_VALUES_FILES" >> $GITHUB_OUTPUT
+          # Get list of all changed env overlay files
+          echo "env_overlays_files=$ENV_OVERLAYS_FILES" >> $GITHUB_OUTPUT
 
-          # Extract environment names from paths
+          # Extract environment names from paths, capturing the first directory name after the environments path
           ENV_LIST=""
-          if [ -n "$ENV_VALUES_FILES" ]; then
-            ENV_LIST=$(echo "$ENV_VALUES_FILES" | xargs -n1 dirname | xargs -n1 basename | sort -u | tr '\n' ' ')
+          if [ -n "$ENV_OVERLAYS_FILES" ]; then
+            ENV_LIST=$(echo "$ENV_OVERLAYS_FILES" | xargs -n1 dirname | sed -E "s|^${ENVIRONMENTS_PATH}/([^/]+)/.*|\1|" | sort -u |tr '\n' ' ')
           fi
 
-          # If chart values changed, we need to check all environments
-          if [ "${{ steps.changed-files.outputs.chart_values_any_changed }}" == "true" ]; then
+          # If base kustomize files changed, we need to check all environments
+          if [ "${{ steps.changed-files.outputs.base_kustomize_any_changed }}" == "true" ]; then
             # Get all environments by listing directories
             ALL_ENVS=$(find ${{ env.ENVIRONMENTS_PATH }} -maxdepth 1 -type d | xargs -n1 basename | grep -v "^${ENVIRONMENTS_PATH##*/}$" | tr '\n' ' ')
             if [ -n "$ALL_ENVS" ]; then
@@ -98,30 +89,25 @@ jobs:
       - name: Show debug info
         if: inputs.debug == 'true'
         run: |
-          echo "Chart values changed: ${{ steps.changed-files.outputs.chart_values_any_changed }}"
-          echo "Environment values changed: ${{ steps.changed-files.outputs.env_values_any_changed }}"
-          echo "Changed environment files: ${{ steps.changed-files.outputs.env_values_all_changed_files }}"
+          echo "Base kustomize changed: ${{ steps.changed-files.outputs.base_kustomize_any_changed }}"
+          echo "Environment overlays changed: ${{ steps.changed-files.outputs.env_overlays_any_changed }}"
+          echo "Changed environment files: ${{ steps.changed-files.outputs.env_overlays_all_changed_files }}"
           echo "Environments to check: ${{ steps.filter-envs.outputs.env_list }}"
 
       - uses: actions/checkout@v4
-        if: steps.changed-files.outputs.chart_values_any_changed == 'true' || steps.changed-files.outputs.env_values_any_changed == 'true'
+        if: steps.changed-files.outputs.base_kustomize_any_changed == 'true' || steps.changed-files.outputs.env_overlays_any_changed == 'true'
         with:
           ref: ${{ inputs.base_branch }}
           path: target-branch
-
-      - name: Set up Helm
-        run: |
-          helm repo add ${{ inputs.helm_repo_name }} ${{ inputs.helm_repo_url }}
-          helm dependency build ${{ env.HELM_CHART_PATH}}
-          helm dependency build target-branch/${{ env.HELM_CHART_PATH}}
 
       - name: Process environments
         id: process-envs
         run: |
           mkdir -p ${{ env.OUTPUT_PATH }}
-          echo "## Helm Deployment Changes" > ${{ env.OUTPUT_PATH }}/all_diffs.md
+          echo "## Kustomize Deployment Changes" > ${{ env.OUTPUT_PATH }}/all_diffs.md
           echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
 
+          KUSTOMIZE_ARGS="${{ inputs.kustomize_args }}"
           HAS_CHANGES=false
 
           for ENV in ${{ steps.filter-envs.outputs.env_list }}; do
@@ -133,16 +119,12 @@ jobs:
               continue
             fi
 
-            # Generate rendered output for PR branch with environment values
+            # Generate rendered output for PR branch with environment overlays
 
-            helm template ${{ env.HELM_RELEASE_NAME}} ${{ env.HELM_CHART_PATH}} \
-              -f ${{ env.ENVIRONMENTS_PATH }}/$ENV/values.yaml \
-              > rendered-$ENV.yaml
+            kustomize build $KUSTOMIZE_ARGS ${{ env.ENVIRONMENTS_PATH }}/$ENV > rendered-$ENV.yaml
 
-            # Generate rendered output for target branch with environment values
-            helm template ${{ env.HELM_RELEASE_NAME}} target-branch/${{ env.HELM_CHART_PATH}} \
-              -f target-branch/${{ env.ENVIRONMENTS_PATH }}/$ENV/values.yaml \
-              > target-branch/rendered-$ENV.yaml
+            # Generate rendered output for target branch with environment overlays
+            kustomize build $KUSTOMIZE_ARGS target-branch/${{ env.ENVIRONMENTS_PATH }}/$ENV > target-branch/rendered-$ENV.yaml
 
             # Generate diff for this environment
             diff -u target-branch/rendered-$ENV.yaml rendered-$ENV.yaml > ${{ env.OUTPUT_PATH }}/diff-$ENV.txt || true
