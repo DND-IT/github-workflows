@@ -17,3 +17,6 @@
 - [ ] I have executed `pre-commit run -a` on my pull request
 - [ ] I have executed `make gen_docs_run` on my pull request
 <!--- Please see https://github.com/antonbabenko/pre-commit-terraform#how-to-install for how to install -->
+
+## Github Conventional Commit Release
+[https://dnd-it.github.io/github-workflows/workflows/gh-release-on-main/](https://dnd-it.github.io/github-workflows/workflows/gh-release-on-main/)

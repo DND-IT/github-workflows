@@ -110,5 +110,3 @@ jobs:
       debug: true
 
 ## FAQ
-
-

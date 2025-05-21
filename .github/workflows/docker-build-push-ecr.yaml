@@ -26,7 +26,7 @@ on:
         description: "Name of the Docker image to build"
         type: string
       image_tag:
-        description: "Tag of the Docker image to build"
+        description: "Addition tag to the Docker image, default tag is the commit SHA"
         type: string
       docker_context:
         description: "Path to the build context"
@@ -113,5 +113,5 @@ jobs:
           push: ${{ inputs.docker_push }}
           target: ${{ env.DOCKER_TARGET }}
           tags: |
-            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ github.event.pull_request.head.sha || github.sha }}
             ${{ (env.IMAGE_TAG != '' && format('{0}/{1}:{2}', env.REGISTRY, env.REPOSITORY, env.IMAGE_TAG)) || '' }}

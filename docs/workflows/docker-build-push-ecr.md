@@ -21,7 +21,7 @@ This workflow builds a Docker image and pushes it to the Elastic Container Regis
 | `aws_role_name` | <p>AWS Role Name</p> | `string` | `false` | `""` |
 | `aws_oidc_role_arn` | <p>AWS OIDC IAM role to assume</p> | `string` | `false` | `""` |
 | `image_name` | <p>Name of the Docker image to build</p> | `string` | `false` | `""` |
-| `image_tag` | <p>Tag of the Docker image to build</p> | `string` | `false` | `""` |
+| `image_tag` | <p>Addition tag to the Docker image, default tag is the commit SHA</p> | `string` | `false` | `""` |
 | `docker_context` | <p>Path to the build context</p> | `string` | `false` | `""` |
 | `dockerfile_path` | <p>Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile</p> | `string` | `false` | `""` |
 | `docker_push` | <p>Push Image to ECR</p> | `boolean` | `false` | `true` |
@@ -87,7 +87,7 @@ jobs:
       # Default: ""
 
       image_tag:
-      # Tag of the Docker image to build
+      # Addition tag to the Docker image, default tag is the commit SHA
       #
       # Type: string
       # Required: false
