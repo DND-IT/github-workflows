@@ -1535,7 +1535,7 @@
 <td><p>Tag of the Docker image to build</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
-<td><code>${{ github.sha }}</code></td>
+<td><code>${{ github.event.pull_request.head.sha || github.sha }}</code></td>
 </tr>
 </tbody>
 </table>
@@ -1598,7 +1598,7 @@
 </span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="w">      </span><span class="c1"># Default: ${{ github.sha }}</span>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="w">      </span><span class="c1"># Default: ${{ github.event.pull_request.head.sha || github.sha }}</span>
 </span></code></pre></div>
 <!-- action-docs-usage source=".github/workflows/docker-push-ecr.yaml" project="dnd-it/github-workflows/.github/workflows/docker-push-ecr.yaml" version="v2" -->
 
