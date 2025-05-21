@@ -103,19 +103,22 @@ jobs:
           echo "Changed environment files: ${{ steps.changed-files.outputs.env_values_all_changed_files }}"
           echo "Environments to check: ${{ steps.filter-envs.outputs.env_list }}"
 
-      - uses: actions/checkout@v4
+      - name: Checkout target branch
+        uses: actions/checkout@v4
         if: steps.changed-files.outputs.chart_values_any_changed == 'true' || steps.changed-files.outputs.env_values_any_changed == 'true'
         with:
           ref: ${{ inputs.base_branch }}
           path: target-branch
 
       - name: Set up Helm
+        if: steps.changed-files.outputs.chart_values_any_changed == 'true' || steps.changed-files.outputs.env_values_any_changed == 'true'
         run: |
           helm repo add ${{ inputs.helm_repo_name }} ${{ inputs.helm_repo_url }}
           helm dependency build ${{ env.HELM_CHART_PATH}}
           helm dependency build target-branch/${{ env.HELM_CHART_PATH}}
 
       - name: Process environments
+        if: steps.changed-files.outputs.chart_values_any_changed == 'true' || steps.changed-files.outputs.env_values_any_changed == 'true'
         id: process-envs
         run: |
           mkdir -p ${{ env.OUTPUT_PATH }}
