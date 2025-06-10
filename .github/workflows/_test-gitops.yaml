@@ -6,6 +6,7 @@ on:
       - '.github/workflows/_test-gitops.yaml'
       - '.github/workflows/gitops-*.yaml'
       - 'tests/helm/**'
+      - 'tests/gitops/**'
 
 jobs:
   edit_helm_values:
@@ -33,3 +34,34 @@ jobs:
       kustomize_path: 'tests/kustomize'
       environments_path: 'tests/kustomize/envs'
       debug: true
+
+  # Test image tag update with single file
+  test_image_tag_single:
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: 'test-v1.2.3'
+      values_files: tests/helm/values.yaml
+      create_pr: true
+      image_tag_keys: 'webapp.image_tag'
+
+  # Test image tag update with multiple files
+  test_image_tag_multiple:
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: 'test-v2.0.0'
+      values_files: |
+        tests/helm/values.yaml
+        tests/helm/envs/sandbox/values.yaml
+      create_pr: true
+      image_tag_keys: 'webapp.image_tag'
+
+  # Test image tag update with multiple keys
+  test_image_tag_multiple_keys:
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: 'test-v3.0.0'
+      values_files: tests/helm/values.yaml
+      create_pr: true
+      image_tag_keys: |
+        webapp.image_tag
+        webapp.replicas
