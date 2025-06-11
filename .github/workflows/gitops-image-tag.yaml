@@ -8,23 +8,38 @@ on:
     inputs:
       image_tag:
         description: 'The tag of the Docker image'
+        type: string
         required: true
+      image_tag_keys:
+        description: 'Newline-separated list of keys to update (e.g., webapp.image.tag)'
         type: string
-      image_tag_key:
-        description: 'Key in the values file to update (e.g., image.tag)'
-        default: 'image_tag' # Webapp helm chart uses image_tag
+        default: 'webapp.image_tag'
+      values_files:
+        description: 'Newline-separated list of file paths to update'
         type: string
-      values_file:
-        description: 'Path to the Helm values file'
-        default: 'deploy/app/values-common.yaml'
-        type: string
+        required: true
       create_pr:
-        description: 'Whether to create a pull request'
-        default: true
+        description: |
+          Create a pull request. If false, the changes will be committed directly to the target branch.
+          Github Actions must have write permissions to the repository and able to bypass branch protection rules.
         type: boolean
+        default: true
+      pr_message:
+        description: 'Custom message for the pull request. Defaults to a standard message.'
+        type: string
+        default: 'This PR updates the Helm values files to use the latest image tag.'
+      auto_merge:
+        description: 'Enable auto-merge for the pull request. Only works if create_pr is true.'
+        type: boolean
+        default: false
+      branch_name_prefix:
+        description: 'Prefix for the branch name.'
+        type: string
+        default: 'helm-values'
       target_branch:
         description: 'The target branch for the pull request. Defaults the default branch of the repository.'
         type: string
+        default: ${{ github.event.repository.default_branch }}
 
 jobs:
   update-helm-values:
@@ -33,36 +48,115 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
 
-      - name: Update Helm values.yaml
+      - name: Update Helm values files
         run: |
-          echo "Updating ${{ inputs.values_file }} image tag:${{ inputs.image_tag }}"
+          echo "Files to update:"
+          echo "${{ inputs.values_files }}"
+          echo ""
+          echo "Keys to update:"
+          echo "${{ inputs.image_tag_keys }}"
 
-          yq -i e ".${{ inputs.image_tag_key }} = \"${{ inputs.image_tag }}\"" ${{ inputs.values_file }}
+          # Process each file (newline-separated)
+          while IFS= read -r file; do
+            # Skip empty lines
+            [ -z "$file" ] && continue
+
+            echo ""
+            echo "Updating $file with image tag: ${{ inputs.image_tag }}"
+
+            # Update each key in the file
+            while IFS= read -r key; do
+              [ -z "$key" ] && continue
+
+              # Check if key exists before updating
+              if yq e ".$key" "$file" >/dev/null 2>&1 && [ "$(yq e ".$key" "$file")" != "null" ]; then
+                echo "  Setting $key = ${{ inputs.image_tag }}"
+                # Get current value to check if update is needed
+                current_value=$(yq e ".$key" "$file")
+                if [ "$current_value" != "${{ inputs.image_tag }}" ]; then
+                  # Use sed to replace the value while preserving formatting
+                  sed -i "s|${key##*.}: .*|${key##*.}: ${{ inputs.image_tag }}|" "$file"
+                else
+                  echo "  Value already up to date"
+                fi
+              else
+                echo "  Key $key not found in $file, skipping"
+                exit 1
+              fi
+            done <<< "${{ inputs.image_tag_keys }}"
+          done <<< "${{ inputs.values_files }}"
+
+      - name: Generate PR details
+        id: pr_details
+        run: |
+          # Create a hash of the files being updated for consistent branch naming
+          FILES_HASH=$(echo "${{ inputs.values_files }}" | sha256sum | cut -c1-8)
+          echo "branch_name=${{ inputs.branch_name_prefix }}-$FILES_HASH" >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
-        if: inputs.create_pr
+        if: inputs.create_pr == true
+        id: create_pr
         uses: peter-evans/create-pull-request@v7.0.8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: 'chore: update ${{ inputs.values_file }} image tag to ${{ inputs.image_tag }}'
-          title: 'Update ${{ inputs.values_file }} to ${{ inputs.image_tag }}'
+          commit-message: 'chore: update image tag to ${{ inputs.image_tag }}'
+          title: 'Update image tag to ${{ inputs.image_tag }}'
           body: |
-            This PR updates the Helm values file to use the latest image tag.
+            ${{ inputs.pr_message }}
 
-            - New tag: `${{ inputs.image_tag }}`
-            - Updated file: `${{ inputs.values_file }}`
+            **New tag**:
+            ```
+            ${{ inputs.image_tag }}
+            ```
 
-            This change was automatically generated by the Update Helm Values workflow.
-          branch: update-helm-values-${{ inputs.image_tag }}
-          base: ${{ inputs.target_branch || github.repository.default_branch }}
+            **Keys to update**:
+            ```
+            ${{ inputs.image_tag_keys }}
+            ```
+
+            **Files to update**:
+            ```
+            ${{ inputs.values_files }}
+            ```
+
+            *This change was automatically generated by the ${{ github.workflow }} workflow.*
+          branch: ${{ steps.pr_details.outputs.branch_name }}
+          base: ${{ inputs.target_branch }}
+          delete-branch: true
+
+      - name: Enable auto-merge
+        if: inputs.create_pr == true && steps.create_pr.outputs.pull-request-number && inputs.auto_merge == true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Enabling auto-merge for PR #${{ steps.create_pr.outputs.pull-request-number }}"
+          gh pr merge "${{ steps.create_pr.outputs.pull-request-number }}" \
+            --auto \
+            --squash \
+            --delete-branch
+
+          # Add a comment explaining the auto-merge
+          gh pr comment "${{ steps.create_pr.outputs.pull-request-number }}" \
+            --body "This PR will be automatically merged once all checks pass."
 
       - name: Commit changes
         if: inputs.create_pr == false
         run: |
           git config --global user.name 'GitHub Actions'
           git config --global user.email 'actions@github.com'
-          git checkout ${{ inputs.target_branch || github.repository.default_branch }}
-          git pull
-          git add ${{ inputs.values_file }}
-          git commit -m "chore: update ${{ inputs.values_file }} image tag to ${{ inputs.image_tag }}"
-          git push origin ${{ inputs.target_branch || github.repository.default_branch }}
+
+          TARGET_BRANCH="${{ inputs.target_branch }}"
+          if [ -z "$TARGET_BRANCH" ]; then
+            TARGET_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@')
+          fi
+
+          git checkout "$TARGET_BRANCH" 2>/dev/null || git checkout -b "$TARGET_BRANCH"
+          git pull origin "$TARGET_BRANCH" 2>/dev/null || true
+
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            git add "$file"
+          done <<< "${{ inputs.values_files }}"
+
+          git commit -m "chore: update image tag to ${{ inputs.image_tag }}"
+          git push origin "$TARGET_BRANCH"

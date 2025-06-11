@@ -6,6 +6,7 @@ on:
       - '.github/workflows/_test-gitops.yaml'
       - '.github/workflows/gitops-*.yaml'
       - 'tests/helm/**'
+      - 'tests/gitops/**'
 
 jobs:
   edit_helm_values:
@@ -33,3 +34,69 @@ jobs:
       kustomize_path: 'tests/kustomize'
       environments_path: 'tests/kustomize/envs'
       debug: true
+
+  # Test image tag update with single file
+  test_image_tag_single:
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: 'test-v1.2.3'
+      values_files: tests/helm/values.yaml
+      create_pr: true
+      image_tag_keys: 'webapp.image_tag'
+
+  # Test image tag update with multiple files
+  test_image_tag_multiple:
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: 'test-v2.0.0'
+      values_files: |
+        tests/helm/values.yaml
+        tests/helm/envs/sandbox/values.yaml
+      create_pr: true
+      image_tag_keys: 'webapp.image_tag'
+
+  # Test image tag update with multiple keys
+  test_image_tag_multiple_keys:
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: 'test-v3.0.0'
+      values_files: tests/helm/values.yaml
+      create_pr: true
+      image_tag_keys: |
+        webapp.image_tag
+        webapp_2.image_tag
+
+  # Cleanup job to close test PRs
+  cleanup:
+    runs-on: ubuntu-latest
+    needs:
+      - test_image_tag_single
+      - test_image_tag_multiple
+      - test_image_tag_multiple_keys
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Close test PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Closing test PRs created during workflow run..."
+
+          # List all open PRs created by GitHub Actions
+          gh pr list --state open --author "github-actions[bot]" --json number,title,headRefName | \
+          jq -r '.[] | select(.headRefName | startswith("helm-values-")) | .number' | \
+          while read -r pr_number; do
+            echo "Closing PR #$pr_number"
+            gh pr close "$pr_number" --comment "Closing test PR automatically after test completion"
+          done
+
+          # Also clean up any test branches
+          echo "Cleaning up test branches..."
+          git fetch --prune
+          git branch -r | grep 'origin/helm-values-' | sed 's/origin\///' | \
+          while read -r branch; do
+            echo "Deleting branch $branch"
+            git push origin --delete "$branch" 2>/dev/null || true
+          done
