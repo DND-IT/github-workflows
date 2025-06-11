@@ -13,9 +13,11 @@ This GitHub Actions workflow updates the image tag in specified yaml files. It c
 | --- | --- | --- | --- | --- |
 | `image_tag` | <p>The tag of the Docker image</p> | `string` | `true` | `""` |
 | `image_tag_keys` | <p>Newline-separated list of keys to update (e.g., webapp.image.tag)</p> | `string` | `false` | `webapp.image_tag` |
-| `values_files` | <p>Newline-separated list of file paths to update</p> | `string` | `false` | `deploy/app/values.yaml` |
+| `values_files` | <p>Newline-separated list of file paths to update</p> | `string` | `true` | `""` |
 | `create_pr` | <p>Create a pull request. If false, the changes will be committed directly to the target branch. Github Actions must have write permissions to the repository and able to bypass branch protection rules.</p> | `boolean` | `false` | `true` |
 | `pr_message` | <p>Custom message for the pull request. Defaults to a standard message.</p> | `string` | `false` | `This PR updates the Helm values files to use the latest image tag.` |
+| `auto_merge` | <p>Enable auto-merge for the pull request. Only works if create_pr is true.</p> | `boolean` | `false` | `false` |
+| `branch_name_prefix` | <p>Prefix for the branch name.</p> | `string` | `false` | `helm-values-` |
 | `target_branch` | <p>The target branch for the pull request. Defaults the default branch of the repository.</p> | `string` | `false` | `${{ github.event.repository.default_branch }}` |
 <!-- action-docs-inputs source=".github/workflows/gitops-image-tag.yaml" -->
 
@@ -49,8 +51,8 @@ jobs:
       # Newline-separated list of file paths to update
       #
       # Type: string
-      # Required: false
-      # Default: deploy/app/values.yaml
+      # Required: true
+      # Default: ""
 
       create_pr:
       # Create a pull request. If false, the changes will be committed directly to the target branch.
@@ -66,6 +68,20 @@ jobs:
       # Type: string
       # Required: false
       # Default: This PR updates the Helm values files to use the latest image tag.
+
+      auto_merge:
+      # Enable auto-merge for the pull request. Only works if create_pr is true.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: false
+
+      branch_name_prefix:
+      # Prefix for the branch name.
+      #
+      # Type: string
+      # Required: false
+      # Default: helm-values-
 
       target_branch:
       # The target branch for the pull request. Defaults the default branch of the repository.
@@ -162,6 +178,39 @@ jobs:
 
 This updates multiple services that share the same Docker image.
 
+### Auto-merge Example
+
+```yaml
+name: Deploy to Production
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  deploy:
+    uses: dnd-it/github-workflows/.github/workflows/gitops-image-tag.yaml@v3
+    with:
+      image_tag: ${{ github.event.release.tag_name }}
+      values_files: |
+        deploy/prod/values.yaml
+        deploy/prod/secondary/values.yaml
+      image_tag_keys: |
+        app.image.tag
+        worker.image.tag
+      create_pr: true
+      auto_merge: true
+      pr_message: |
+        Automated deployment of release ${{ github.event.release.tag_name }} to production.
+
+        Release notes: ${{ github.event.release.html_url }}
+```
+
+This creates a PR that will automatically merge once all checks pass, providing an audit trail while enabling continuous deployment.
+
 ## Key Features
 
 ### Automatic PR Replacement
@@ -216,7 +265,7 @@ image_tag_keys: |
 
 **Q: What happens if a key doesn't exist in a file?**
 
-A: The yq command will create the key path if it doesn't exist. For example, if `webapp.image.tag` doesn't exist, it will create the nested structure.
+A: The workflow will skip that key and log a message. It only updates existing keys to prevent accidentally creating new structures.
 
 **Q: Is the values_files input required?**
 
