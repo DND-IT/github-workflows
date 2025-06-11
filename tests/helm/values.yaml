@@ -1,3 +1,7 @@
 webapp:
   image_repo: foo
-  image_tag: latest
+  image_tag: test-v1.2.3
+
+webapp_2:
+  image_repo: foo
+  image_tag: test-v1.2.3
