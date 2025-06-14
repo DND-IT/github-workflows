@@ -96,7 +96,7 @@ jobs:
           GH_ARTIFACT_NAME: ${{ inputs.gh_artifact_name || vars.gh_artifact_name }}
           GH_ARTIFACT_PATTERN: ${{ inputs.gh_artifact_pattern || vars.gh_artifact_pattern }}
           GH_ARTIFACT_MERGE_MULTIPLE: ${{ inputs.gh_artifact_merge_multiple || vars.gh_artifact_merge_multiple || false }}
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         if: env.GH_ARTIFACT_PATH != '' || env.GH_ARTIFACT_NAME != ''
         with:
           path: ${{ env.GH_ARTIFACT_PATH }}
@@ -105,14 +105,14 @@ jobs:
           merge-multiple: ${{ env.GH_ARTIFACT_MERGE_MULTIPLE }}
 
       - name: Terraform Format
-        uses: dflook/terraform-fmt-check@825f2a4baa59de608a2d105d63193079e973c6d3 # v1
+        uses: dflook/terraform-fmt-check@eae6e6f9fd083ea1f4af2323d8feeb5feed96e1d # v1
         with:
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
           backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
 
       - name: Terraform Validate
-        uses: dflook/terraform-validate@5e22e449923d40905db0b3ca67ebc5787e8b2dee # v1
+        uses: dflook/terraform-validate@cfdea12135be7eb8960fbb272fb2f99c63a872f1 # v1
         with:
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
@@ -120,7 +120,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        uses: dflook/terraform-plan@a6967bcc161f0df654b5df2f1f00eca83a4cbad9 # v1
+        uses: dflook/terraform-plan@2ec7b1cfea872f089d039e9b6e7ebb3fd7717799 # v1
         env:
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
