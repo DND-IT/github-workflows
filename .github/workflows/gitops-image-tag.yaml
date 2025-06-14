@@ -130,14 +130,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Enabling auto-merge for PR #${{ steps.create_pr.outputs.pull-request-number }}"
-          gh pr merge "${{ steps.create_pr.outputs.pull-request-number }}" \
-            --auto \
-            --squash \
-            --delete-branch
 
           # Add a comment explaining the auto-merge
           gh pr comment "${{ steps.create_pr.outputs.pull-request-number }}" \
             --body "This PR will be automatically merged once all checks pass."
+
+          # Enable auto-merge
+          gh pr merge "${{ steps.create_pr.outputs.pull-request-number }}" \
+            --auto \
+            --squash \
+            --delete-branch
 
       - name: Commit changes
         if: inputs.create_pr == false
