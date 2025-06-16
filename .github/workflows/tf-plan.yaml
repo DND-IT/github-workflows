@@ -120,7 +120,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        uses: dflook/terraform-plan@2ec7b1cfea872f089d039e9b6e7ebb3fd7717799 # v1
+        uses: dflook/terraform-plan@b7bf0aabcffd1699464b3ef10c9bff6b265231c0 # v2
         env:
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
