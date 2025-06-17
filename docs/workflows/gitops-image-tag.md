@@ -17,7 +17,7 @@ This GitHub Actions workflow updates the image tag in specified yaml files. It c
 | `create_pr` | <p>Create a pull request. If false, the changes will be committed directly to the target branch. Github Actions must have write permissions to the repository and able to bypass branch protection rules.</p> | `boolean` | `false` | `true` |
 | `pr_message` | <p>Custom message for the pull request. Defaults to a standard message.</p> | `string` | `false` | `This PR updates the Helm values files to use the latest image tag.` |
 | `auto_merge` | <p>Enable auto-merge for the pull request. Only works if create_pr is true.</p> | `boolean` | `false` | `false` |
-| `branch_name_prefix` | <p>Prefix for the branch name.</p> | `string` | `false` | `helm-values-` |
+| `branch_name_prefix` | <p>Prefix for the branch name.</p> | `string` | `false` | `helm-values` |
 | `target_branch` | <p>The target branch for the pull request. Defaults the default branch of the repository.</p> | `string` | `false` | `${{ github.event.repository.default_branch }}` |
 <!-- action-docs-inputs source=".github/workflows/gitops-image-tag.yaml" -->
 
@@ -81,7 +81,7 @@ jobs:
       #
       # Type: string
       # Required: false
-      # Default: helm-values-
+      # Default: helm-values
 
       target_branch:
       # The target branch for the pull request. Defaults the default branch of the repository.

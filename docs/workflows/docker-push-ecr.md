@@ -22,6 +22,7 @@ This workflow pushes a Docker artifact to an ECR repository.
 | `aws_oidc_role_arn` | <p>AWS OIDC IAM role to assume</p> | `string` | `false` | `""` |
 | `image_name` | <p>Name of the Docker image to build</p> | `string` | `false` | `""` |
 | `image_tag` | <p>Tag of the Docker image to build</p> | `string` | `false` | `${{ github.event.pull_request.head.sha || github.sha }}` |
+| `artifact_name` | <p>Artifact name. If not set, it will be derived from the image name.</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/docker-push-ecr.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/docker-push-ecr.yaml" -->
@@ -84,6 +85,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      artifact_name:
+      # Artifact name. If not set, it will be derived from the image name.
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
 ```
 <!-- action-docs-usage source=".github/workflows/docker-push-ecr.yaml" project="dnd-it/github-workflows/.github/workflows/docker-push-ecr.yaml" version="v2" -->
 
