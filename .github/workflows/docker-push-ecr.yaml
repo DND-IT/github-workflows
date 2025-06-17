@@ -62,12 +62,13 @@ jobs:
       - name: Tag and push docker image to Amazon ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ inputs.artifact_name || inputs.image_name || vars.image_name || github.event.repository.name}}
+          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name}}
           SOURCE_TAG: ${{ github.event.pull_request.head.sha || github.sha }}
           IMAGE_TAG: ${{ inputs.image_tag }}
           BRANCH: ${{ github.ref_name }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name || inputs.image_name || vars.image_name || github.event.repository.name }}
         run: |
-          docker load -i /tmp/$REPOSITORY.tar
+          docker load -i /tmp/$ARTIFACT_NAME.tar
           docker tag $REPOSITORY:$SOURCE_TAG $REGISTRY/$REPOSITORY:$SOURCE_TAG
           docker tag $REPOSITORY:$SOURCE_TAG $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
