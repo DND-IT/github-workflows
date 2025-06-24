@@ -136,7 +136,7 @@ jobs:
             --body "This PR will be automatically merged once all checks pass."
 
           # Enable auto-merge
-          gh pr merge "${{ steps.create_pr.outputs.pull-request-number }}" \
+          GH_DEBUG=api gh pr merge "${{ steps.create_pr.outputs.pull-request-number }}" \
             --admin \
             --squash \
             --delete-branch
