@@ -138,7 +138,7 @@ jobs:
           # Enable auto-merge
           gh pr merge "${{ steps.create_pr.outputs.pull-request-number }}" \
             --admin \
-            --auto \
+            # --auto \
             --squash \
             --delete-branch
 
