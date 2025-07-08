@@ -4,6 +4,8 @@ title: ArgoCD CLI
 
 ## Description
 
+Run arbitrary ArgoCD CLI commands in a GitHub Actions workflow. This action allows you to specify the version of the ArgoCD CLI, the architecture, and the commands to execute. It supports both `amd64` and `arm64` architectures and can run multiple commands in sequence.
+
 <!-- action-docs-inputs source=".github/workflows/argocd-cli.yaml" -->
 ### Inputs
 
