@@ -12,13 +12,13 @@
         <meta name="author" content="DAI">
       
       
-        <link rel="canonical" href="https://dnd-it.github.io/github-workflows/workflows/aws-secrets-copy/">
+        <link rel="canonical" href="https://dnd-it.github.io/github-workflows/workflows/argocd-cli/">
       
       
-        <link rel="prev" href="../aws-rds-snapshot/">
+        <link rel="prev" href="../">
       
       
-        <link rel="next" href="../docker-build-push-ecr/">
+        <link rel="next" href="../aws-rds-snapshot/">
       
       
       <link rel="icon" href="../../images/favicon.png">
@@ -26,7 +26,7 @@
     
     
       
-        <title>AWS Secrets Copy - Github Reusable Workflows</title>
+        <title>ArgoCD CLI - Github Reusable Workflows</title>
       
     
     
@@ -129,7 +129,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#aws-secrets-copy" class="md-skip">
+        <a href="#description" class="md-skip">
           Skip to content
         </a>
       
@@ -164,7 +164,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              AWS Secrets Copy
+              ArgoCD CLI
             
           </span>
         </div>
@@ -675,48 +675,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../argocd-cli/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    ArgoCD CLI
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../aws-rds-snapshot/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    AWS RDS Snapshot
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -731,7 +689,7 @@
           
   
   <span class="md-ellipsis">
-    AWS Secrets Copy
+    ArgoCD CLI
   </span>
   
 
@@ -742,7 +700,7 @@
         
   
   <span class="md-ellipsis">
-    AWS Secrets Copy
+    ArgoCD CLI
   </span>
   
 
@@ -760,15 +718,6 @@
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#aws-secrets-copy" class="md-nav__link">
-    <span class="md-ellipsis">
-      AWS Secrets Copy
-    </span>
-  </a>
-  
-</li>
       
         <li class="md-nav__item">
   <a href="#description" class="md-nav__link">
@@ -810,6 +759,48 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Example">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-server-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      With Server Connection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-prepost-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      With Pre/Post Commands
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-specific-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Specific Version
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -819,14 +810,65 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#workflow" class="md-nav__link">
+    <nav class="md-nav" aria-label="FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-authenticate-with-an-argocd-server" class="md-nav__link">
     <span class="md-ellipsis">
-      Workflow
+      Q: How do I authenticate with an ArgoCD server?
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-can-i-use-environment-variables-from-github" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: Can I use environment variables from GitHub?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-run-multiple-argocd-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: How do I run multiple ArgoCD commands?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-what-architectures-are-supported" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: What architectures are supported?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-can-i-use-this-workflow-with-a-custom-runner" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: Can I use this workflow with a custom runner?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-handle-errors-in-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: How do I handle errors in commands?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -834,6 +876,48 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../aws-rds-snapshot/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS RDS Snapshot
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../aws-secrets-copy/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS Secrets Copy
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -1424,15 +1508,6 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#aws-secrets-copy" class="md-nav__link">
-    <span class="md-ellipsis">
-      AWS Secrets Copy
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#description" class="md-nav__link">
     <span class="md-ellipsis">
       Description
@@ -1472,6 +1547,48 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Example">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Basic Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-server-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      With Server Connection
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-prepost-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      With Pre/Post Commands
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-specific-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using Specific Version
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1481,14 +1598,65 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#workflow" class="md-nav__link">
+    <nav class="md-nav" aria-label="FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-authenticate-with-an-argocd-server" class="md-nav__link">
     <span class="md-ellipsis">
-      Workflow
+      Q: How do I authenticate with an ArgoCD server?
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-can-i-use-environment-variables-from-github" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: Can I use environment variables from GitHub?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-run-multiple-argocd-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: How do I run multiple ArgoCD commands?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-what-architectures-are-supported" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: What architectures are supported?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-can-i-use-this-workflow-with-a-custom-runner" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: Can I use this workflow with a custom runner?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-how-do-i-handle-errors-in-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Q: How do I handle errors in commands?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1510,15 +1678,11 @@
   
 
 
-  <h1>AWS Secrets Copy</h1>
-
-<!-- action-docs-header source=".github/workflows/aws-secrets-copy.yaml" -->
-<h2 id="aws-secrets-copy">AWS Secrets Copy<a class="headerlink" href="#aws-secrets-copy" title="Permanent link">&para;</a></h2>
-<!-- action-docs-header source=".github/workflows/aws-secrets-copy.yaml" -->
+  <h1>ArgoCD CLI</h1>
 
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p>This workflow copies an AWS secret from one account to another.</p>
-<!-- action-docs-inputs source=".github/workflows/aws-secrets-copy.yaml" -->
+<p>Run arbitrary ArgoCD CLI commands in a GitHub Actions workflow. This action allows you to specify the version of the ArgoCD CLI, the architecture, and the commands to execute. It supports both <code>amd64</code> and <code>arm64</code> architectures and can run multiple commands in sequence.</p>
+<!-- action-docs-inputs source=".github/workflows/argocd-cli.yaml" -->
 <h3 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1532,157 +1696,232 @@
 </thead>
 <tbody>
 <tr>
-<td><code>source_aws_region</code></td>
-<td><p>AWS region</p></td>
-<td><code>string</code></td>
-<td><code>true</code></td>
-<td><code>""</code></td>
-</tr>
-<tr>
-<td><code>source_aws_oidc_role_arn</code></td>
-<td><p>AWS OIDC IAM role to assume</p></td>
-<td><code>string</code></td>
-<td><code>true</code></td>
-<td><code>""</code></td>
-</tr>
-<tr>
-<td><code>source_secret_name</code></td>
-<td><p>AWS secret name to copy from</p></td>
-<td><code>string</code></td>
-<td><code>true</code></td>
-<td><code>""</code></td>
-</tr>
-<tr>
-<td><code>destination_aws_region</code></td>
-<td><p>AWS region</p></td>
-<td><code>string</code></td>
-<td><code>true</code></td>
-<td><code>""</code></td>
-</tr>
-<tr>
-<td><code>destination_aws_oidc_role_arn</code></td>
-<td><p>AWS OIDC IAM role to assume</p></td>
-<td><code>string</code></td>
-<td><code>true</code></td>
-<td><code>""</code></td>
-</tr>
-<tr>
-<td><code>destination_secret_name</code></td>
-<td><p>AWS secret name to copy to (default to the source secret name)</p></td>
+<td><code>argocd_version</code></td>
+<td><p>ArgoCD CLI version to use</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><code>secret_description</code></td>
-<td><p>The description to attach to the AWS secret (default to the description of the source secret's description)</p></td>
+<td><code>argocd_architecture</code></td>
+<td><p>Architecture for ArgoCD CLI (default is amd64)</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>amd64</code></td>
+</tr>
+<tr>
+<td><code>argocd_server</code></td>
+<td><p>ArgoCD server URL</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><code>aws_tags</code></td>
-<td><p>Tags to put on the created secret in the form '[{"Key":"key1", "Value":"value1"},{"Key":"key2", "Value":"value2"}] (default to no tags)'</p></td>
+<td><code>argocd_grpc_web</code></td>
+<td><p>Use gRPC-web for ArgoCD CLI</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>argocd_commands</code></td>
+<td><p>ArgoCD CLI commands to run. Can be a single command or multiple commands separated by newlines. Example:</td>
+<td>app list   app get my-app   app sync my-app --prune</p></td>
+<td><code>string</code></td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>pre_run</code></td>
+<td><p>Custom commands to run before ArgoCD commands</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
+</tr>
+<tr>
+<td><code>post_run</code></td>
+<td><p>Custom commands to run after ArgoCD commands</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>""</code></td>
+</tr>
+<tr>
+<td><code>working_directory</code></td>
+<td><p>Working directory for running commands</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>.</code></td>
+</tr>
+<tr>
+<td><code>runner</code></td>
+<td><p>GitHub runner to use</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>ubuntu-latest</code></td>
 </tr>
 </tbody>
 </table>
-<!-- action-docs-inputs source=".github/workflows/aws-secrets-copy.yaml" -->
+<!-- action-docs-inputs source=".github/workflows/argocd-cli.yaml" -->
 
-<!-- action-docs-outputs source=".github/workflows/aws-secrets-copy.yaml" -->
+<!-- action-docs-outputs source=".github/workflows/argocd-cli.yaml" -->
 
-<!-- action-docs-outputs source=".github/workflows/aws-secrets-copy.yaml" -->
+<!-- action-docs-outputs source=".github/workflows/argocd-cli.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/aws-secrets-copy.yaml" project="dnd-it/github-workflows/.github/workflows/aws-secrets-copy.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/argocd-cli.yaml" project="dnd-it/github-workflows/.github/workflows/argocd-cli.yaml" version="v2" -->
 <h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h3>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">jobs</span><span class="p">:</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">job1</span><span class="p">:</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/aws-secrets-copy.yaml@v2</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/argocd-cli.yaml@v2</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">source_aws_region</span><span class="p">:</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="c1"># AWS region</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">argocd_version</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="c1"># ArgoCD CLI version to use</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="c1"># Required: true</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="c1"># Required: false</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">source_aws_oidc_role_arn</span><span class="p">:</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="c1"># AWS OIDC IAM role to assume</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">argocd_architecture</span><span class="p">:</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="c1"># Architecture for ArgoCD CLI (default is amd64)</span>
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span><span class="c1"># Required: true</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="c1"># Default: amd64</span>
 </span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="nt">source_secret_name</span><span class="p">:</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">      </span><span class="c1"># AWS secret name to copy from</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="nt">argocd_server</span><span class="p">:</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">      </span><span class="c1"># ArgoCD server URL</span>
 </span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">      </span><span class="c1"># Required: true</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">      </span><span class="c1"># Required: false</span>
 </span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
 </span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">      </span><span class="nt">destination_aws_region</span><span class="p">:</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">      </span><span class="c1"># AWS region</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">      </span><span class="nt">argocd_grpc_web</span><span class="p">:</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">      </span><span class="c1"># Use gRPC-web for ArgoCD CLI</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">      </span><span class="c1"># Required: true</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="c1"># Default: false</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">destination_aws_oidc_role_arn</span><span class="p">:</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">      </span><span class="c1"># AWS OIDC IAM role to assume</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">      </span><span class="c1"># Required: true</span>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">      </span><span class="nt">destination_secret_name</span><span class="p">:</span>
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">      </span><span class="c1"># AWS secret name to copy to (default to the source secret name)</span>
-</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="w">      </span><span class="nt">secret_description</span><span class="p">:</span>
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">      </span><span class="c1"># The description to attach to the AWS secret (default to the description of the source secret&#39;s description)</span>
-</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
-</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>
-</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="w">      </span><span class="nt">aws_tags</span><span class="p">:</span>
-</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="w">      </span><span class="c1"># Tags to put on the created secret in the form &#39;[{&quot;Key&quot;:&quot;key1&quot;, &quot;Value&quot;:&quot;value1&quot;},{&quot;Key&quot;:&quot;key2&quot;, &quot;Value&quot;:&quot;value2&quot;}] (default to no tags)&#39;</span>
-</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">argocd_commands</span><span class="p">:</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">      </span><span class="c1"># ArgoCD CLI commands to run. Can be a single command or multiple commands separated by newlines.</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">      </span><span class="c1"># Example: |</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">      </span><span class="c1">#   app list</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">      </span><span class="c1">#   app get my-app</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">      </span><span class="c1">#   app sync my-app --prune</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">      </span><span class="c1"># Required: true</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">      </span><span class="nt">pre_run</span><span class="p">:</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">      </span><span class="c1"># Custom commands to run before ArgoCD commands</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>
+</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="w">      </span><span class="nt">post_run</span><span class="p">:</span>
+</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="w">      </span><span class="c1"># Custom commands to run after ArgoCD commands</span>
+</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a>
+</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a><span class="w">      </span><span class="nt">working_directory</span><span class="p">:</span>
+</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a><span class="w">      </span><span class="c1"># Working directory for running commands</span>
+</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60" href="#__codelineno-0-60"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61" href="#__codelineno-0-61"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62" href="#__codelineno-0-62"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63" href="#__codelineno-0-63"></a><span class="w">      </span><span class="c1"># Default: .</span>
+</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64" href="#__codelineno-0-64"></a>
+</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65" href="#__codelineno-0-65"></a><span class="w">      </span><span class="nt">runner</span><span class="p">:</span>
+</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66" href="#__codelineno-0-66"></a><span class="w">      </span><span class="c1"># GitHub runner to use</span>
+</span><span id="__span-0-67"><a id="__codelineno-0-67" name="__codelineno-0-67" href="#__codelineno-0-67"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-68"><a id="__codelineno-0-68" name="__codelineno-0-68" href="#__codelineno-0-68"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-69"><a id="__codelineno-0-69" name="__codelineno-0-69" href="#__codelineno-0-69"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-70"><a id="__codelineno-0-70" name="__codelineno-0-70" href="#__codelineno-0-70"></a><span class="w">      </span><span class="c1"># Default: ubuntu-latest</span>
 </span></code></pre></div>
-<!-- action-docs-usage source=".github/workflows/aws-secrets-copy.yaml" project="dnd-it/github-workflows/.github/workflows/aws-secrets-copy.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/argocd-cli.yaml" project="dnd-it/github-workflows/.github/workflows/argocd-cli.yaml" version="v2" -->
 
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">push</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">pull_request</span><span class="p p-Indicator">]</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">jobs</span><span class="p">:</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">copy_secret</span><span class="p">:</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./.github/workflows/aws-secrets-copy.yaml</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">      </span><span class="nt">source_aws_region</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;us-west-2&#39;</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">      </span><span class="nt">source_aws_oidc_role_arn</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;arn:aws:iam::123456789012:role/my-aws-role&#39;</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">      </span><span class="nt">source_secret_name</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;</span><span class="nv"> </span><span class="s">my-aws-secret&#39;</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">      </span><span class="nt">destination_aws_region</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;us-west-1&#39;</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">      </span><span class="nt">destination_aws_oidc_role_arn</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;arn:aws:iam::012345678901:role/my-aws-role&#39;</span>
+<h3 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">argocd-commands</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/argocd-cli.yaml@v2</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="nt">argocd_commands</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">        </span><span class="no">version --client</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">        </span><span class="no">app list</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">        </span><span class="no">app get my-app</span>
+</span></code></pre></div>
+<h3 id="with-server-connection">With Server Connection<a class="headerlink" href="#with-server-connection" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">sync-application</span><span class="p">:</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/argocd-cli.yaml@v2</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">argocd_server</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;argocd.example.com&quot;</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">      </span><span class="nt">argocd_grpc_web</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;true&quot;</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">      </span><span class="nt">argocd_commands</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">        </span><span class="no">app sync my-app --prune</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">        </span><span class="no">app wait my-app --health</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="nt">secrets</span><span class="p">:</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">      </span><span class="nt">argocd_auth_token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.ARGOCD_AUTH_TOKEN }}</span>
+</span></code></pre></div>
+<h3 id="with-prepost-commands">With Pre/Post Commands<a class="headerlink" href="#with-prepost-commands" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">deploy-with-setup</span><span class="p">:</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/argocd-cli.yaml@v2</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="nt">pre_run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">        </span><span class="no">echo &quot;Setting up environment...&quot;</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">        </span><span class="no">export DEPLOY_ENV=production</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="nt">argocd_commands</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">        </span><span class="no">app create my-app --repo https://github.com/org/repo --path k8s --dest-server https://kubernetes.default.svc</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">        </span><span class="no">app sync my-app</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">      </span><span class="nt">post_run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">        </span><span class="no">echo &quot;Deployment completed&quot;</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">        </span><span class="no">curl -X POST https://webhook.site/deployment-complete</span>
+</span></code></pre></div>
+<h3 id="using-specific-version">Using Specific Version<a class="headerlink" href="#using-specific-version" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">argocd-v2-12</span><span class="p">:</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/argocd-cli.yaml@v2</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">      </span><span class="nt">argocd_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.0.1&quot;</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">      </span><span class="nt">argocd_architecture</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;amd64&quot;</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span><span class="nt">argocd_commands</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">        </span><span class="no">version --client</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">        </span><span class="no">repo list</span>
 </span></code></pre></div>
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
-<p><strong>Q: What happen if the destination secret already exists ?</strong></p>
-<p>A: The destination AWS secret value will be updated to the value of the source secret</p>
-<h2 id="workflow">Workflow<a class="headerlink" href="#workflow" title="Permanent link">&para;</a></h2>
-<p>There is a <a href="../.github/workflows/_test-aws-secrets-copy.yaml">validation workflow</a> triggered when a pull request from a feature branch to <code>main</code> is created.
-The workflow will create some temporary AWS secrets to validate that different use cases of the workflow will work:</p>
-<ul>
-<li>Copy of a secret to non existing secret</li>
-<li>Copy of a secret to an existing secret</li>
-<li>Copy of a secret with different input parameters</li>
-</ul>
-<p>At the end, all secrets are deleted</p>
+<h3 id="q-how-do-i-authenticate-with-an-argocd-server">Q: How do I authenticate with an ArgoCD server?<a class="headerlink" href="#q-how-do-i-authenticate-with-an-argocd-server" title="Permanent link">&para;</a></h3>
+<p>A: Use the <code>argocd_server</code> input to specify your server URL and pass the authentication token as a secret:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">argocd_server</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;argocd.example.com&quot;</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nt">secrets</span><span class="p">:</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">argocd_auth_token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ secrets.ARGOCD_TOKEN }}</span>
+</span></code></pre></div>
+<h3 id="q-can-i-use-environment-variables-from-github">Q: Can I use environment variables from GitHub?<a class="headerlink" href="#q-can-i-use-environment-variables-from-github" title="Permanent link">&para;</a></h3>
+<p>A: Yes, the workflow supports GitHub environment variables. If you don't provide an input, it will fall back to the corresponding GitHub variable (e.g., <code>vars.argocd_version</code>).</p>
+<h3 id="q-how-do-i-run-multiple-argocd-commands">Q: How do I run multiple ArgoCD commands?<a class="headerlink" href="#q-how-do-i-run-multiple-argocd-commands" title="Permanent link">&para;</a></h3>
+<p>A: Use the multiline YAML syntax with the pipe (<code>|</code>) character:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">argocd_commands</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="no">app list</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">  </span><span class="no">app get my-app</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="no">app sync my-app --prune</span>
+</span></code></pre></div>
+<h3 id="q-what-architectures-are-supported">Q: What architectures are supported?<a class="headerlink" href="#q-what-architectures-are-supported" title="Permanent link">&para;</a></h3>
+<p>A: The workflow supports both <code>amd64</code> (default) and <code>arm64</code> architectures. Specify using the <code>argocd_architecture</code> input.</p>
+<h3 id="q-can-i-use-this-workflow-with-a-custom-runner">Q: Can I use this workflow with a custom runner?<a class="headerlink" href="#q-can-i-use-this-workflow-with-a-custom-runner" title="Permanent link">&para;</a></h3>
+<p>A: Yes, use the <code>runner</code> input to specify a custom runner:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">  </span><span class="nt">runner</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;self-hosted&quot;</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span><span class="nt">argocd_commands</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;version</span><span class="nv"> </span><span class="s">--client&quot;</span>
+</span></code></pre></div>
+<h3 id="q-how-do-i-handle-errors-in-commands">Q: How do I handle errors in commands?<a class="headerlink" href="#q-how-do-i-handle-errors-in-commands" title="Permanent link">&para;</a></h3>
+<p>A: The workflow uses <code>set -e</code> which will stop execution on the first error. If you need to handle errors gracefully, use shell error handling in your commands:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">argocd_commands</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="no">app sync my-app || echo &quot;Sync failed, but continuing...&quot;</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">  </span><span class="no">app list</span>
+</span></code></pre></div>
 
 
 
