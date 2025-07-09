@@ -1,0 +1,69 @@
+name: Test ArgoCD CLI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/argocd-cli.yaml
+      - .github/workflows/_test-argocd-cli.yaml
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test-basic-commands:
+    name: Test basic ArgoCD commands
+    uses: ./.github/workflows/argocd-cli.yaml
+    with:
+      argocd_commands: |
+        version --client
+        help
+
+  test-latest-version:
+    name: Test latest ArgoCD version
+    uses: ./.github/workflows/argocd-cli.yaml
+    with:
+      argocd_version: "latest"
+      argocd_commands: |
+        version --client
+
+  test-different-architecture:
+    name: Test ARM64 architecture
+    uses: ./.github/workflows/argocd-cli.yaml
+    with:
+      argocd_architecture: "arm64"
+      argocd_commands: |
+        version --client
+
+  test-multiple-commands:
+    name: Test multiple commands
+    uses: ./.github/workflows/argocd-cli.yaml
+    with:
+      argocd_commands: |
+        version --client
+        help
+        app --help
+        repo --help
+
+  test-with-pre-post-run:
+    name: Test with pre and post run commands
+    uses: ./.github/workflows/argocd-cli.yaml
+    with:
+      pre_run: |
+        echo "Pre-run: Setting up environment"
+        pwd
+        ls -la
+      post_run: |
+        echo "Post-run: Cleanup"
+        echo "ArgoCD commands completed successfully"
+      argocd_commands: |
+        version --client
+
+  test-custom-runner:
+    name: Test with custom runner
+    uses: ./.github/workflows/argocd-cli.yaml
+    with:
+      runner: "ubuntu-22.04"
+      argocd_commands: |
+        version --client

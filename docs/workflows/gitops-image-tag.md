@@ -14,11 +14,12 @@ This GitHub Actions workflow updates the image tag in specified yaml files. It c
 | `image_tag` | <p>The tag of the Docker image</p> | `string` | `true` | `""` |
 | `image_tag_keys` | <p>Newline-separated list of keys to update (e.g., webapp.image.tag)</p> | `string` | `false` | `webapp.image_tag` |
 | `values_files` | <p>Newline-separated list of file paths to update</p> | `string` | `true` | `""` |
-| `create_pr` | <p>Create a pull request. If false, the changes will be committed directly to the target branch. Github Actions must have write permissions to the repository and able to bypass branch protection rules.</p> | `boolean` | `false` | `true` |
+| `create_pr` | <p>Create a pull request. If false, the changes will be committed directly to the target branch. Github Actions must have write permissions to the repository. If branch protection is enabled a Github App is required and is able to bypass branch protection rules.</p> | `boolean` | `false` | `true` |
 | `pr_message` | <p>Custom message for the pull request. Defaults to a standard message.</p> | `string` | `false` | `This PR updates the Helm values files to use the latest image tag.` |
 | `auto_merge` | <p>Enable auto-merge for the pull request. Only works if create_pr is true.</p> | `boolean` | `false` | `false` |
 | `branch_name_prefix` | <p>Prefix for the branch name.</p> | `string` | `false` | `helm-values` |
 | `target_branch` | <p>The target branch for the pull request. Defaults the default branch of the repository.</p> | `string` | `false` | `${{ github.event.repository.default_branch }}` |
+| `app_id` | <p>GitHub App ID for generating a token. Required if using GitHub App authentication.</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/gitops-image-tag.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/gitops-image-tag.yaml" -->
@@ -56,7 +57,7 @@ jobs:
 
       create_pr:
       # Create a pull request. If false, the changes will be committed directly to the target branch.
-      # Github Actions must have write permissions to the repository and able to bypass branch protection rules.
+      # Github Actions must have write permissions to the repository. If branch protection is enabled a Github App is required and is able to bypass branch protection rules.
       #
       # Type: boolean
       # Required: false
@@ -89,6 +90,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ${{ github.event.repository.default_branch }}
+
+      app_id:
+      # GitHub App ID for generating a token. Required if using GitHub App authentication.
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
 ```
 <!-- action-docs-usage source=".github/workflows/gitops-image-tag.yaml" project="dnd-it/github-workflows/.github/workflows/gitops-image-tag.yaml" version="v2" -->
 

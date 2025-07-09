@@ -1,0 +1,108 @@
+name: ArgoCD CLI
+
+on:
+  workflow_call:
+    inputs:
+      argocd_version:
+        description: ArgoCD CLI version to use
+        type: string
+      argocd_architecture:
+        description: Architecture for ArgoCD CLI (default is amd64)
+        type: string
+        default: "amd64"
+      argocd_server:
+        description: ArgoCD server URL
+        type: string
+      argocd_grpc_web:
+        description: Use gRPC-web for ArgoCD CLI
+        type: string
+        default: "false"
+      argocd_commands:
+        description: |
+          ArgoCD CLI commands to run. Can be a single command or multiple commands separated by newlines.
+          Example: |
+            app list
+            app get my-app
+            app sync my-app --prune
+        type: string
+        required: true
+      pre_run:
+        description: Custom commands to run before ArgoCD commands
+        type: string
+      post_run:
+        description: Custom commands to run after ArgoCD commands
+        type: string
+      working_directory:
+        description: Working directory for running commands
+        type: string
+        default: "."
+      runner:
+        description: GitHub runner to use
+        type: string
+        default: "ubuntu-latest"
+    secrets:
+      argocd_auth_token:
+        description: ArgoCD authentication token (as secret)
+        required: false
+
+env:
+  ARGOCD_VERSION: ${{ inputs.argocd_version || vars.argocd_version || 'latest' }}
+  ARGOCD_SERVER: ${{ inputs.argocd_server || vars.argocd_server || '' }}
+  ARGOCD_AUTH_TOKEN: ${{ secrets.argocd_auth_token }}
+
+jobs:
+  argocd-cli:
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Download and install ArgoCD CLI
+        run: |
+          # Download ArgoCD CLI
+          if [ "$ARGOCD_VERSION" = "latest" ]; then
+            VERSION=$(curl --silent "https://api.github.com/repos/argoproj/argo-cd/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+          else
+            VERSION=$ARGOCD_VERSION
+          fi
+
+          echo "Downloading ArgoCD CLI version: $VERSION"
+          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/download/$VERSION/argocd-linux-amd64
+          chmod +x argocd
+          sudo mv argocd /usr/local/bin/
+
+          argocd version --client
+
+      - name: Run pre-run commands
+        if: inputs.pre_run
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          ${{ inputs.pre_run }}
+
+      - name: Run ArgoCD commands
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          set -e
+          echo "Running ArgoCD commands..."
+
+          # Set global flags if needed
+          ARGOCD_FLAGS=""
+          if [[ -n "${{ env.ARGOCD_SERVER }}" ]]; then
+            ARGOCD_FLAGS="$ARGOCD_FLAGS --server ${{ env.ARGOCD_SERVER }}"
+          fi
+          if [[ -n "${{ env.ARGOCD_AUTH_TOKEN }}" ]]; then
+            ARGOCD_FLAGS="$ARGOCD_FLAGS --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}"
+          fi
+          if [[ "${{ inputs.argocd_grpc_web }}" == "true" ]]; then
+            ARGOCD_FLAGS="$ARGOCD_FLAGS --grpc-web"
+          fi
+          # Execute commands line by line
+          echo "${{ inputs.argocd_commands }}" | while IFS= read -r cmd; do
+            if [[ -n "$cmd" ]]; then
+              echo "Executing: argocd $cmd $ARGOCD_FLAGS"
+              argocd $cmd $ARGOCD_FLAGS
+            fi
+          done
+
+      - name: Run post-run commands
+        if: inputs.post_run
+        working-directory: ${{ inputs.working_directory }}
+        run: |
+          ${{ inputs.post_run }}
