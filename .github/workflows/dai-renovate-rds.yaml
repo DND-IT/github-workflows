@@ -128,9 +128,7 @@ jobs:
 
           git status
 
-          echo "branch_name=dai-renovate/rds-update-$latest" >> $GITHUB_OUTPUT
-          echo "latest=$latest" >> $GITHUB_OUTPUT
-
+          echo "branch_name=dai-renovate/rds-update-latest" >> $GITHUB_OUTPUT
           if [[ -n "$(git status --porcelain)" ]]; then
             echo "changed=1" >> $GITHUB_OUTPUT
           fi
@@ -140,8 +138,8 @@ jobs:
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: bump RDS engine version(s) to ${{ steps.update_files.outputs.latest }}"
-          title: "chore: bump RDS engine version(s) to ${{ steps.update_files.outputs.latest }}"
+          commit-message: "chore: bump RDS engine version(s) to latest minor"
+          title: "chore: bump RDS engine version(s) to latest minor"
           body: |
             This PR was created automatically by the dai-renovate-rds workflow.
           branch: ${{ steps.update_files.outputs.branch_name }}
