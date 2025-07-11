@@ -29,6 +29,10 @@ on:
         required: false
         type: boolean
         default: true
+      target_branch:
+        description: 'The target branch for the pull request. Defaults the default branch of the repository.'
+        type: string
+        default: ${{ github.event.repository.default_branch }}
 
       schedule:
         description: 'Cron schedule for workflow'
@@ -75,7 +79,12 @@ jobs:
           IFS=',' read -ra globs <<< "$patterns"
           > files.txt
           for glob in "${globs[@]}"; do
-            find . -type f -name "${glob// /}" >> files.txt || true
+            # If the pattern is a directory, search all files recursively inside it
+            if [ -d "$glob" ]; then
+              find "$glob" -type f >> files.txt || true
+            else
+              find . -type f -name "$glob" >> files.txt || true
+            fi
           done
           sort -u files.txt -o files.txt
           echo "Found files:"
@@ -115,6 +124,8 @@ jobs:
               fi
             done
           done < files.txt
+
+          echo "branch_name=dai-renovate/rds-update-$latest" >> $GITHUB_OUTPUT
           echo "latest=$latest" >> $GITHUB_OUTPUT
           echo "changed=$changed" >> $GITHUB_OUTPUT
 
@@ -122,9 +133,11 @@ jobs:
         if: steps.update_files.outputs.changed == '1' && ${{ inputs.create_pull_request }}
         uses: peter-evans/create-pull-request@v7
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "chore: bump RDS engine version(s) to latest minor"
           title: "chore: bump RDS engine version(s) to latest minor"
           body: |
             This PR was created automatically by the dai-renovate-rds workflow.
-          branch: dai-renovate/rds-update-${{ steps.update_files.outputs.latest }}
+          branch: ${{ steps.update_files.outputs.branch_name }}
+          base: ${{ inputs.target_branch }}
           delete-branch: true

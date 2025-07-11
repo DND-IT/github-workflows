@@ -5,7 +5,12 @@ patterns="*.yaml,*.tf,*.tfvars"
 IFS=',' read -ra globs <<< "$patterns"
 > files.txt
 for glob in "${globs[@]}"; do
-  find . -type f -name "${glob// /}" >> files.txt || true
+  # If the pattern is a directory, search all files recursively inside it
+  if [ -d "$glob" ]; then
+    find "$glob" -type f >> files.txt || true
+  else
+    find . -type f -name "$glob" >> files.txt || true
+  fi
 done
 sort -u files.txt -o files.txt
 echo "Found files:"
@@ -46,5 +51,7 @@ while read -r file; do
     fi
   done
 done < files.txt
-echo "latest=$latest"
+
+echo "branch_name=dai-renovate/rds-update-$latest" >> $GITHUB_OUTPUT
+echo "latest=$latest" >> $GITHUB_OUTPUT
 echo "changed=$changed"
