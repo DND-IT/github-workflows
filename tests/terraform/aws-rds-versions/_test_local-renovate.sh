@@ -37,6 +37,7 @@ while read -r file; do
       # Query AWS for latest version
       echo "Checking latest version for var: $varname, current: $current, engine: $engine, major: $major in file: $file"
       latest=$(aws rds describe-db-engine-versions --engine "$engine" --engine-version "$major" --query 'DBEngineVersions[*].EngineVersion' --output text | tr '\t' '\n' | sort -V | tail -1)
+      echo "Latest version found: $latest"
       
       if [[ "$current" != "$latest" && -n "$latest" ]]; then
         echo "Updating $varname in $file from $current to $latest"
