@@ -39,3 +39,17 @@ Add the annotation above any RDS engine version variable you want to keep update
 ```hcl
 engine_version = "16.7" #dai-aws-rds engine:postgres version:16
 ```
+
+### Supported Patterns
+```yaml
+# yaml
+db:
+  version: "16.7" #dai-aws-rds engine:postgres version:16
+
+version: "16.7" #dai-aws-rds engine:postgres version:16
+```
+```hcl
+engine_version = "16.7" #dai-aws-rds engine:postgres version:16
+
+engine_version = optional(string, "16.8") #dai-aws-rds engine:postgres version:16
+```
