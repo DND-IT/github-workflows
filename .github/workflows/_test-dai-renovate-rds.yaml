@@ -19,5 +19,5 @@ jobs:
     uses: './.github/workflows/dai-renovate-rds.yaml'
     with:
       environment: sandbox
-      files_pattern: 'tests/terraform/dai-renovate-rds/**/*'
+      files_pattern: 'tests/terraform/dai-renovate-rds'
       create_pull_request: true

@@ -19,7 +19,6 @@ cat files.txt
 ## Simulating step
 # - name: Update files with latest RDS version
 set -e
-changed=0
 while read -r file; do
   echo "\n>> Processing file: $file"
   # Search for annotated lines
@@ -44,7 +43,6 @@ while read -r file; do
         # `sed -i ''` is used for macOS compatibility
         # remember to remove the `''` if running on Linux
         sed -i '' "${lineno}s/\"$current\"/\"$latest\"/" "$file"
-        changed=1
       fi
     else
       echo "No match found"
@@ -52,6 +50,13 @@ while read -r file; do
   done
 done < files.txt
 
+rm -f files.txt
+
+git status
+
 echo "branch_name=dai-renovate/rds-update-$latest" >> $GITHUB_OUTPUT
 echo "latest=$latest" >> $GITHUB_OUTPUT
-echo "changed=$changed"
+
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "files were modified"
+fi

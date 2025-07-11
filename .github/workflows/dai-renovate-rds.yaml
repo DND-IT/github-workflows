@@ -94,7 +94,6 @@ jobs:
         id: update_files
         run: |
           set -e
-          changed=0
           while read -r file; do
             echo "\n>> Processing file: $file"
             # Search for annotated lines
@@ -117,7 +116,6 @@ jobs:
                   echo "Updating $varname in $file from $current to $latest"
                   # Use line number to update in-place
                   sed -i "${lineno}s/\"$current\"/\"$latest\"/" "$file"
-                  changed=1
                 fi
               else
                 echo "No match found"
@@ -125,17 +123,24 @@ jobs:
             done
           done < files.txt
 
+          rm -f files.txt
+
+          git status
+
           echo "branch_name=dai-renovate/rds-update-$latest" >> $GITHUB_OUTPUT
           echo "latest=$latest" >> $GITHUB_OUTPUT
-          echo "changed=$changed" >> $GITHUB_OUTPUT
+
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changed=$changed" >> $GITHUB_OUTPUT
+          fi
 
       - name: Commit and create PR if changed
-        if: steps.update_files.outputs.changed == '1' && ${{ inputs.create_pull_request }}
+        if: steps.update_files.outputs.changed == '1' && inputs.create_pull_request
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: bump RDS engine version(s) to latest minor"
-          title: "chore: bump RDS engine version(s) to latest minor"
+          commit-message: "chore: bump RDS engine version(s) to ${{ steps.update_files.outputs.latest }}"
+          title: "chore: bump RDS engine version(s) to ${{ steps.update_files.outputs.latest }}"
           body: |
             This PR was created automatically by the dai-renovate-rds workflow.
           branch: ${{ steps.update_files.outputs.branch_name }}
