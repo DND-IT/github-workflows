@@ -1,4 +1,4 @@
-name: Dai Renovate AWS RDS (Reusable)
+name: Update AWS RDS to latest minor version
 
 on:
   workflow_call:
@@ -40,19 +40,14 @@ on:
         type: string
         default: '0 6 1 */3 *' # Every 3 months on the 1st at 6am
 
-  schedule:
-    - cron: '0 6 1 */3 *' # fallback: every 3 months
-
-  workflow_dispatch:
-
 jobs:
   # Automatically scans your repository for infrastructure files containing 
-  # the `#dai-renovate-rds engine:<engine> version:<major>` annotation. 
+  # the `#dai-aws-rds engine:<engine> version:<major>` annotation. 
   # It queries AWS using the cli for the latest available RDS engine version 
   # matching the specified engine and major version, updates the relevant variable 
   # in your code if a newer version is found, and creates a pull request with the changes.
   renovate-rds:
-    name: DAI Renovate RDS
+    name: AWS RDS Version Management
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
@@ -98,11 +93,11 @@ jobs:
             echo " "
             echo ">> Processing file: $file"
             # Search for annotated lines
-            grep -n '#dai-renovate-rds' "$file" | while IFS=: read -r lineno line; do
+            grep -n '#dai-aws-rds' "$file" | while IFS=: read -r lineno line; do
               echo "Processing line: $line (line number: $lineno)"
-              # Parse annotation: #dai-renovate-rds engine:postgres version:16
-              # Check dnd-it/github-workflows/tests/terraform/dai-renovate-rds/* for patterns
-              if [[ "$line" =~ ([a-zA-Z0-9_]+)[[:space:]]*[:=][[:space:]]*(optional\([a-zA-Z0-9_]+,[[:space:]]*)?\"([0-9]+\.[0-9]+)\"(\))?[[:space:]]*#dai-renovate-rds[[:space:]]+engine:([a-zA-Z0-9_-]+)[[:space:]]+version:([0-9]+) ]]; then
+              # Parse annotation: #dai-aws-rds engine:postgres version:16
+              # Check dnd-it/github-workflows/tests/terraform/dai-aws-rds/* for patterns
+              if [[ "$line" =~ ([a-zA-Z0-9_]+)[[:space:]]*[:=][[:space:]]*(optional\([a-zA-Z0-9_]+,[[:space:]]*)?\"([0-9]+\.[0-9]+)\"(\))?[[:space:]]*#dai-aws-rds[[:space:]]+engine:([a-zA-Z0-9_-]+)[[:space:]]+version:([0-9]+) ]]; then
                 echo "Matched patter found"
                 varname="${BASH_REMATCH[1]}"
                 current="${BASH_REMATCH[3]}"
@@ -128,7 +123,7 @@ jobs:
 
           git status
 
-          echo "branch_name=dai-renovate/rds-update-latest" >> $GITHUB_OUTPUT
+          echo "branch_name=workflows/aws-rds-update-latest" >> $GITHUB_OUTPUT
           if [[ -n "$(git status --porcelain)" ]]; then
             echo "changed=1" >> $GITHUB_OUTPUT
           fi
@@ -141,7 +136,7 @@ jobs:
           commit-message: "chore: bump RDS engine version(s) to latest minor"
           title: "chore: bump RDS engine version(s) to latest minor"
           body: |
-            This PR was created automatically by the dai-renovate-rds workflow.
+            This PR was created automatically by the aws-rds-version-management workflow.
           branch: ${{ steps.update_files.outputs.branch_name }}
           base: ${{ inputs.target_branch }}
           delete-branch: true

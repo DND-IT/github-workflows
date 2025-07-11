@@ -1,14 +1,14 @@
 variable "engine_version" {
   description = "The version of the database engine to use"
   type        = string
-  default     = "16.8" #dai-renovate-rds engine:postgres version:16
+  default     = "16.8" #dai-aws-rds engine:postgres version:16
 
 }
 
 variable "rds_config" {
   description = "Configuration for the RDS instance"
   type = object({
-    engine_version = optional(string, "16.8") #dai-renovate-rds engine:postgres version:16
+    engine_version = optional(string, "16.8") #dai-aws-rds engine:postgres version:16
   })
   default = {}
 }

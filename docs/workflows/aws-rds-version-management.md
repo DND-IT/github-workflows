@@ -1,14 +1,14 @@
-## Dai Renovate AWS RDS
+## AWS RDS Version Management
 
 Automates the process of updating AWS RDS engine versions in the infrastructure code. It is designed to be **reusable** and configurable for different file patterns and schedules.
 
 ### Features
 
 - **Annotation-based detection:**  
-  Searches for lines annotated with `#dai-renovate-rds engine:<engine> version:<major>` in your codebase.  
+  Searches for lines annotated with `#dai-aws-rds engine:<engine> version:<major>` in your codebase.  
   Example annotation:  
   ```
-  engine_version = "16.7" #dai-renovate-rds engine:postgres version:16
+  engine_version = "16.7" #dai-aws-rds engine:postgres version:16
   ```
 
 - **AWS RDS version lookup:**  
@@ -37,5 +37,5 @@ Automates the process of updating AWS RDS engine versions in the infrastructure 
 
 Add the annotation above any RDS engine version variable you want to keep updated:
 ```hcl
-engine_version = "16.7" #dai-renovate-rds engine:postgres version:16
+engine_version = "16.7" #dai-aws-rds engine:postgres version:16
 ```

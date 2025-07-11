@@ -23,11 +23,11 @@ while read -r file; do
   echo " "
   echo ">> Processing file: $file"
   # Search for annotated lines
-  grep -n '#dai-renovate-rds' "$file" | while IFS=: read -r lineno line; do
+  grep -n '#dai-aws-rds' "$file" | while IFS=: read -r lineno line; do
     echo "Processing line: $line (line number: $lineno)"
-    # Parse annotation: #dai-renovate-rds engine:postgres version:16
-    # Check dnd-it/github-workflows/tests/terraform/dai-renovate-rds/* for patterns
-    if [[ "$line" =~ ([a-zA-Z0-9_]+)[[:space:]]*[:=][[:space:]]*(optional\([a-zA-Z0-9_]+,[[:space:]]*)?\"([0-9]+\.[0-9]+)\"(\))?[[:space:]]*#dai-renovate-rds[[:space:]]+engine:([a-zA-Z0-9_-]+)[[:space:]]+version:([0-9]+) ]]; then
+    # Parse annotation: #dai-aws-rds engine:postgres version:16
+    # Check dnd-it/github-workflows/tests/terraform/dai-aws-rds/* for patterns
+    if [[ "$line" =~ ([a-zA-Z0-9_]+)[[:space:]]*[:=][[:space:]]*(optional\([a-zA-Z0-9_]+,[[:space:]]*)?\"([0-9]+\.[0-9]+)\"(\))?[[:space:]]*#dai-aws-rds[[:space:]]+engine:([a-zA-Z0-9_-]+)[[:space:]]+version:([0-9]+) ]]; then
       echo "Matched patter found"
       varname="${BASH_REMATCH[1]}"
       current="${BASH_REMATCH[3]}"

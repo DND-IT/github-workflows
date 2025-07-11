@@ -1,0 +1,23 @@
+name: Test Update AWS RDS to latest minor version
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    paths:
+      - '.github/workflows/_test-aws-rds-version-management.yaml'
+      - '.github/workflows/aws-rds-version-management.yaml'
+      - 'tests/terraform/aws-rds-versions/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  test-aws-rds-version-management:
+    uses: './.github/workflows/aws-rds-version-management.yaml'
+    with:
+      environment: sandbox
+      files_pattern: 'tests/terraform/aws-rds-versions'
+      create_pull_request: true
