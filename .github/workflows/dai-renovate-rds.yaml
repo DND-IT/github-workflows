@@ -95,7 +95,8 @@ jobs:
         run: |
           set -e
           while read -r file; do
-            echo "\n>> Processing file: $file"
+            echo " "
+            echo ">> Processing file: $file"
             # Search for annotated lines
             grep -n '#dai-renovate-rds' "$file" | while IFS=: read -r lineno line; do
               echo "Processing line: $line (line number: $lineno)"
@@ -131,7 +132,7 @@ jobs:
           echo "latest=$latest" >> $GITHUB_OUTPUT
 
           if [[ -n "$(git status --porcelain)" ]]; then
-            echo "changed=$changed" >> $GITHUB_OUTPUT
+            echo "changed=1" >> $GITHUB_OUTPUT
           fi
 
       - name: Commit and create PR if changed

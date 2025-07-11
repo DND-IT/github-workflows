@@ -20,7 +20,8 @@ cat files.txt
 # - name: Update files with latest RDS version
 set -e
 while read -r file; do
-  echo "\n>> Processing file: $file"
+  echo " "
+  echo ">> Processing file: $file"
   # Search for annotated lines
   grep -n '#dai-renovate-rds' "$file" | while IFS=: read -r lineno line; do
     echo "Processing line: $line (line number: $lineno)"
