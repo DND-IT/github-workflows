@@ -1,0 +1,123 @@
+name: Dai Renovate AWS RDS (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        type: string
+      aws_account_id:
+        description: "AWS Account ID"
+        type: string
+      aws_region:
+        description: "AWS Region"
+        type: string
+      aws_role_name:
+        description: "AWS Role Name"
+        type: string
+      aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+
+      files_pattern:
+        description: 'Comma-separated glob patterns for files to search'
+        required: false
+        type: string
+        default: '**/*.yaml,**/*.tf,**/*.tfvars'
+      create_pull_request:
+        description: 'Whether to create a pull request if changes are made'
+        required: false
+        type: boolean
+        default: true
+
+      schedule:
+        description: 'Cron schedule for workflow'
+        required: false
+        type: string
+        default: '0 6 1 */3 *' # Every 3 months on the 1st at 6am
+
+  schedule:
+    - cron: '0 6 1 */3 *' # fallback: every 3 months
+
+  workflow_dispatch:
+
+jobs:
+  # Automatically scans your repository for infrastructure files containing 
+  # the `#dai-renovate-rds engine:<engine> version:<major>` annotation. 
+  # It queries AWS using the cli for the latest available RDS engine version 
+  # matching the specified engine and major version, updates the relevant variable 
+  # in your code if a newer version is found, and creates a pull request with the changes.
+  renovate-rds:
+    name: DAI Renovate RDS
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+          AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Find files matching pattern
+        id: find_files
+        run: |
+          patterns="${{ inputs.files_pattern }}"
+          IFS=',' read -ra globs <<< "$patterns"
+          > files.txt
+          for glob in "${globs[@]}"; do
+            find . -type f -name "${glob// /}" >> files.txt || true
+          done
+          sort -u files.txt -o files.txt
+          cat files.txt
+
+      - name: Update files with latest RDS version
+        id: update_files
+        run: |
+          set -e
+          changed=0
+          while read -r file; do
+            # Search for annotated lines
+            grep -n '#dai-renovate-rds' "$file" | while IFS=: read -r lineno line; do
+              # Parse annotation: #dai-renovate-rds engine:postgres version:16
+              # Check dnd-it/github-workflows/tests/terraform/dai-renovate-rds/* for patterns
+              if [[ "$line" =~ ([a-zA-Z0-9_]+)[[:space:]]*[:=][[:space:]]*(optional\([a-zA-Z0-9_]+,\s*)?"([0-9]+\.[0-9]+)"\)?[[:space:]]*#dai-renovate-rds[[:space:]]+engine:([a-zA-Z0-9_-]+)[[:space:]]+version:([0-9]+) ]]; then
+                varname="${BASH_REMATCH[1]}"
+                current="${BASH_REMATCH[3]}"
+                engine="${BASH_REMATCH[4]}"
+                major="${BASH_REMATCH[5]}"
+                
+                # Query AWS for latest version
+                echo "Checking latest version for engine: $engine, major: $major in file: $file"
+                latest=$(aws rds describe-db-engine-versions --engine "$engine" --engine-version "$major" --query 'DBEngineVersions[*].EngineVersion' --output text | tr '\t' '\n' | sort -V | tail -1)
+                
+                if [[ "$current" != "$latest" && -n "$latest" ]]; then
+                  echo "Updating $varname in $file from $current to $latest"
+                  # Use line number to update in-place
+                  sed -i "${lineno}s/\"$current\"/\"$latest\"/" "$file"
+                  changed=1
+                fi
+              fi
+            done
+          done < files.txt
+          echo "latest=$latest" >> $GITHUB_OUTPUT
+          echo "changed=$changed" >> $GITHUB_OUTPUT
+
+      - name: Commit and create PR if changed
+        if: steps.update_files.outputs.changed == '1' && ${{ inputs.create_pull_request }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: bump RDS engine version(s) to latest minor"
+          title: "chore: bump RDS engine version(s) to latest minor"
+          body: |
+            This PR was created automatically by the dai-renovate-rds workflow.
+          branch: dai-renovate/rds-update-${{ steps.update_files.outputs.latest }}
+          delete-branch: true

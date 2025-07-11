@@ -1,0 +1,23 @@
+name: Test DAI Renovate RDS
+
+on:
+  workflow_dispatch:
+
+  pull_request:
+    paths:
+      - '.github/workflows/_test-dai-renovate-rds.yaml'
+      - '.github/workflows/dai-renovate-rds.yaml'
+      - 'tests/terraform/dai-renovate-rds/**'
+
+permissions: 
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  test-dai-renovate-rds:
+    uses: './.github/workflows/dai-renovate-rds.yaml'
+    with:
+      environment: sandbox
+      files_pattern: 'tests/terraform/dai-renovate-rds/**/*'
+      create_pull_request: true
