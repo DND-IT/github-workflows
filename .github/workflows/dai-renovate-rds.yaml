@@ -52,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
+      id-token: write
       contents: write
       pull-requests: write
     steps:
