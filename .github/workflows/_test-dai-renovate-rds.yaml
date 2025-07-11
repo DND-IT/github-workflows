@@ -9,7 +9,7 @@ on:
       - '.github/workflows/dai-renovate-rds.yaml'
       - 'tests/terraform/dai-renovate-rds/**'
 
-permissions: 
+permissions:
   contents: write
   pull-requests: write
   id-token: write
