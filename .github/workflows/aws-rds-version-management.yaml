@@ -1,0 +1,143 @@
+name: Update AWS RDS to latest minor version
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        type: string
+      aws_account_id:
+        description: "AWS Account ID"
+        type: string
+      aws_region:
+        description: "AWS Region"
+        type: string
+      aws_role_name:
+        description: "AWS Role Name"
+        type: string
+      aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+
+      files_pattern:
+        description: 'Comma-separated glob patterns for files to search'
+        required: false
+        type: string
+        default: '*.yaml,*.tf,*.tfvars'
+      create_pull_request:
+        description: 'Whether to create a pull request if changes are made'
+        required: false
+        type: boolean
+        default: true
+      target_branch:
+        description: 'The target branch for the pull request. Defaults the default branch of the repository.'
+        type: string
+        default: ${{ github.event.repository.default_branch }}
+
+      schedule:
+        description: 'Cron schedule for workflow'
+        required: false
+        type: string
+        default: '0 6 1 */3 *' # Every 3 months on the 1st at 6am
+
+jobs:
+  # Automatically scans your repository for infrastructure files containing 
+  # the `#dai-aws-rds engine:<engine> version:<major>` annotation. 
+  # It queries AWS using the cli for the latest available RDS engine version 
+  # matching the specified engine and major version, updates the relevant variable 
+  # in your code if a newer version is found, and creates a pull request with the changes.
+  renovate-rds:
+    name: AWS RDS Version Management
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+          AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Find files matching pattern
+        id: find_files
+        run: |
+          patterns="${{ inputs.files_pattern }}"
+          IFS=',' read -ra globs <<< "$patterns"
+          > files.txt
+          for glob in "${globs[@]}"; do
+            # If the pattern is a directory, search all files recursively inside it
+            if [ -d "$glob" ]; then
+              find "$glob" -type f >> files.txt || true
+            else
+              find . -type f -name "$glob" >> files.txt || true
+            fi
+          done
+          sort -u files.txt -o files.txt
+          echo "Found files:"
+          cat files.txt
+
+      - name: Update files with latest RDS version
+        id: update_files
+        run: |
+          set -e
+          while read -r file; do
+            echo " "
+            echo ">> Processing file: $file"
+            # Search for annotated lines
+            grep -n '#dai-aws-rds' "$file" | while IFS=: read -r lineno line; do
+              echo "Processing line: $line (line number: $lineno)"
+              # Parse annotation: #dai-aws-rds engine:postgres version:16
+              # Check dnd-it/github-workflows/tests/terraform/dai-aws-rds/* for patterns
+              if [[ "$line" =~ ([a-zA-Z0-9_]+)[[:space:]]*[:=][[:space:]]*(optional\([a-zA-Z0-9_]+,[[:space:]]*)?\"([0-9]+\.[0-9]+)\"(\))?[[:space:]]*#dai-aws-rds[[:space:]]+engine:([a-zA-Z0-9_-]+)[[:space:]]+version:([0-9]+) ]]; then
+                echo "Matched patter found"
+                varname="${BASH_REMATCH[1]}"
+                current="${BASH_REMATCH[3]}"
+                engine="${BASH_REMATCH[5]}"
+                major="${BASH_REMATCH[6]}"
+                
+                # Query AWS for latest version
+                echo "Checking latest version for var: $varname, current: $current, engine: $engine, major: $major in file: $file"
+                latest=$(aws rds describe-db-engine-versions --engine "$engine" --engine-version "$major" --query 'DBEngineVersions[*].EngineVersion' --output text | tr '\t' '\n' | sort -V | tail -1)
+                echo "Latest version found: $latest"
+                
+                if [[ "$current" != "$latest" && -n "$latest" ]]; then
+                  echo "Updating $varname in $file from $current to $latest"
+                  # Use line number to update in-place
+                  sed -i "${lineno}s/\"$current\"/\"$latest\"/" "$file"
+                fi
+              else
+                echo "No match found"
+              fi
+            done
+          done < files.txt
+
+          rm -f files.txt
+
+          git status
+
+          echo "branch_name=workflows/aws-rds-update-latest" >> $GITHUB_OUTPUT
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changed=1" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and create PR if changed
+        if: steps.update_files.outputs.changed == '1' && inputs.create_pull_request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump RDS engine version(s) to latest minor"
+          title: "chore: bump RDS engine version(s) to latest minor"
+          body: |
+            This PR was created automatically by the aws-rds-version-management workflow.
+          branch: ${{ steps.update_files.outputs.branch_name }}
+          base: ${{ inputs.target_branch }}
+          delete-branch: true
