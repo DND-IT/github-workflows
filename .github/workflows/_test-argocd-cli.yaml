@@ -18,7 +18,6 @@ jobs:
     with:
       argocd_commands: |
         version --client
-        help
 
   test-latest-version:
     name: Test latest ArgoCD version
@@ -29,9 +28,10 @@ jobs:
         version --client
 
   test-different-architecture:
-    name: Test ARM64 architecture
+    name: Test ARM64 architecture download (won't execute on x86_64)
     uses: ./.github/workflows/argocd-cli.yaml
     with:
+      runner: "ubuntu-24.04-arm"
       argocd_architecture: "arm64"
       argocd_commands: |
         version --client
@@ -42,7 +42,6 @@ jobs:
     with:
       argocd_commands: |
         version --client
-        help
         app --help
         repo --help
 

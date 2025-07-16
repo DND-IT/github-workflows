@@ -6,6 +6,7 @@ on:
       argocd_version:
         description: ArgoCD CLI version to use
         type: string
+        default: "latest"
       argocd_architecture:
         description: Architecture for ArgoCD CLI (default is amd64)
         type: string
@@ -46,8 +47,8 @@ on:
         required: false
 
 env:
-  ARGOCD_VERSION: ${{ inputs.argocd_version || vars.argocd_version || 'latest' }}
-  ARGOCD_SERVER: ${{ inputs.argocd_server || vars.argocd_server || '' }}
+  ARGOCD_VERSION: ${{ inputs.argocd_version }}
+  ARGOCD_SERVER: ${{ inputs.argocd_server || vars.argocd_server }}
   ARGOCD_AUTH_TOKEN: ${{ secrets.argocd_auth_token }}
 
 jobs:
@@ -56,53 +57,63 @@ jobs:
     steps:
       - name: Download and install ArgoCD CLI
         run: |
-          # Download ArgoCD CLI
-          if [ "$ARGOCD_VERSION" = "latest" ]; then
-            VERSION=$(curl --silent "https://api.github.com/repos/argoproj/argo-cd/releases/latest" | grep '"tag_name"' | sed -E 's/.*"([^"]+)".*/\1/')
+          # Use GitHub CLI with runner token for better rate limits and reliability
+          if [ "${{ inputs.argocd_version }}" = "latest" ]; then
+            VERSION=$(gh release view --repo argoproj/argo-cd --json tagName --jq '.tagName')
           else
-            VERSION=$ARGOCD_VERSION
+            VERSION=${{ inputs.argocd_version }}
           fi
 
-          echo "Downloading ArgoCD CLI version: $VERSION"
-          curl -sSL -o argocd https://github.com/argoproj/argo-cd/releases/download/$VERSION/argocd-linux-amd64
+          echo "Installing ArgoCD CLI version: $VERSION"
+
+          gh release download "$VERSION" \
+            --repo argoproj/argo-cd \
+            --pattern "argocd-linux-${{ inputs.argocd_architecture }}" \
+            --output argocd
+
           chmod +x argocd
           sudo mv argocd /usr/local/bin/
 
+          # Verify installation
           argocd version --client
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Run pre-run commands
         if: inputs.pre_run
         working-directory: ${{ inputs.working_directory }}
-        run: |
-          ${{ inputs.pre_run }}
+        run: ${{ inputs.pre_run }}
 
       - name: Run ArgoCD commands
         working-directory: ${{ inputs.working_directory }}
         run: |
-          set -e
-          echo "Running ArgoCD commands..."
+          set +e  # Disable exit on error so we can handle errors properly
 
-          # Set global flags if needed
+          # Build global flags
           ARGOCD_FLAGS=""
-          if [[ -n "${{ env.ARGOCD_SERVER }}" ]]; then
-            ARGOCD_FLAGS="$ARGOCD_FLAGS --server ${{ env.ARGOCD_SERVER }}"
-          fi
-          if [[ -n "${{ env.ARGOCD_AUTH_TOKEN }}" ]]; then
-            ARGOCD_FLAGS="$ARGOCD_FLAGS --auth-token ${{ env.ARGOCD_AUTH_TOKEN }}"
-          fi
-          if [[ "${{ inputs.argocd_grpc_web }}" == "true" ]]; then
-            ARGOCD_FLAGS="$ARGOCD_FLAGS --grpc-web"
-          fi
-          # Execute commands line by line
-          echo "${{ inputs.argocd_commands }}" | while IFS= read -r cmd; do
-            if [[ -n "$cmd" ]]; then
+          [[ -n "$ARGOCD_SERVER" ]] && ARGOCD_FLAGS="$ARGOCD_FLAGS --server $ARGOCD_SERVER"
+          [[ -n "$ARGOCD_AUTH_TOKEN" ]] && ARGOCD_FLAGS="$ARGOCD_FLAGS --auth-token $ARGOCD_AUTH_TOKEN"
+          [[ "${{ inputs.argocd_grpc_web }}" == "true" ]] && ARGOCD_FLAGS="$ARGOCD_FLAGS --grpc-web"
+
+          # Execute commands with proper error handling
+          exit_code=0
+          while IFS= read -r cmd; do
+            # Skip empty lines and whitespace-only lines
+            if [[ -n "${cmd// }" ]]; then
               echo "Executing: argocd $cmd $ARGOCD_FLAGS"
               argocd $cmd $ARGOCD_FLAGS
-            fi
-          done
+              cmd_exit_code=$?
 
+              if [[ $cmd_exit_code -ne 0 ]]; then
+                echo "ERROR: Command failed with exit code $cmd_exit_code"
+                exit_code=$cmd_exit_code
+              fi
+            fi
+          done <<< "${{ inputs.argocd_commands }}"
+
+          # Exit with the last error code if any command failed
+          exit $exit_code
       - name: Run post-run commands
         if: inputs.post_run
         working-directory: ${{ inputs.working_directory }}
-        run: |
-          ${{ inputs.post_run }}
+        run: ${{ inputs.post_run }}
