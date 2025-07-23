@@ -38,6 +38,16 @@ jobs:
       artifact_retention_days: 1
 
   test_docker_build_secrets:
+    uses: ./.github/workflows/docker-build.yaml
+    secrets:
+      docker_secrets: |
+        SECRET_TOKEN=${{ secrets.TEST_SECRET_TOKEN }}
+    with:
+      image_name: test-docker-build-secrets
+      docker_context: tests/docker
+      dockerfile_path: tests/docker/secrets.Dockerfile
+
+  test_docker_build_push_secrets:
     uses: ./.github/workflows/docker-build-push-ecr.yaml
     secrets:
       docker_secrets: |
