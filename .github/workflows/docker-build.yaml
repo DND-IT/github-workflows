@@ -2,6 +2,10 @@ name: Docker Build
 
 on:
   workflow_call:
+    secrets:
+      docker_secrets:
+        description: "Comma-delimited list of Github secrets to pass to docker build workflow"
+        required: false
     inputs:
       environment:
         description: "Environment to deploy"
@@ -11,6 +15,9 @@ on:
         type: string
       docker_context:
         description: "Path to the build context"
+        type: string
+      dockerfile_path:
+        description: "Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile"
         type: string
       artifact_name:
         description: "Name of the artifact to upload. If not set, it will be derived from the image name"
@@ -32,6 +39,7 @@ jobs:
     env:
       IMAGE_TAG: ${{ github.event.pull_request.head.sha || github.sha }}
       IMAGE_NAME: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+      DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }} # upstream defaults to {DOCKER_CTX}/Dockerfile
     steps:
       - name: Check out code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
@@ -46,6 +54,8 @@ jobs:
           DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
         with:
           context: ${{ env.DOCKER_CTX }}
+          file: ${{ env.DOCKERFILE_PATH }}
+          secrets: ${{ secrets.docker_secrets }}
           # platforms: linux/amd64,linux/arm64 # TODO add support for multi-arch builds
           tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           outputs: type=docker,dest=/tmp/${{ env.IMAGE_NAME }}.tar
