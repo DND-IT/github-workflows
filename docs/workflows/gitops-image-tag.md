@@ -19,7 +19,7 @@ This GitHub Actions workflow updates the image tag in specified yaml files. It c
 | `auto_merge` | <p>Enable auto-merge for the pull request. Only works if create_pr is true.</p> | `boolean` | `false` | `false` |
 | `branch_name_prefix` | <p>Prefix for the branch name.</p> | `string` | `false` | `helm-values` |
 | `target_branch` | <p>The target branch for the pull request. Defaults the default branch of the repository.</p> | `string` | `false` | `${{ github.event.repository.default_branch }}` |
-| `app_id` | <p>GitHub App ID for generating a token. Required if using GitHub App authentication.</p> | `string` | `false` | `""` |
+| `app_id` | <p>GitHub App ID for generating a token. Required if using GitHub App authentication. app<em>private</em>key must be set in the secrets.</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/gitops-image-tag.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/gitops-image-tag.yaml" -->
@@ -92,7 +92,7 @@ jobs:
       # Default: ${{ github.event.repository.default_branch }}
 
       app_id:
-      # GitHub App ID for generating a token. Required if using GitHub App authentication.
+      # GitHub App ID for generating a token. Required if using GitHub App authentication. app_private_key must be set in the secrets.
       #
       # Type: string
       # Required: false

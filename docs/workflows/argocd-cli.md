@@ -11,7 +11,7 @@ Run arbitrary ArgoCD CLI commands in a GitHub Actions workflow. This action allo
 
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
-| `argocd_version` | <p>ArgoCD CLI version to use</p> | `string` | `false` | `""` |
+| `argocd_version` | <p>ArgoCD CLI version to use</p> | `string` | `false` | `latest` |
 | `argocd_architecture` | <p>Architecture for ArgoCD CLI (default is amd64)</p> | `string` | `false` | `amd64` |
 | `argocd_server` | <p>ArgoCD server URL</p> | `string` | `false` | `""` |
 | `argocd_grpc_web` | <p>Use gRPC-web for ArgoCD CLI</p> | `string` | `false` | `false` |
@@ -39,7 +39,7 @@ jobs:
       #
       # Type: string
       # Required: false
-      # Default: ""
+      # Default: latest
 
       argocd_architecture:
       # Architecture for ArgoCD CLI (default is amd64)
