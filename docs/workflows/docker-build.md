@@ -18,6 +18,7 @@ This workflow builds a Docker image and the artifact is uploaded to the GitHub a
 | `environment` | <p>Environment to deploy</p> | `string` | `false` | `""` |
 | `image_name` | <p>Name of the Docker image to build</p> | `string` | `false` | `""` |
 | `docker_context` | <p>Path to the build context</p> | `string` | `false` | `""` |
+| `dockerfile_path` | <p>Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile</p> | `string` | `false` | `""` |
 | `artifact_name` | <p>Name of the artifact to upload. If not set, it will be derived from the image name</p> | `string` | `false` | `""` |
 | `artifact_retention_days` | <p>Number of days to retain the artifact</p> | `number` | `false` | `""` |
 | `docker_target` | <p>Build target</p> | `string` | `false` | `""` |
@@ -51,6 +52,13 @@ jobs:
 
       docker_context:
       # Path to the build context
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      dockerfile_path:
+      # Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile
       #
       # Type: string
       # Required: false
