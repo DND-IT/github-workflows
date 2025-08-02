@@ -120,7 +120,7 @@ jobs:
 
       - name: Deploy Test Infrastructure
         id: tf_apply
-        uses: dflook/terraform-apply@d62f3b833781560bf16193fd56940796a44f70ec # v2
+        uses: dflook/terraform-apply@b8eeae1fcfefe833fa52b09b9c1f89eed0cd8ac7 # v2
         env:
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
