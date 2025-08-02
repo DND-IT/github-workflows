@@ -105,7 +105,7 @@ jobs:
           merge-multiple: ${{ env.GH_ARTIFACT_MERGE_MULTIPLE }}
 
       - name: Terraform Format
-        uses: dflook/terraform-fmt-check@eae6e6f9fd083ea1f4af2323d8feeb5feed96e1d # v1
+        uses: dflook/terraform-fmt-check@594e6a4bd26edb3749d2fadf71a2a7605c219f5e # v2
         with:
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
