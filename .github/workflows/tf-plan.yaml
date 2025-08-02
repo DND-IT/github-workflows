@@ -112,7 +112,7 @@ jobs:
           backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
 
       - name: Terraform Validate
-        uses: dflook/terraform-validate@cfdea12135be7eb8960fbb272fb2f99c63a872f1 # v1
+        uses: dflook/terraform-validate@8bd4064878bbbce34b3f76a832abade6354668cc # v2
         with:
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
