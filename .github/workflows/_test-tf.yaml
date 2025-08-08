@@ -150,7 +150,7 @@ jobs:
       tf_dir: tests/terraform/artifact
       gh_artifact_path: tests/terraform/artifact/
       tf_vars: |
-        file_path="docker-artifacts/artifact-sample.txt"
+        file_path="tests/docker-artifacts/artifact-sample.txt"
 
   test_tf_checkout_ref:
     uses: ./.github/workflows/tf-plan.yaml
