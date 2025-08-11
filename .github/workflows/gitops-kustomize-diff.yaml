@@ -45,7 +45,7 @@ jobs:
       env_overlays_files: ${{ steps.filter-envs.outputs.env_overlays_files }}
       env_list: ${{ steps.filter-envs.outputs.env_list }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -94,7 +94,7 @@ jobs:
           echo "Changed environment files: ${{ steps.changed-files.outputs.env_overlays_all_changed_files }}"
           echo "Environments to check: ${{ steps.filter-envs.outputs.env_list }}"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: steps.changed-files.outputs.base_kustomize_any_changed == 'true' || steps.changed-files.outputs.env_overlays_any_changed == 'true'
         with:
           ref: ${{ inputs.base_branch }}
