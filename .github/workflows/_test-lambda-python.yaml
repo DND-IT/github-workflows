@@ -18,7 +18,7 @@ jobs:
         working-directory: tests/lambda/python
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
   build:
     uses: ./.github/workflows/lambda-python.yaml
