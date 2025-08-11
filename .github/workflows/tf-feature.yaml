@@ -111,7 +111,7 @@ jobs:
           merge-multiple: ${{ env.GH_ARTIFACT_MERGE_MULTIPLE }}
 
       - name: Use Branch Workspace
-        uses: dflook/terraform-new-workspace@dd507b9c3928454ef4d62472c432d5a317d3cb17 # v1
+        uses: dflook/terraform-new-workspace@b39b8b4a6836d69620ed3de39726ade3b050f960 # v2
         with:
           workspace: ${{ env.TF_WORKSPACE }}
           path: ${{ env.TF_DIR }}
