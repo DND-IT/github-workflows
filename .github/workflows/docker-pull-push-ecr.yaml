@@ -1,0 +1,141 @@
+name: Docker Pull Push ECR
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        type: string
+      # Source ECR Configuration
+      source_aws_account_id:
+        description: "Source AWS Account ID"
+        type: string
+      source_aws_region:
+        description: "Source AWS Region"
+        type: string
+      source_aws_role_name:
+        description: "Source AWS Role Name"
+        type: string
+      source_aws_oidc_role_arn:
+        description: "Source AWS OIDC IAM role to assume"
+        type: string
+      source_image_name:
+        description: "Name of the Docker image to pull from source ECR"
+        type: string
+      source_image_tag:
+        description: "Tag of the Docker image to pull"
+        type: string
+        default: latest
+      # Destination ECR Configuration
+      dest_aws_account_id:
+        description: "Destination AWS Account ID"
+        type: string
+      dest_aws_region:
+        description: "Destination AWS Region"
+        type: string
+      dest_aws_role_name:
+        description: "Destination AWS Role Name"
+        type: string
+      dest_aws_oidc_role_arn:
+        description: "Destination AWS OIDC IAM role to assume"
+        type: string
+      dest_image_name:
+        description: "Name of the Docker image to push to destination ECR"
+        type: string
+      dest_image_tag:
+        description: "Tag of the Docker image to push"
+        type: string
+      artifact_name:
+        description: "Artifact name for the Docker image"
+        type: string
+
+jobs:
+  pull-artifact:
+    name: Pull from ECR and Create Artifact
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      artifact-name: ${{ steps.artifact.outputs.name }}
+    steps:
+      - name: Configure AWS credentials for source ECR
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.source_aws_oidc_role_arn || vars.source_aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.source_aws_account_id, inputs.source_aws_role_name) }}
+          AWS_REGION: ${{ inputs.source_aws_region || vars.source_aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Source Amazon ECR
+        id: login-source-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
+
+      - name: Pull Docker image from source ECR
+        env:
+          REGISTRY: ${{ steps.login-source-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.source_image_name || vars.source_image_name || github.event.repository.name }}
+          IMAGE_TAG: ${{ inputs.source_image_tag || vars.source_image_tag || 'latest' }}
+        run: |
+          docker pull $REGISTRY/$REPOSITORY:$IMAGE_TAG
+          docker tag $REGISTRY/$REPOSITORY:$IMAGE_TAG $REPOSITORY:$IMAGE_TAG
+
+      - name: Save Docker image to artifact
+        id: artifact
+        env:
+          REPOSITORY: ${{ inputs.source_image_name || vars.source_image_name || github.event.repository.name }}
+          IMAGE_TAG: ${{ inputs.source_image_tag || vars.source_image_tag || 'latest' }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name || inputs.source_image_name || vars.source_image_name || github.event.repository.name }}
+        run: |
+          docker save -o /tmp/$ARTIFACT_NAME.tar $REPOSITORY:$IMAGE_TAG
+          echo "name=$ARTIFACT_NAME-$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@d38adcf8b6e5ac2a049c3f7879ce7cd87f11b34d # v4
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: /tmp/${{ inputs.artifact_name || inputs.source_image_name || vars.source_image_name || github.event.repository.name }}.tar
+          retention-days: 1
+
+  push-to-dest:
+    name: Push to Destination ECR
+    needs: pull-artifact
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.pull-artifact.outputs.artifact-name }}
+          path: /tmp
+
+      - name: Configure AWS credentials for destination ECR
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.dest_aws_oidc_role_arn || vars.dest_aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.dest_aws_account_id, inputs.dest_aws_role_name) }}
+          AWS_REGION: ${{ inputs.dest_aws_region || vars.dest_aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Destination Amazon ECR
+        id: login-dest-ecr
+        uses: aws-actions/amazon-ecr-login@062b18b96a7aff071d4dc91bc00c4c1a7945b076 # v2
+
+      - name: Load and push docker image to destination ECR
+        env:
+          DEST_REGISTRY: ${{ steps.login-dest-ecr.outputs.registry }}
+          SOURCE_REPOSITORY: ${{ inputs.source_image_name || vars.source_image_name || github.event.repository.name }}
+          DEST_REPOSITORY: ${{ inputs.dest_image_name || vars.dest_image_name || inputs.source_image_name || vars.source_image_name || github.event.repository.name }}
+          SOURCE_TAG: ${{ inputs.source_image_tag || vars.source_image_tag || 'latest' }}
+          DEST_TAG: ${{ inputs.dest_image_tag || vars.dest_image_tag || inputs.source_image_tag || vars.source_image_tag || 'latest' }}
+          ARTIFACT_NAME: ${{ inputs.artifact_name || inputs.source_image_name || vars.source_image_name || github.event.repository.name }}
+        run: |
+          docker load -i /tmp/$ARTIFACT_NAME.tar
+          docker tag $SOURCE_REPOSITORY:$SOURCE_TAG $DEST_REGISTRY/$DEST_REPOSITORY:$DEST_TAG
+          docker push $DEST_REGISTRY/$DEST_REPOSITORY:$DEST_TAG

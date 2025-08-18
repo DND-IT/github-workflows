@@ -1,0 +1,65 @@
+name: Test - Docker Pull Push ECR
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/docker-pull-push-ecr.yaml"
+      - ".github/workflows/_test-docker-pull-push-ecr.yaml"
+  workflow_dispatch:
+
+jobs:
+  test-docker-pull-push-ecr:
+    name: Test Docker Pull Push ECR
+    uses: ./.github/workflows/docker-pull-push-ecr.yaml
+    with:
+      source_aws_account_id: "911453050078"
+      source_aws_region: "eu-central-1"
+      source_aws_role_name: "github-workflow-tests"
+      source_image_name: "github-workflow-tests"
+      source_image_tag: "latest"
+      dest_aws_account_id: "911453050078"
+      dest_aws_region: "eu-central-1"
+      dest_aws_role_name: "github-workflow-tests"
+      dest_image_name: "github-workflow-tests-copy"
+      dest_image_tag: "test-${{ github.run_id }}"
+    permissions:
+      id-token: write
+      contents: read
+
+  test-docker-pull-push-ecr-with-env:
+    name: Test Docker Pull Push ECR with Environment
+    uses: ./.github/workflows/docker-pull-push-ecr.yaml
+    with:
+      environment: "test"
+      source_aws_account_id: "911453050078"
+      source_aws_region: "eu-central-1"
+      source_aws_role_name: "github-workflow-tests"
+      source_image_name: "github-workflow-tests"
+      source_image_tag: "latest"
+      dest_aws_account_id: "911453050078"
+      dest_aws_region: "eu-central-1"
+      dest_aws_role_name: "github-workflow-tests"
+      dest_image_name: "github-workflow-tests-env"
+      dest_image_tag: "test-env-${{ github.run_id }}"
+    permissions:
+      id-token: write
+      contents: read
+
+  test-docker-pull-push-ecr-custom-artifact:
+    name: Test Docker Pull Push ECR with Custom Artifact Name
+    uses: ./.github/workflows/docker-pull-push-ecr.yaml
+    with:
+      source_aws_account_id: "911453050078"
+      source_aws_region: "eu-central-1"
+      source_aws_role_name: "github-workflow-tests"
+      source_image_name: "github-workflow-tests"
+      source_image_tag: "latest"
+      dest_aws_account_id: "911453050078"
+      dest_aws_region: "eu-central-1"
+      dest_aws_role_name: "github-workflow-tests"
+      dest_image_name: "github-workflow-tests-artifact"
+      dest_image_tag: "test-artifact-${{ github.run_id }}"
+      artifact_name: "custom-artifact"
+    permissions:
+      id-token: write
+      contents: read
