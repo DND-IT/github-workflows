@@ -7,6 +7,11 @@ webapp_2:
   image_tag: latest
 
 valkey:
+  # The image is not insecure, but the chart doesn't
+  # recognize bitnamilegacy as their own valid repo
+  global:
+    security:
+      allowInsecureImages: true
   # https://github.com/bitnami/charts/issues/35164
   # bitnamilegacy do not receive updates anymore
   # an official Valkey solution is probably on the way https://github.com/valkey-io/valkey/issues/2371
