@@ -5,3 +5,12 @@ webapp:
 webapp_2:
   image_repo: foo
   image_tag: latest
+
+valkey:
+  # https://github.com/bitnami/charts/issues/35164
+  # bitnamilegacy do not receive updates anymore
+  # an official Valkey solution is probably on the way https://github.com/valkey-io/valkey/issues/2371
+  image:
+    registry: docker.io
+    repository: bitnamilegacy/valkey
+    tag: 8.0.2-debian-12-r0
