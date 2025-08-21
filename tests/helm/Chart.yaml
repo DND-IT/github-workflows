@@ -9,6 +9,8 @@ dependencies:
     tags:
       - webapp
   - name: valkey
+    # do not update without moving away from bitnami
+    # https://github.com/bitnami/charts/issues/35164; check values.yaml
     version: 2.2.3
     repository: oci://registry-1.docker.io/bitnamicharts
     condition: valkey.enabled
