@@ -28,7 +28,7 @@ jobs:
   notify-slack:
     name: Notify Slack of Release
     needs: [release]
-    if: success()
+    if: success() && needs.release.outputs.new_release_published == 'true'
     uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
