@@ -1,0 +1,16 @@
+{
+  "name": "github-workflows",
+  "version": "3.6.0",
+  "description": "Reusable GitHub Actions workflows for DND-IT/DAI",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DND-IT/github-workflows.git"
+  },
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "semantic-release": "^24.2.0"
+  }
+}

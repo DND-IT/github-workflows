@@ -20,7 +20,8 @@ The state of these workflows are considered to be in alpha, and are subject to c
 - Terraform orchestration
 - Docker image management
 - Lambda builds
-- AWS secrets cloning across AWS accounts.
+- AWS secrets cloning across AWS accounts
+- Slack notifications
 
 ## Goals
 

@@ -1,12 +1,23 @@
-name: Release Github Resuable Workflows
+name: Release Github Reusable Workflows
 
 on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '.github/**'
+      - '**.md'
+      - 'docs/**'
+
+  workflow_dispatch:
 
 jobs:
   release:
     permissions:
       contents: write
-    uses: ./.github/workflows/gh-release-on-main.yaml
+      issues: write
+      pull-requests: write
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      use_semantic_release: true
+      update_version_aliases: true
