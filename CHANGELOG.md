@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.8.0](https://github.com/DND-IT/github-workflows/compare/v3.7.0...v3.8.0) (2025-10-15)
+
+### ✨ Features
+
+* notifications workflow ([#59](https://github.com/DND-IT/github-workflows/issues/59)) ([a51d44e](https://github.com/DND-IT/github-workflows/commit/a51d44ebf333294f094f5a5c0290d659fd9a34ac))
+
 ## [3.7.0](https://github.com/DND-IT/github-workflows/compare/v3.6.0...v3.7.0) (2025-10-15)
 
 ### ✨ Features
