@@ -104,101 +104,95 @@ jobs:
       - name: Build Slack Payload
         id: payload
         run: |
-          # Start building the payload
-          PAYLOAD=$(cat <<'EOF'
-          {
-            "channel": "${{ inputs.channel }}",
-            "text": "${{ steps.settings.outputs.emoji }} ${{ steps.settings.outputs.message }}",
-            "blocks": [
-              {
-                "type": "header",
-                "text": {
-                  "type": "plain_text",
-                  "text": "${{ steps.settings.outputs.emoji }} ${{ inputs.notification_title }}",
-                  "emoji": true
-                }
-              }
-          EOF
-          )
-
-          # Add fields section if there are job results or additional fields
+          # Build payload using jq to ensure proper JSON formatting
           JOB_RESULTS='${{ inputs.job_results }}'
           ADDITIONAL_FIELDS='${{ inputs.additional_fields }}'
+          CUSTOM_BLOCKS='${{ inputs.custom_blocks }}'
 
-          FIELDS=""
+          # Start with base structure
+          jq -n \
+            --arg channel "${{ inputs.channel }}" \
+            --arg text "${{ steps.settings.outputs.emoji }} ${{ steps.settings.outputs.message }}" \
+            --arg emoji "${{ steps.settings.outputs.emoji }}" \
+            --arg title "${{ inputs.notification_title }}" \
+            '{
+              channel: $channel,
+              text: $text,
+              blocks: [
+                {
+                  type: "header",
+                  text: {
+                    type: "plain_text",
+                    text: ($emoji + " " + $title),
+                    emoji: true
+                  }
+                }
+              ]
+            }' > /tmp/slack-payload.json
+
+          # Add fields section if needed
+          FIELDS_ARRAY="[]"
 
           # Process job results
           if [ -n "$JOB_RESULTS" ] && [ "$JOB_RESULTS" != "null" ]; then
-            echo "$JOB_RESULTS" | jq -r '.[] | "  - type: \"mrkdwn\"\n    text: \"*" + .name + ":*\\n" + .result + "\""' | while read -r line; do
-              FIELDS="${FIELDS}${line}"$'\n'
-            done
+            FIELDS_ARRAY=$(echo "$JOB_RESULTS" | jq -r '[.[] | {type: "mrkdwn", text: ("*" + .name + ":*\n" + .result)}]')
           fi
 
           # Process additional fields
           if [ -n "$ADDITIONAL_FIELDS" ] && [ "$ADDITIONAL_FIELDS" != "null" ]; then
-            echo "$ADDITIONAL_FIELDS" | jq -r '.[] | "  - type: \"mrkdwn\"\n    text: \"*" + .name + ":*\\n" + .value + "\""' | while read -r line; do
-              FIELDS="${FIELDS}${line}"$'\n'
-            done
+            ADDITIONAL=$(echo "$ADDITIONAL_FIELDS" | jq -r '[.[] | {type: "mrkdwn", text: ("*" + .name + ":*\n" + .value)}]')
+            FIELDS_ARRAY=$(echo "$FIELDS_ARRAY" | jq --argjson add "$ADDITIONAL" '. + $add')
           fi
 
           # Add environment field if provided
           if [ -n "${{ inputs.environment }}" ]; then
-            FIELDS="${FIELDS}  - type: \"mrkdwn\"\n    text: \"*Environment:*\\n${{ inputs.environment }}\"\n"
+            ENV_FIELD=$(jq -n --arg env "${{ inputs.environment }}" '{type: "mrkdwn", text: ("*Environment:*\n" + $env)}')
+            FIELDS_ARRAY=$(echo "$FIELDS_ARRAY" | jq --argjson field "$ENV_FIELD" '. + [$field]')
           fi
 
           # Add triggered by field if requested
           if [ "${{ inputs.include_triggered_by }}" == "true" ]; then
-            FIELDS="${FIELDS}  - type: \"mrkdwn\"\n    text: \"*Triggered By:*\\n${{ github.event_name }}\"\n"
+            TRIGGER_FIELD=$(jq -n --arg event "${{ github.event_name }}" '{type: "mrkdwn", text: ("*Triggered By:*\n" + $event)}')
+            FIELDS_ARRAY=$(echo "$FIELDS_ARRAY" | jq --argjson field "$TRIGGER_FIELD" '. + [$field]')
           fi
 
           # Add fields section if we have any fields
-          if [ -n "$FIELDS" ]; then
-            PAYLOAD="${PAYLOAD},"$'\n'"$(cat <<'FIELDS_EOF'
-              {
-                "type": "section",
-                "fields": [
-          FIELDS_EOF
-            )"
-            PAYLOAD="${PAYLOAD}"$'\n'"${FIELDS%$'\n'}]"$'\n'"}"
+          if [ "$(echo "$FIELDS_ARRAY" | jq 'length')" -gt 0 ]; then
+            FIELDS_BLOCK=$(jq -n --argjson fields "$FIELDS_ARRAY" '{type: "section", fields: $fields}')
+            jq --argjson block "$FIELDS_BLOCK" '.blocks += [$block]' /tmp/slack-payload.json > /tmp/slack-payload-tmp.json
+            mv /tmp/slack-payload-tmp.json /tmp/slack-payload.json
           fi
 
           # Add workflow link if requested
           if [ "${{ inputs.include_workflow_link }}" == "true" ]; then
-            PAYLOAD="${PAYLOAD},"$'\n'"$(cat <<'LINK_EOF'
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>"
+            LINK_BLOCK=$(jq -n \
+              --arg url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              '{
+                type: "section",
+                text: {
+                  type: "mrkdwn",
+                  text: ("<" + $url + "|View Workflow Run>")
                 }
-              }
-          LINK_EOF
-            )"
+              }')
+            jq --argjson block "$LINK_BLOCK" '.blocks += [$block]' /tmp/slack-payload.json > /tmp/slack-payload-tmp.json
+            mv /tmp/slack-payload-tmp.json /tmp/slack-payload.json
           fi
 
           # Add custom blocks if provided
-          CUSTOM_BLOCKS='${{ inputs.custom_blocks }}'
           if [ -n "$CUSTOM_BLOCKS" ] && [ "$CUSTOM_BLOCKS" != "null" ]; then
-            PAYLOAD="${PAYLOAD},$(echo "$CUSTOM_BLOCKS" | jq -r '.[] | @json' | sed 's/^/              /')"
+            jq --argjson blocks "$CUSTOM_BLOCKS" '.blocks += $blocks' /tmp/slack-payload.json > /tmp/slack-payload-tmp.json
+            mv /tmp/slack-payload-tmp.json /tmp/slack-payload.json
           fi
-
-          # Close the blocks array
-          PAYLOAD="${PAYLOAD}"$'\n'"    ]"
 
           # Add thread_ts if provided
           if [ -n "${{ inputs.thread_ts }}" ]; then
-            PAYLOAD="${PAYLOAD},"$'\n'"    \"thread_ts\": \"${{ inputs.thread_ts }}\""
+            jq --arg ts "${{ inputs.thread_ts }}" '.thread_ts = $ts' /tmp/slack-payload.json > /tmp/slack-payload-tmp.json
+            mv /tmp/slack-payload-tmp.json /tmp/slack-payload.json
           fi
 
-          # Close the payload
-          PAYLOAD="${PAYLOAD}"$'\n'"  }"
-
-          # Save to file for debugging and use in next step
-          echo "$PAYLOAD" > /tmp/slack-payload.json
-
-          # Output for verification (truncated for logs)
+          # Output for verification
           echo "Payload preview:"
-          head -20 /tmp/slack-payload.json
+          jq . /tmp/slack-payload.json | head -30
 
       - name: Send Slack Notification
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
