@@ -1,0 +1,208 @@
+name: Slack Notification
+
+on:
+  workflow_call:
+    secrets:
+      slack_bot_token:
+        description: "Slack Bot Token for authentication"
+        required: true
+    inputs:
+      channel:
+        description: "Slack channel ID or name to send notification to"
+        type: string
+        required: true
+      notification_title:
+        description: "Title of the notification (shown in header)"
+        type: string
+        required: true
+      notification_message:
+        description: "Main notification message text"
+        type: string
+      status:
+        description: "Overall status (success, failure, partial, warning, info). Used for color and emoji if not overridden."
+        type: string
+        default: "info"
+      color:
+        description: "Custom hex color for notification (e.g., #36a64f). Overrides status-based color."
+        type: string
+      emoji:
+        description: "Custom emoji for notification. Overrides status-based emoji."
+        type: string
+      job_results:
+        description: "JSON array of job results: [{\"name\": \"Job Name\", \"result\": \"success\"}]. Max 10 fields due to Slack limits."
+        type: string
+      additional_fields:
+        description: "JSON array of custom fields: [{\"name\": \"Field Name\", \"value\": \"Field Value\"}]. Combined with job_results, max 10 total."
+        type: string
+      include_workflow_link:
+        description: "Include link to workflow run"
+        type: boolean
+        default: true
+      include_triggered_by:
+        description: "Include information about who/what triggered the workflow"
+        type: boolean
+        default: true
+      custom_blocks:
+        description: "JSON array of custom Slack blocks to append to the message"
+        type: string
+      thread_ts:
+        description: "Thread timestamp to reply in a thread"
+        type: string
+      environment:
+        description: "Environment name (optional, added as a field if provided)"
+        type: string
+
+jobs:
+  notify:
+    name: Send Slack Notification
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Determine Notification Settings
+        id: settings
+        run: |
+          STATUS="${{ inputs.status }}"
+
+          # Set default colors and emojis based on status
+          case "$STATUS" in
+            success)
+              DEFAULT_COLOR="#36a64f"
+              DEFAULT_EMOJI="✅"
+              ;;
+            failure)
+              DEFAULT_COLOR="#FF0000"
+              DEFAULT_EMOJI="❌"
+              ;;
+            partial|warning)
+              DEFAULT_COLOR="#FFA500"
+              DEFAULT_EMOJI="⚠️"
+              ;;
+            info)
+              DEFAULT_COLOR="#0066CC"
+              DEFAULT_EMOJI="ℹ️"
+              ;;
+            *)
+              DEFAULT_COLOR="#808080"
+              DEFAULT_EMOJI="⚪"
+              ;;
+          esac
+
+          # Use custom values if provided, otherwise use defaults
+          COLOR="${{ inputs.color }}"
+          EMOJI="${{ inputs.emoji }}"
+
+          echo "color=${COLOR:-$DEFAULT_COLOR}" >> $GITHUB_OUTPUT
+          echo "emoji=${EMOJI:-$DEFAULT_EMOJI}" >> $GITHUB_OUTPUT
+
+          # Format the message
+          MESSAGE="${{ inputs.notification_message }}"
+          if [ -z "$MESSAGE" ]; then
+            MESSAGE="${{ inputs.notification_title }}"
+          fi
+          echo "message=$MESSAGE" >> $GITHUB_OUTPUT
+
+      - name: Build Slack Payload
+        id: payload
+        run: |
+          # Start building the payload
+          PAYLOAD=$(cat <<'EOF'
+          {
+            "channel": "${{ inputs.channel }}",
+            "text": "${{ steps.settings.outputs.emoji }} ${{ steps.settings.outputs.message }}",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "${{ steps.settings.outputs.emoji }} ${{ inputs.notification_title }}",
+                  "emoji": true
+                }
+              }
+          EOF
+          )
+
+          # Add fields section if there are job results or additional fields
+          JOB_RESULTS='${{ inputs.job_results }}'
+          ADDITIONAL_FIELDS='${{ inputs.additional_fields }}'
+
+          FIELDS=""
+
+          # Process job results
+          if [ -n "$JOB_RESULTS" ] && [ "$JOB_RESULTS" != "null" ]; then
+            echo "$JOB_RESULTS" | jq -r '.[] | "  - type: \"mrkdwn\"\n    text: \"*" + .name + ":*\\n" + .result + "\""' | while read -r line; do
+              FIELDS="${FIELDS}${line}"$'\n'
+            done
+          fi
+
+          # Process additional fields
+          if [ -n "$ADDITIONAL_FIELDS" ] && [ "$ADDITIONAL_FIELDS" != "null" ]; then
+            echo "$ADDITIONAL_FIELDS" | jq -r '.[] | "  - type: \"mrkdwn\"\n    text: \"*" + .name + ":*\\n" + .value + "\""' | while read -r line; do
+              FIELDS="${FIELDS}${line}"$'\n'
+            done
+          fi
+
+          # Add environment field if provided
+          if [ -n "${{ inputs.environment }}" ]; then
+            FIELDS="${FIELDS}  - type: \"mrkdwn\"\n    text: \"*Environment:*\\n${{ inputs.environment }}\"\n"
+          fi
+
+          # Add triggered by field if requested
+          if [ "${{ inputs.include_triggered_by }}" == "true" ]; then
+            FIELDS="${FIELDS}  - type: \"mrkdwn\"\n    text: \"*Triggered By:*\\n${{ github.event_name }}\"\n"
+          fi
+
+          # Add fields section if we have any fields
+          if [ -n "$FIELDS" ]; then
+            PAYLOAD="${PAYLOAD},"$'\n'"$(cat <<'FIELDS_EOF'
+              {
+                "type": "section",
+                "fields": [
+          FIELDS_EOF
+            )"
+            PAYLOAD="${PAYLOAD}"$'\n'"${FIELDS%$'\n'}]"$'\n'"}"
+          fi
+
+          # Add workflow link if requested
+          if [ "${{ inputs.include_workflow_link }}" == "true" ]; then
+            PAYLOAD="${PAYLOAD},"$'\n'"$(cat <<'LINK_EOF'
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>"
+                }
+              }
+          LINK_EOF
+            )"
+          fi
+
+          # Add custom blocks if provided
+          CUSTOM_BLOCKS='${{ inputs.custom_blocks }}'
+          if [ -n "$CUSTOM_BLOCKS" ] && [ "$CUSTOM_BLOCKS" != "null" ]; then
+            PAYLOAD="${PAYLOAD},$(echo "$CUSTOM_BLOCKS" | jq -r '.[] | @json' | sed 's/^/              /')"
+          fi
+
+          # Close the blocks array
+          PAYLOAD="${PAYLOAD}"$'\n'"    ]"
+
+          # Add thread_ts if provided
+          if [ -n "${{ inputs.thread_ts }}" ]; then
+            PAYLOAD="${PAYLOAD},"$'\n'"    \"thread_ts\": \"${{ inputs.thread_ts }}\""
+          fi
+
+          # Close the payload
+          PAYLOAD="${PAYLOAD}"$'\n'"  }"
+
+          # Save to file for debugging and use in next step
+          echo "$PAYLOAD" > /tmp/slack-payload.json
+
+          # Output for verification (truncated for logs)
+          echo "Payload preview:"
+          head -20 /tmp/slack-payload.json
+
+      - name: Send Slack Notification
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.slack_bot_token }}
+          payload-file-path: /tmp/slack-payload.json

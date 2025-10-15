@@ -1,0 +1,168 @@
+name: Test Slack Notification Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_test-slack-notify.yaml"
+      - ".github/workflows/slack-notify.yaml"
+
+jobs:
+  # Simulate some jobs with different outcomes
+  job_success:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Success Step
+        run: echo "This job succeeds"
+
+  job_failure:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Failure Step
+        run: exit 1
+
+  job_skipped:
+    runs-on: ubuntu-latest
+    if: false
+    steps:
+      - name: Skipped Step
+        run: echo "This should be skipped"
+
+  # Test 1: Basic notification with default settings
+  test_basic_notification:
+    needs: [job_success]
+    uses: ./.github/workflows/slack-notify.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
+      notification_title: "Test: Basic Notification"
+      notification_message: "This is a basic test notification with default info status"
+
+  # Test 2: Success notification with job results
+  test_success_notification:
+    needs: [job_success, job_failure]
+    if: always()
+    uses: ./.github/workflows/slack-notify.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
+      notification_title: "Test: Success Notification"
+      notification_message: "Testing success status with job results"
+      status: "success"
+      job_results: |
+        [
+          {"name": "Job Success", "result": "${{ needs.job_success.result }}"},
+          {"name": "Job Failure", "result": "${{ needs.job_failure.result }}"}
+        ]
+
+  # Test 3: Failure notification with custom color and emoji
+  test_failure_notification:
+    needs: [job_failure]
+    if: always()
+    uses: ./.github/workflows/slack-notify.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
+      notification_title: "Test: Failure Notification"
+      notification_message: "Testing failure status with custom styling"
+      status: "failure"
+      color: "#DC143C"
+      emoji: "🔥"
+      include_workflow_link: true
+      include_triggered_by: true
+
+  # Test 4: Warning notification with additional fields
+  test_warning_with_fields:
+    needs: [job_success, job_failure]
+    if: always()
+    uses: ./.github/workflows/slack-notify.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
+      notification_title: "Test: Warning with Fields"
+      notification_message: "Testing warning status with additional fields"
+      status: "warning"
+      additional_fields: |
+        [
+          {"name": "Repository", "value": "${{ github.repository }}"},
+          {"name": "Branch", "value": "${{ github.ref_name }}"},
+          {"name": "Commit", "value": "${{ github.sha }}"}
+        ]
+
+  # Test 5: Comprehensive notification (combines job results and additional fields)
+  test_comprehensive_notification:
+    needs: [job_success, job_failure]
+    if: always()
+    uses: ./.github/workflows/slack-notify.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
+      notification_title: "Test: Comprehensive Notification"
+      notification_message: "This notification includes job results, additional fields, and all features"
+      status: "partial"
+      environment: "test"
+      job_results: |
+        [
+          {"name": "Success Job", "result": "${{ needs.job_success.result }}"},
+          {"name": "Failure Job", "result": "${{ needs.job_failure.result }}"}
+        ]
+      additional_fields: |
+        [
+          {"name": "PR Number", "value": "${{ github.event.pull_request.number || 'N/A' }}"},
+          {"name": "Actor", "value": "${{ github.actor }}"}
+        ]
+      include_workflow_link: true
+      include_triggered_by: true
+
+  # Test 6: Minimal notification (no optional fields)
+  test_minimal_notification:
+    uses: ./.github/workflows/slack-notify.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
+      notification_title: "Test: Minimal Notification"
+      include_workflow_link: false
+      include_triggered_by: false
+
+  # Test 7: Multiple statuses demonstration
+  test_info_status:
+    uses: ./.github/workflows/slack-notify.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
+      notification_title: "Test: Info Status"
+      notification_message: "Testing info status type"
+      status: "info"
+
+  # Simulated real-world scenario: Deployment notification
+  test_deployment_scenario:
+    needs: [job_success, job_failure]
+    if: always()
+    uses: ./.github/workflows/slack-notify.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
+      notification_title: "Deployment Status - Staging"
+      notification_message: "Deployment workflow completed with mixed results"
+      status: "partial"
+      environment: "staging"
+      job_results: |
+        [
+          {"name": "Build", "result": "${{ needs.job_success.result }}"},
+          {"name": "Deploy", "result": "${{ needs.job_failure.result }}"}
+        ]
+      additional_fields: |
+        [
+          {"name": "Version", "value": "v1.2.3"},
+          {"name": "Deployer", "value": "${{ github.actor }}"}
+        ]
