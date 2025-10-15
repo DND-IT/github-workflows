@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/_test-slack-notify.yaml"
-      - ".github/workflows/slack-notify.yaml"
+      - ".github/workflows/_test-notify-slack.yaml"
+      - ".github/workflows/notify-slack.yaml"
 
 jobs:
   # Simulate some jobs with different outcomes
@@ -33,7 +33,7 @@ jobs:
   # Test 1: Basic notification with default settings
   test_basic_notification:
     needs: [job_success]
-    uses: ./.github/workflows/slack-notify.yaml
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -45,7 +45,7 @@ jobs:
   test_success_notification:
     needs: [job_success, job_failure]
     if: always()
-    uses: ./.github/workflows/slack-notify.yaml
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -63,7 +63,7 @@ jobs:
   test_failure_notification:
     needs: [job_failure]
     if: always()
-    uses: ./.github/workflows/slack-notify.yaml
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -80,7 +80,7 @@ jobs:
   test_warning_with_fields:
     needs: [job_success, job_failure]
     if: always()
-    uses: ./.github/workflows/slack-notify.yaml
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -99,7 +99,7 @@ jobs:
   test_comprehensive_notification:
     needs: [job_success, job_failure]
     if: always()
-    uses: ./.github/workflows/slack-notify.yaml
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -123,7 +123,7 @@ jobs:
 
   # Test 6: Minimal notification (no optional fields)
   test_minimal_notification:
-    uses: ./.github/workflows/slack-notify.yaml
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -134,7 +134,7 @@ jobs:
 
   # Test 7: Multiple statuses demonstration
   test_info_status:
-    uses: ./.github/workflows/slack-notify.yaml
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -147,7 +147,7 @@ jobs:
   test_deployment_scenario:
     needs: [job_success, job_failure]
     if: always()
-    uses: ./.github/workflows/slack-notify.yaml
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
