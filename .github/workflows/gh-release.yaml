@@ -15,6 +15,24 @@ on:
         description: "Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release."
         type: boolean
         default: false
+      use_github_app:
+        description: "Use GitHub App token to bypass branch protection (requires GH_APP_ID and GH_APP_PRIVATE_KEY secrets)"
+        type: boolean
+        default: false
+    secrets:
+      GH_APP_ID:
+        description: "GitHub App ID (required if use_github_app is true)"
+        required: false
+      GH_APP_PRIVATE_KEY:
+        description: "GitHub App private key (required if use_github_app is true)"
+        required: false
+    outputs:
+      version:
+        description: "The version that was released"
+        value: ${{ jobs.determine-version.outputs.version }}
+      new_release_published:
+        description: "Whether a new release was published"
+        value: ${{ jobs.determine-version.outputs.new_release_published }}
 
 jobs:
   determine-version:
@@ -73,11 +91,20 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      - name: Generate GitHub App Token
+        if: inputs.use_semantic_release == true && inputs.use_github_app == true
+        id: generate-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           fetch-depth: 0
           persist-credentials: true
+          token: ${{ (inputs.use_semantic_release == true && inputs.use_github_app == true) && steps.generate-token.outputs.token || github.token }}
 
       - name: Semantic Release
         if: inputs.use_semantic_release == true
@@ -93,7 +120,7 @@ jobs:
             @semantic-release/git@10.0.1
             conventional-changelog-conventionalcommits@8.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ (inputs.use_github_app == true) && steps.generate-token.outputs.token || github.token }}
 
       - name: Manual Release
         if: inputs.use_semantic_release == false && inputs.tag != ''

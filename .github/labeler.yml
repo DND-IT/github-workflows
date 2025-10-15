@@ -1,0 +1,50 @@
+# Labeler configuration for github-workflows repository
+# Automatically assigns labels based on changed files in PRs
+
+terraform:
+  - changed-files:
+      - any-glob-to-any-file: '.github/workflows/tf-*.yaml'
+
+docker:
+  - changed-files:
+      - any-glob-to-any-file: '.github/workflows/docker-*.yaml'
+
+lambda:
+  - changed-files:
+      - any-glob-to-any-file: '.github/workflows/lambda-*.yaml'
+
+gitops:
+  - changed-files:
+      - any-glob-to-any-file: '.github/workflows/gitops-*.yaml'
+
+aws:
+  - changed-files:
+      - any-glob-to-any-file: '.github/workflows/aws-*.yaml'
+
+github:
+  - changed-files:
+      - any-glob-to-any-file: '.github/workflows/gh-*.yaml'
+
+notifications:
+  - changed-files:
+      - any-glob-to-any-file: '.github/workflows/notify-*.yaml'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '**.md'
+          - 'mkdocs.yaml'
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'package.json'
+          - 'package-lock.json'
+          - '.releaserc.json'
+
+ci-cd:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '.github/workflows/release.yaml'
+          - 'renovate.json'

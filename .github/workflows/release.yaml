@@ -5,7 +5,6 @@ on:
     branches:
       - main
     paths-ignore:
-      - '.github/**'
       - '**.md'
       - 'docs/**'
 
@@ -21,3 +20,27 @@ jobs:
     with:
       use_semantic_release: true
       update_version_aliases: true
+      use_github_app: true
+    secrets:
+      GH_APP_ID: ${{ secrets.FISSION_GH_APP_ID }}
+      GH_APP_PRIVATE_KEY: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
+
+  notify-slack:
+    name: Notify Slack of Release
+    needs: [release]
+    if: success()
+    uses: ./.github/workflows/notify-slack.yaml
+    secrets:
+      slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
+    with:
+      channel: "C09LG2L8EQ5"
+      notification_title: "New GitHub Workflows Release 🚀"
+      notification_message: "Version v${{ needs.release.outputs.version }} has been released!"
+      status: "success"
+      additional_fields: |
+        [
+          {"name": "Version", "value": "<${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.release.outputs.version }}|v${{ needs.release.outputs.version }}>"},
+          {"name": "Repository", "value": "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"}
+        ]
+      include_workflow_link: true
+      include_triggered_by: true
