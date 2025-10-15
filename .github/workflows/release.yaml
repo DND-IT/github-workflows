@@ -12,94 +12,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  determine-version:
-    name: Determine Version
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.semantic.outputs.new_release_version }}
-      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Semantic Release (Dry Run)
-        id: semantic
-        uses: cycjimmy/semantic-release-action@v4
-        with:
-          dry_run: true
-          branches: |
-            [
-              'main'
-            ]
-          semantic_version: 24.2.0
-          extra_plugins: |
-            @semantic-release/changelog@6.0.3
-            @semantic-release/git@10.0.1
-            conventional-changelog-conventionalcommits@8.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Display version
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          echo "📦 New version will be: v${{ steps.semantic.outputs.new_release_version }}"
-          echo "   Release notes:"
-          echo "${{ steps.semantic.outputs.new_release_notes }}"
-
-      - name: No release needed
-        if: steps.semantic.outputs.new_release_published == 'false'
-        run: |
-          echo "ℹ️  No release needed - no significant changes since last release"
-
   release:
-    name: Create GitHub Release
-    needs: [determine-version]
-    if: needs.determine-version.outputs.new_release_published == 'true'
-    runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
       pull-requests: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-        with:
-          fetch-depth: 0
-          persist-credentials: true
-
-      - name: Semantic Release
-        uses: cycjimmy/semantic-release-action@v4
-        with:
-          branches: |
-            [
-              'main'
-            ]
-          semantic_version: 24.2.0
-          extra_plugins: |
-            @semantic-release/changelog@6.0.3
-            @semantic-release/git@10.0.1
-            conventional-changelog-conventionalcommits@8.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update major and minor version tags
-        run: |
-          VERSION="${{ needs.determine-version.outputs.version }}"
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          MINOR=$(echo $VERSION | cut -d. -f2)
-
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          # Update major version tag (e.g., v3)
-          git tag -fa "v${MAJOR}" -m "Update major version tag to ${VERSION}"
-          git push origin "v${MAJOR}" --force
-
-          # Update minor version tag (e.g., v3.6)
-          git tag -fa "v${MAJOR}.${MINOR}" -m "Update minor version tag to ${VERSION}"
-          git push origin "v${MAJOR}.${MINOR}" --force
-
-          echo "✅ Updated version aliases: v${MAJOR}, v${MAJOR}.${MINOR}"
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      use_semantic_release: true
+      update_version_aliases: true
