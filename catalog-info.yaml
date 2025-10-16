@@ -1,0 +1,21 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: github-workflows
+  description: DAI standardized github workflows
+  annotations:
+    github.com/project-slug: DND-IT/github-workflows
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - infrastructure
+    - ci-cd
+    - github-actions
+  links:
+    - url: https://github.com/DND-IT/github-workflows
+      title: GitHub Repository
+      icon: github
+spec:
+  type: library
+  lifecycle: production
+  owner: group:dai
+  system: fission
