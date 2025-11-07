@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.10.0](https://github.com/DND-IT/github-workflows/compare/v3.9.0...v3.10.0) (2025-11-07)
+
+### ✨ Features
+
+* add input validation ([#66](https://github.com/DND-IT/github-workflows/issues/66)) ([71ca088](https://github.com/DND-IT/github-workflows/commit/71ca0886cd0994d6ec68b435fdf0cc22946f9eb0))
+
 ## [3.9.0](https://github.com/DND-IT/github-workflows/compare/v3.8.0...v3.9.0) (2025-10-16)
 
 ### ✨ Features
