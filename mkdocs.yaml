@@ -55,7 +55,7 @@ extra:
 
 plugins:
   - include-markdown
-  - awesome-pages
+  - awesome-nav
   - search:
       lang:
         - en
