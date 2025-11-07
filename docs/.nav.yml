@@ -1,9 +1,7 @@
 nav:
   - Overview:
-    - Overview: index.md
+      - Overview: index.md
   - Getting Started: getting-started
   - Workflows: workflows
   - Examples: examples
   - faq.md
-
-sort: title
