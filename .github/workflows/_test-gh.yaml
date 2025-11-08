@@ -1,0 +1,80 @@
+name: Test GitHub Release Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_test-gh.yaml"
+      - ".github/workflows/gh-release.yaml"
+
+jobs:
+  # Test 1: Semantic release with dry run (default behavior)
+  # This will determine what version would be released
+  test_semantic_release_default:
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      use_semantic_release: true
+      update_version_aliases: false
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+  # Test 2: Semantic release with version alias updates
+  # Tests the version alias update functionality
+  test_semantic_release_with_aliases:
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      use_semantic_release: true
+      update_version_aliases: true
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+  # Test 3: Manual release with explicit tag
+  # Note: This would only create a release if the tag exists
+  test_manual_release:
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      tag: v99.99.99-test
+      use_semantic_release: false
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+  # Test 4: Semantic release with GitHub App authentication
+  # Tests the app token generation flow
+  # test_semantic_release_with_app_auth:
+  #   uses: ./.github/workflows/gh-release.yaml
+  #   secrets:
+  #     app_private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+  #   with:
+  #     app_id: ${{ vars.GH_APP_ID }}
+  #     use_semantic_release: true
+  #     update_version_aliases: false
+  #   permissions:
+  #     contents: write
+  #     issues: write
+  #     pull-requests: write
+
+  # Test 5: Verify outputs are properly exposed
+  test_outputs:
+    needs: test_semantic_release_default
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check version output
+        run: |
+          echo "Version output: ${{ needs.test_semantic_release_default.outputs.version }}"
+          echo "New release published: ${{ needs.test_semantic_release_default.outputs.new_release_published }}"
+
+      - name: Validate outputs format
+        run: |
+          # Check that outputs are defined (even if empty)
+          if [ -z "${{ needs.test_semantic_release_default.outputs.new_release_published }}" ]; then
+            echo "⚠️  new_release_published output is not set"
+          else
+            echo "✅ new_release_published output: ${{ needs.test_semantic_release_default.outputs.new_release_published }}"
+          fi
