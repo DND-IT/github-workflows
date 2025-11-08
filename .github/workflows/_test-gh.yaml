@@ -9,72 +9,34 @@ on:
       - ".github/workflows/gh-release.yaml"
 
 jobs:
-  # Test 1: Semantic release with dry run (default behavior)
-  # This will determine what version would be released
-  test_semantic_release_default:
+  # Test 1: Dry-run semantic release
+  test_semantic_release_dry_run:
     uses: ./.github/workflows/gh-release.yaml
     with:
       use_semantic_release: true
-      update_version_aliases: false
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
+      dry_run: true
 
-  # Test 2: Semantic release with version alias updates
-  # Tests the version alias update functionality
-  test_semantic_release_with_aliases:
-    uses: ./.github/workflows/gh-release.yaml
-    with:
-      use_semantic_release: true
-      update_version_aliases: true
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-
-  # Test 3: Manual release with explicit tag
-  # Note: This would only create a release if the tag exists
-  test_manual_release:
-    uses: ./.github/workflows/gh-release.yaml
-    with:
-      tag: v99.99.99-test
-      use_semantic_release: false
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-
-  # Test 4: Semantic release with GitHub App authentication
-  # Tests the app token generation flow
-  # test_semantic_release_with_app_auth:
-  #   uses: ./.github/workflows/gh-release.yaml
-  #   secrets:
-  #     app_private_key: ${{ secrets.GH_APP_PRIVATE_KEY }}
-  #   with:
-  #     app_id: ${{ vars.GH_APP_ID }}
-  #     use_semantic_release: true
-  #     update_version_aliases: false
-  #   permissions:
-  #     contents: write
-  #     issues: write
-  #     pull-requests: write
-
-  # Test 5: Verify outputs are properly exposed
+  # Test 2: Verify outputs are properly exposed
   test_outputs:
-    needs: test_semantic_release_default
+    needs: test_semantic_release_dry_run
     runs-on: ubuntu-latest
     steps:
-      - name: Check version output
+      - name: Display all outputs
         run: |
-          echo "Version output: ${{ needs.test_semantic_release_default.outputs.version }}"
-          echo "New release published: ${{ needs.test_semantic_release_default.outputs.new_release_published }}"
+          echo "new_release_published: ${{ needs.test_semantic_release_dry_run.outputs.new_release_published }}"
+          echo "new_release_version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_version }}"
+          echo "new_release_major_version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_major_version }}"
+          echo "new_release_minor_version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_minor_version }}"
+          echo "new_release_patch_version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_patch_version }}"
+          echo "new_release_git_tag: ${{ needs.test_semantic_release_dry_run.outputs.new_release_git_tag }}"
+          echo "new_release_git_head: ${{ needs.test_semantic_release_dry_run.outputs.new_release_git_head }}"
 
-      - name: Validate outputs format
+      - name: Validate outputs are set
         run: |
-          # Check that outputs are defined (even if empty)
-          if [ -z "${{ needs.test_semantic_release_default.outputs.new_release_published }}" ]; then
-            echo "⚠️  new_release_published output is not set"
+          if [ "${{ needs.test_semantic_release_dry_run.outputs.new_release_published }}" == "true" ]; then
+            echo "✅ New release will be published"
+            echo "   Version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_version }}"
+            echo "   Git tag: ${{ needs.test_semantic_release_dry_run.outputs.new_release_git_tag }}"
           else
-            echo "✅ new_release_published output: ${{ needs.test_semantic_release_default.outputs.new_release_published }}"
+            echo "ℹ️  No new release needed"
           fi

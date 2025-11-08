@@ -15,6 +15,10 @@ on:
         description: "Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release."
         type: boolean
         default: false
+      dry_run:
+        description: "Run in dry-run mode to preview the release without creating it."
+        type: boolean
+        default: false
       app_id:
         description: "GitHub App ID (for generating a token if using GitHub App authentication)"
         type: string
@@ -24,69 +28,44 @@ on:
         description: "GitHub App private key (for generating a token if using GitHub App authentication)"
         required: false
     outputs:
-      version:
-        description: "The version that was released"
-        value: ${{ jobs.determine-version.outputs.version }}
       new_release_published:
-        description: "Whether a new release was published"
-        value: ${{ jobs.determine-version.outputs.new_release_published }}
+        description: "Whether a new release was published (true or false)"
+        value: ${{ jobs.release.outputs.new_release_published }}
+      new_release_version:
+        description: "Version of the new release (e.g. 1.3.0)"
+        value: ${{ jobs.release.outputs.new_release_version }}
+      new_release_major_version:
+        description: "Major version of the new release (e.g. 1)"
+        value: ${{ jobs.release.outputs.new_release_major_version }}
+      new_release_minor_version:
+        description: "Minor version of the new release (e.g. 3)"
+        value: ${{ jobs.release.outputs.new_release_minor_version }}
+      new_release_patch_version:
+        description: "Patch version of the new release (e.g. 0)"
+        value: ${{ jobs.release.outputs.new_release_patch_version }}
+      new_release_git_tag:
+        description: "The Git tag associated with the new release (e.g. v1.3.0)"
+        value: ${{ jobs.release.outputs.new_release_git_tag }}
+      new_release_git_head:
+        description: "The sha of the last commit being part of the new release"
+        value: ${{ jobs.release.outputs.new_release_git_head }}
 
 jobs:
-  determine-version:
-    name: Determine Version
-    runs-on: ubuntu-latest
-    if: inputs.use_semantic_release == true
-    outputs:
-      version: ${{ steps.semantic.outputs.new_release_version }}
-      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Semantic Release (Dry Run)
-        id: semantic
-        uses: cycjimmy/semantic-release-action@v4
-        with:
-          dry_run: true
-          branches: |
-            [
-              'main'
-            ]
-          semantic_version: 24.2.0
-          extra_plugins: |
-            @semantic-release/changelog@6.0.3
-            @semantic-release/git@10.0.1
-            conventional-changelog-conventionalcommits@8.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Display version
-        if: steps.semantic.outputs.new_release_published == 'true'
-        run: |
-          echo "📦 New version will be: v${{ steps.semantic.outputs.new_release_version }}"
-          echo "   Release notes:"
-          echo "${{ steps.semantic.outputs.new_release_notes }}"
-
-      - name: No release needed
-        if: steps.semantic.outputs.new_release_published == 'false'
-        run: |
-          echo "ℹ️  No release needed - no significant changes since last release"
-
   release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
-    needs: [determine-version]
-    if: |
-      always() &&
-      (inputs.use_semantic_release == false ||
-       needs.determine-version.outputs.new_release_published == 'true')
     permissions:
       contents: write
       issues: write
       pull-requests: write
+    outputs:
+      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
+      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
+      new_release_major_version: ${{ steps.semantic.outputs.new_release_major_version }}
+      new_release_minor_version: ${{ steps.semantic.outputs.new_release_minor_version }}
+      new_release_patch_version: ${{ steps.semantic.outputs.new_release_patch_version }}
+      new_release_git_tag: ${{ steps.semantic.outputs.new_release_git_tag }}
+      new_release_git_head: ${{ steps.semantic.outputs.new_release_git_head }}
     steps:
       - name: Generate GitHub App Token
         if: inputs.use_semantic_release == true && inputs.app_id != ''
@@ -102,14 +81,29 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
           token: ${{ (inputs.use_semantic_release == true && inputs.app_id != '') && steps.generate-token.outputs.token || github.token }}
+          # Always checkout main branch for consistency
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref || github.ref }}
+
+      - name: Temporarily merge PR branch
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          git fetch origin ${{ github.event.pull_request.head.ref }}
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
+          git merge --no-ff origin/${{ github.event.pull_request.head.ref }} --message "${{ github.event.pull_request.title }}"
 
       - name: Semantic Release
         if: inputs.use_semantic_release == true
-        uses: cycjimmy/semantic-release-action@v4
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v5
         with:
+          dry_run: ${{ inputs.dry_run }}
+          unset_gha_env: ${{ github.event_name == 'pull_request' }}
+          ci: ${{ github.event_name == 'pull_request' && false || '' }}
           branches: |
             [
-              'main'
+              'main',
+              'master'
             ]
           semantic_version: 24.2.0
           extra_plugins: |
@@ -120,28 +114,24 @@ jobs:
           GITHUB_TOKEN: ${{ (inputs.app_id != '') && steps.generate-token.outputs.token || github.token }}
 
       - name: Manual Release
-        if: inputs.use_semantic_release == false && inputs.tag != ''
+        if: inputs.use_semantic_release == false && inputs.tag != '' && inputs.dry_run == false
         uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2
         with:
           tag_name: ${{ inputs.tag }}
           generate_release_notes: true
 
       - name: Update major and minor version tags
-        if: inputs.use_semantic_release == true && inputs.update_version_aliases == true
+        if: inputs.use_semantic_release == true && inputs.update_version_aliases == true && inputs.dry_run == false && steps.semantic.outputs.new_release_published == 'true'
         run: |
-          VERSION="${{ needs.determine-version.outputs.version }}"
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          MINOR=$(echo $VERSION | cut -d. -f2)
-
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
           # Update major version tag (e.g., v3)
-          git tag -fa "v${MAJOR}" -m "Update major version tag to ${VERSION}"
-          git push origin "v${MAJOR}" --force
+          git tag -fa "v${{ steps.semantic.outputs.new_release_major_version }}" -m "Update major version tag to ${{ steps.semantic.outputs.new_release_version }}"
+          git push origin "v${{ steps.semantic.outputs.new_release_major_version }}" --force
 
           # Update minor version tag (e.g., v3.6)
-          git tag -fa "v${MAJOR}.${MINOR}" -m "Update minor version tag to ${VERSION}"
-          git push origin "v${MAJOR}.${MINOR}" --force
+          git tag -fa "v${{ steps.semantic.outputs.new_release_major_version }}.${{ steps.semantic.outputs.new_release_minor_version }}" -m "Update minor version tag to ${{ steps.semantic.outputs.new_release_version }}"
+          git push origin "v${{ steps.semantic.outputs.new_release_major_version }}.${{ steps.semantic.outputs.new_release_minor_version }}" --force
 
-          echo "✅ Updated version aliases: v${MAJOR}, v${MAJOR}.${MINOR}"
+          echo "✅ Updated version aliases: v${{ steps.semantic.outputs.new_release_major_version }}, v${{ steps.semantic.outputs.new_release_major_version }}.${{ steps.semantic.outputs.new_release_minor_version }}"

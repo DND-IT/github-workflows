@@ -7,6 +7,12 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
   workflow_dispatch:
 
@@ -20,7 +26,6 @@ jobs:
     with:
       use_semantic_release: true
       update_version_aliases: true
-      use_github_app: true
       app_id: ${{ vars.FISSION_GH_APP_ID }}
     secrets:
       app_private_key: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
