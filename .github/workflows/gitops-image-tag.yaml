@@ -42,6 +42,7 @@ on:
         default: ${{ github.event.repository.default_branch }}
       app_id:
         description: 'GitHub App ID for generating a token. Required if using GitHub App authentication.'
+        type: string
         required: false
     secrets:
       app_private_key:
