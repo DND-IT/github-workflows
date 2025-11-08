@@ -19,4 +19,4 @@
 <!--- Please see https://github.com/antonbabenko/pre-commit-terraform#how-to-install for how to install -->
 
 ## Github Conventional Commit Release
-[https://dnd-it.github.io/github-workflows/workflows/gh-release-on-main/](https://dnd-it.github.io/github-workflows/workflows/gh-release-on-main/)
+[https://dnd-it.github.io/github-workflows/workflows/gh-release/](https://dnd-it.github.io/github-workflows/workflows/gh-release/)
