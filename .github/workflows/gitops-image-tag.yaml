@@ -41,12 +41,9 @@ on:
         type: string
         default: ${{ github.event.repository.default_branch }}
       app_id:
-        description: '[DEPRECATED] Use secret instead: GitHub App ID for generating a token. Required if using GitHub App authentication. app_private_key must be set in the secrets.'
-        type: string
-    secrets:
-      app_id:
         description: 'GitHub App ID for generating a token. Required if using GitHub App authentication.'
         required: false
+    secrets:
       app_private_key:
         description: 'Private key for the GitHub App. Required if using GitHub App authentication.'
         required: false
@@ -146,7 +143,7 @@ jobs:
 
       - name: Generate a token
         id: generate-token
-        if: inputs.app_id
+        if: inputs.auto_merge == true
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ inputs.app_id }}
