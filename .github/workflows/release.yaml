@@ -21,9 +21,9 @@ jobs:
       use_semantic_release: true
       update_version_aliases: true
       use_github_app: true
+      app_id: ${{ vars.FISSION_GH_APP_ID }}
     secrets:
-      GH_APP_ID: ${{ secrets.FISSION_GH_APP_ID }}
-      GH_APP_PRIVATE_KEY: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
+      app_private_key: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
 
   notify-slack:
     name: Notify Slack of Release
