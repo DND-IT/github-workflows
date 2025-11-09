@@ -1,0 +1,42 @@
+name: Test GitHub Release Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_test-gh.yaml"
+      - ".github/workflows/gh-release.yaml"
+
+jobs:
+  # Test 1: Dry-run semantic release
+  test_semantic_release_dry_run:
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      use_semantic_release: true
+      dry_run: true
+
+  # Test 2: Verify outputs are properly exposed
+  test_outputs:
+    needs: test_semantic_release_dry_run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display all outputs
+        run: |
+          echo "new_release_published: ${{ needs.test_semantic_release_dry_run.outputs.new_release_published }}"
+          echo "new_release_version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_version }}"
+          echo "new_release_major_version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_major_version }}"
+          echo "new_release_minor_version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_minor_version }}"
+          echo "new_release_patch_version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_patch_version }}"
+          echo "new_release_git_tag: ${{ needs.test_semantic_release_dry_run.outputs.new_release_git_tag }}"
+          echo "new_release_git_head: ${{ needs.test_semantic_release_dry_run.outputs.new_release_git_head }}"
+
+      - name: Validate outputs are set
+        run: |
+          if [ "${{ needs.test_semantic_release_dry_run.outputs.new_release_published }}" == "true" ]; then
+            echo "✅ New release will be published"
+            echo "   Version: ${{ needs.test_semantic_release_dry_run.outputs.new_release_version }}"
+            echo "   Git tag: ${{ needs.test_semantic_release_dry_run.outputs.new_release_git_tag }}"
+          else
+            echo "ℹ️  No new release needed"
+          fi

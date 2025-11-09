@@ -7,6 +7,12 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
 
   workflow_dispatch:
 
@@ -20,26 +26,25 @@ jobs:
     with:
       use_semantic_release: true
       update_version_aliases: true
-      use_github_app: true
+      app_id: ${{ vars.FISSION_GH_APP_ID }}
     secrets:
-      GH_APP_ID: ${{ secrets.FISSION_GH_APP_ID }}
-      GH_APP_PRIVATE_KEY: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
+      app_private_key: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
 
   notify-slack:
     name: Notify Slack of Release
     needs: [release]
-    if: success() && needs.release.outputs.new_release_published == 'true'
+    if: success() && needs.release.outputs.new_release_published == 'true' && needs.release.outputs.dry_run == 'false'
     uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
       channel: "C09LG2L8EQ5"
-      notification_title: "New GitHub Workflows Release 🚀"
-      notification_message: "Version v${{ needs.release.outputs.version }} has been released!"
+      notification_title: "New ${{ github.event.repository.name }} release 🚀"
+      notification_message: "Version v${{ needs.release.outputs.new_release_version }} has been released!"
       status: "success"
       additional_fields: |
         [
-          {"name": "Version", "value": "<${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.release.outputs.version }}|v${{ needs.release.outputs.version }}>"},
+          {"name": "Version", "value": "<${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.release.outputs.new_release_version }}|v${{ needs.release.outputs.new_release_version }}>"},
           {"name": "Repository", "value": "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"}
         ]
       include_workflow_link: true
