@@ -53,6 +53,10 @@ on:
         description: "Whether this was a dry-run (true) or actual release (false)"
         value: ${{ jobs.release.outputs.dry_run }}
 
+env:
+  GIT_USER_NAME: "tamedia-fission[bot]"
+  GIT_USER_EMAIL: "238147500+tamedia-fission[bot]@users.noreply.github.com"
+
 jobs:
   release:
     name: Create GitHub Release
@@ -86,11 +90,17 @@ jobs:
           persist-credentials: true
           token: ${{ (inputs.use_semantic_release == true && inputs.app_id != '') && steps.generate-token.outputs.token || github.token }}
 
+      - name: Configure Git for semantic-release
+        if: inputs.use_semantic_release == true && inputs.app_id != ''
+        run: |
+          git config --global user.name "${{ env.GIT_USER_NAME }}"
+          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
+
       - name: Temporarily merge PR branch
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          git config --global user.name github-actions
-          git config --global user.email github-actions@github.com
+          git config --global user.name "${{ env.GIT_USER_NAME }}"
+          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
           git checkout ${{ github.event.pull_request.base.ref }}
           git merge --squash origin/${{ github.event.pull_request.head.ref }}
           git commit -m "${{ github.event.pull_request.title }}"
