@@ -3,7 +3,7 @@ title: Github Release
 ---
 
 <!-- action-docs-header source=".github/workflows/gh-release.yaml" -->
-## Github Release
+## Github Semantic Release [Alpha]
 <!-- action-docs-header source=".github/workflows/gh-release.yaml" -->
 
 ## Description
@@ -16,6 +16,7 @@ This workflow creates a release based on the tag.
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `tag` | <p>The tag to release (for manual releases). If not provided, uses semantic-release for automatic versioning.</p> | `string` | `false` | `""` |
+| `tag_format` | <p>The format of the tag to release (for manual releases).</p> | `string` | `false` | `v${version}` |
 | `use_semantic_release` | <p>Use semantic-release for automatic versioning and changelog generation</p> | `boolean` | `false` | `true` |
 | `update_version_aliases` | <p>Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release.</p> | `boolean` | `false` | `false` |
 | `dry_run` | <p>Run in dry-run mode to preview the release without creating it.</p> | `boolean` | `false` | `false` |
@@ -51,6 +52,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
+
+      tag_format:
+      # The format of the tag to release (for manual releases).
+      #
+      # Type: string
+      # Required: false
+      # Default: v${version}
 
       use_semantic_release:
       # Use semantic-release for automatic versioning and changelog generation

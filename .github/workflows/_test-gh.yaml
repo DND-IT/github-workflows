@@ -40,3 +40,10 @@ jobs:
           else
             echo "ℹ️  No new release needed"
           fi
+
+  test_custom_tag_format:
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      use_semantic_release: true
+      dry_run: true
+      tag_format: "fpp-v${version}"
