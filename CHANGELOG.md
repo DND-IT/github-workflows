@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.12.0](https://github.com/DND-IT/github-workflows/compare/v3.11.0...v3.12.0) (2025-11-17)
+
+### ✨ Features
+
+* support custom tags in semantic release workflow ([#72](https://github.com/DND-IT/github-workflows/issues/72)) ([73b793b](https://github.com/DND-IT/github-workflows/commit/73b793bf7469a83b6a1ada87ec3566fcae035581))
+
 ## [3.11.0](https://github.com/DND-IT/github-workflows/compare/v3.10.2...v3.11.0) (2025-11-10)
 
 ### ✨ Features
