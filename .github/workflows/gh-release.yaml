@@ -1,4 +1,4 @@
-name: Github Release
+name: Github Semantic Release [Alpha]
 
 on:
   workflow_call:
@@ -7,6 +7,10 @@ on:
         description: "The tag to release (for manual releases). If not provided, uses semantic-release for automatic versioning."
         type: string
         required: false
+      tag_format:
+        description: "The format of the tag to release (for manual releases)."
+        type: string
+        default: "v${version}"
       use_semantic_release:
         description: "Use semantic-release for automatic versioning and changelog generation"
         type: boolean
@@ -113,6 +117,7 @@ jobs:
           dry_run: ${{ inputs.dry_run || github.event_name == 'pull_request' }}
           unset_gha_env: ${{ github.event_name == 'pull_request' }}
           ci: ${{ github.event_name == 'pull_request' && false || true }}
+          tag_format: ${{ inputs.tag_format }}
           branches: |
             [
               'main',
