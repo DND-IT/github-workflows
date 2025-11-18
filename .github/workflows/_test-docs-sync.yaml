@@ -1,0 +1,78 @@
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/_test-docs-sync.yaml'
+      - '.github/workflows/docs-sync.yaml'
+
+jobs:
+  # Create a sample MkDocs site artifact
+  create_artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create sample MkDocs site
+        run: |
+          mkdir -p site
+          cat > site/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Test Docs</title>
+            <link rel="stylesheet" href="assets/stylesheets/main.css">
+          </head>
+          <body>
+            <h1>Test Documentation Site</h1>
+            <p>This is a test MkDocs deployment</p>
+          </body>
+          </html>
+          EOF
+
+          mkdir -p site/assets/stylesheets
+          cat > site/assets/stylesheets/main.css <<'EOF'
+          body { font-family: Arial, sans-serif; }
+          h1 { color: #333; }
+          EOF
+
+          mkdir -p site/search
+          echo '{"config":{"lang":["en"]},"docs":[]}' > site/search/search_index.json
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-mkdocs-site
+          path: site/
+          retention-days: 1
+
+  # Test the docs-sync workflow with environment
+  # Note: Uses mock S3/CloudFront values - will fail at sync step but validates input handling
+  test_docs_sync_with_environment:
+    needs: create_artifact
+    uses: ./.github/workflows/docs-sync.yaml
+    with:
+      environment: sandbox
+      artifact_name: test-mkdocs-site
+      s3_bucket: test-docs-bucket-${{ github.run_id }}
+      s3_path: test-docs/
+      cloudfront_distribution_id: E1234567890ABC
+      cloudfront_paths: /test-docs/*
+      delete_removed: true
+    continue-on-error: true
+
+  # Test the docs-sync workflow without environment (using explicit AWS inputs)
+  test_docs_sync_no_environment:
+    needs: create_artifact
+    uses: ./.github/workflows/docs-sync.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      artifact_name: test-mkdocs-site
+      s3_bucket: test-docs-bucket-no-env-${{ github.run_id }}
+      cloudfront_distribution_id: EABCDEF1234567
+      cloudfront_paths: /*
+      delete_removed: false
+    continue-on-error: true

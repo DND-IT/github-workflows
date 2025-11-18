@@ -1,0 +1,126 @@
+# Reusable workflow for syncing MkDocs sites to S3 with CloudFront invalidation
+#
+# Usage example:
+#   jobs:
+#     deploy:
+#       uses: DND-IT/github-workflows/.github/workflows/docs-sync.yaml@main
+#       with:
+#         environment: production
+#         artifact_name: mkdocs-site
+#         s3_bucket: my-docs-bucket
+#         s3_path: docs/
+#         cloudfront_distribution_id: E1234567890ABC
+#         cloudfront_paths: /docs/*
+
+name: Sync Docs to S3
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        type: string
+      aws_account_id:
+        description: "AWS Account ID"
+        type: string
+      aws_region:
+        description: "AWS Region"
+        type: string
+      aws_role_name:
+        description: "AWS Role Name"
+        type: string
+      aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+      artifact_name:
+        description: 'Name of the build artifact to deploy'
+        required: true
+        type: string
+      s3_bucket:
+        description: 'S3 bucket name'
+        required: true
+        type: string
+      s3_path:
+        description: 'Path in S3 bucket (e.g., docs/)'
+        required: false
+        type: string
+        default: ''
+      cloudfront_distribution_id:
+        description: 'CloudFront distribution ID'
+        required: true
+        type: string
+      cloudfront_paths:
+        description: 'CloudFront invalidation paths (e.g., /docs/*)'
+        required: true
+        type: string
+      delete_removed:
+        description: 'Delete files from S3 that are not in source (--delete flag)'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  deploy:
+    name: Sync to S3 & CloudFront
+    runs-on: ubuntu-24.04
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      S3_BUCKET: ${{ inputs.s3_bucket || vars.s3_bucket }}
+      S3_PATH: ${{ inputs.s3_path || vars.s3_path || '' }}
+      CLOUDFRONT_DISTRIBUTION_ID: ${{ inputs.cloudfront_distribution_id || vars.cloudfront_distribution_id }}
+      CLOUDFRONT_PATHS: ${{ inputs.cloudfront_paths || vars.cloudfront_paths }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: site
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+          AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync to S3
+        run: |
+          DELETE_FLAG=""
+          if [ "${{ inputs.delete_removed }}" = "true" ]; then
+            DELETE_FLAG="--delete"
+          fi
+
+          echo "📦 Syncing to s3://${S3_BUCKET}/${S3_PATH}"
+          aws s3 sync site/ s3://${S3_BUCKET}/${S3_PATH} $DELETE_FLAG
+
+      - name: Invalidate CloudFront cache
+        id: invalidate
+        run: |
+          echo "🔄 Invalidating CloudFront cache for distribution: ${CLOUDFRONT_DISTRIBUTION_ID}"
+          INVALIDATION_ID=$(aws cloudfront create-invalidation \
+            --distribution-id ${CLOUDFRONT_DISTRIBUTION_ID} \
+            --paths "${CLOUDFRONT_PATHS}" \
+            --query 'Invalidation.Id' \
+            --output text)
+
+          echo "✅ CloudFront invalidation created: $INVALIDATION_ID"
+          echo "invalidation_id=$INVALIDATION_ID" >> $GITHUB_OUTPUT
+
+      - name: Deployment summary
+        run: |
+          echo "## ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 S3 Bucket | \`${S3_BUCKET}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📁 S3 Path | \`${S3_PATH}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🌐 CloudFront Distribution | \`${CLOUDFRONT_DISTRIBUTION_ID}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔄 Invalidation Paths | \`${CLOUDFRONT_PATHS}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🆔 Invalidation ID | \`${{ steps.invalidate.outputs.invalidation_id }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployed from artifact: \`${{ inputs.artifact_name }}\`" >> $GITHUB_STEP_SUMMARY
