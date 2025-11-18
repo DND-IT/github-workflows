@@ -8,13 +8,16 @@ on:
         type: string
         required: false
       tag_format:
-        description: "The format of the tag to release (for manual releases)."
+        description: "The format of the tag to release. If not provided, uses the tagFormat from .releaserc.json or semantic-release default (v${version})."
         type: string
-        default: "v${version}"
+        required: false
       use_semantic_release:
         description: "Use semantic-release for automatic versioning and changelog generation"
         type: boolean
         default: true
+      working_directory:
+        description: "The working directory where the project is located (relative to the repository root)."
+        type: string
       update_version_aliases:
         description: "Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release."
         type: boolean
@@ -118,6 +121,7 @@ jobs:
           unset_gha_env: ${{ github.event_name == 'pull_request' }}
           ci: ${{ github.event_name == 'pull_request' && false || true }}
           tag_format: ${{ inputs.tag_format }}
+          working_directory: ${{ inputs.working_directory }}
           branches: |
             [
               'main',

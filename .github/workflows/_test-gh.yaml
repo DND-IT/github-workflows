@@ -9,14 +9,12 @@ on:
       - ".github/workflows/gh-release.yaml"
 
 jobs:
-  # Test 1: Dry-run semantic release
   test_semantic_release_dry_run:
     uses: ./.github/workflows/gh-release.yaml
     with:
       use_semantic_release: true
       dry_run: true
 
-  # Test 2: Verify outputs are properly exposed
   test_outputs:
     needs: test_semantic_release_dry_run
     runs-on: ubuntu-latest
@@ -46,4 +44,47 @@ jobs:
     with:
       use_semantic_release: true
       dry_run: true
-      tag_format: "fpp-v${version}"
+      tag_format: "foo-v${version}"
+
+  test_working_directory:
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      working_directory: tests/lambda/python
+      dry_run: true
+
+  test_working_directory_outputs:
+    needs: test_working_directory
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display all outputs
+        run: |
+          echo "=== Working Directory Test Outputs ==="
+          echo "new_release_published: ${{ needs.test_working_directory.outputs.new_release_published }}"
+          echo "new_release_version: ${{ needs.test_working_directory.outputs.new_release_version }}"
+          echo "new_release_major_version: ${{ needs.test_working_directory.outputs.new_release_major_version }}"
+          echo "new_release_minor_version: ${{ needs.test_working_directory.outputs.new_release_minor_version }}"
+          echo "new_release_patch_version: ${{ needs.test_working_directory.outputs.new_release_patch_version }}"
+          echo "new_release_git_tag: ${{ needs.test_working_directory.outputs.new_release_git_tag }}"
+          echo "new_release_git_head: ${{ needs.test_working_directory.outputs.new_release_git_head }}"
+
+      - name: Validate first release
+        run: |
+          if [ "${{ needs.test_working_directory.outputs.new_release_published }}" != "true" ]; then
+            echo "❌ Expected new_release_published to be true"
+            exit 1
+          fi
+
+          if [ "${{ needs.test_working_directory.outputs.new_release_version }}" != "1.0.0" ]; then
+            echo "❌ Expected version to be 1.0.0 (first release), got: ${{ needs.test_working_directory.outputs.new_release_version }}"
+            exit 1
+          fi
+
+          if [ "${{ needs.test_working_directory.outputs.new_release_git_tag }}" != "python-lambda-v1.0.0" ]; then
+            echo "❌ Expected tag to be python-lambda-v1.0.0, got: ${{ needs.test_working_directory.outputs.new_release_git_tag }}"
+            exit 1
+          fi
+
+          echo "✅ Working directory test passed!"
+          echo "   Version: ${{ needs.test_working_directory.outputs.new_release_version }}"
+          echo "   Git tag: ${{ needs.test_working_directory.outputs.new_release_git_tag }}"
+          echo "   Tag format from .releaserc.json was correctly applied"
