@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.13.0](https://github.com/DND-IT/github-workflows/compare/v3.12.0...v3.13.0) (2025-11-18)
+
+### ✨ Features
+
+* add working directory to release workflow ([#73](https://github.com/DND-IT/github-workflows/issues/73)) ([4bf339c](https://github.com/DND-IT/github-workflows/commit/4bf339c6e78b2a1aaf0774fefa089e00ff1e7342))
+
 ## [3.12.0](https://github.com/DND-IT/github-workflows/compare/v3.11.0...v3.12.0) (2025-11-17)
 
 ### ✨ Features
