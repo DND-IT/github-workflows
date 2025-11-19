@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.14.0](https://github.com/DND-IT/github-workflows/compare/v3.13.0...v3.14.0) (2025-11-19)
+
+### ✨ Features
+
+* adding instance status in verify step ([#74](https://github.com/DND-IT/github-workflows/issues/74)) ([d25527c](https://github.com/DND-IT/github-workflows/commit/d25527c35bbbbed6971e9f36f62dcbe206c65415))
+
 ## [3.13.0](https://github.com/DND-IT/github-workflows/compare/v3.12.0...v3.13.0) (2025-11-18)
 
 ### ✨ Features
