@@ -87,7 +87,7 @@ jobs:
         run: |
           aws rds describe-db-instances \
             --db-instance-identifier "${{ inputs.source_rds_identifier }}" | \
-              jq '.DBInstances[].TagList'
+              jq '.DBInstances[] | {DBInstanceStatus, TagList}'
 
       - name: Create Snapshot
         id: snapshot
