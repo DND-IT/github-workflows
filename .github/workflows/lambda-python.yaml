@@ -11,6 +11,10 @@ on:
         description: "Directory of the Python source code. Should contain the requirements.txt file"
         type: string
         required: true
+      requirements_filepath:
+        description: "Path to the requirements.txt file, relative to source_dir"
+        type: string
+        default: "requirements.txt"
       zip_filename:
         description: "The zip file to create. It's relativ to the repository root"
         type: string
@@ -23,16 +27,21 @@ on:
         description: "Number of days to retain the artifact"
         type: number
         default: 30
+
 jobs:
   build:
     name: Build Python
     runs-on: ubuntu-latest
+    
     env:
       PYTHON_VERSION: ${{ inputs.python_version }}
       SOURCE_DIR: ${{ inputs.source_dir }}
+      REQUIREMENTS_FILEPATH: ${{ inputs.requirements_filepath }}
+    
     defaults:
       run:
         working-directory: ${{ env.SOURCE_DIR }}
+    
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
@@ -45,7 +54,8 @@ jobs:
       - name: Download Python modules
         run: |
           mkdir package
-          pip install -r requirements.txt -t package
+          pip install -r ${{ env.REQUIREMENTS_FILEPATH }} -t package
+
       - name: Create Zipfile
         working-directory: .
         run: |
@@ -54,6 +64,7 @@ jobs:
           zip -r "$DIR/${{ inputs.zip_filename }}" .
           cd ..
           zip -r "$DIR/${{ inputs.zip_filename }}" . -x 'package/*'
+
       - name: Save artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
