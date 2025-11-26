@@ -36,7 +36,6 @@ jobs:
     env:
       PYTHON_VERSION: ${{ inputs.python_version }}
       SOURCE_DIR: ${{ inputs.source_dir }}
-      REQUIREMENTS_FILEPATH: ${{ inputs.requirements_filepath }}
     
     defaults:
       run:
@@ -54,7 +53,7 @@ jobs:
       - name: Download Python modules
         run: |
           mkdir package
-          pip install -r ${{ env.REQUIREMENTS_FILEPATH }} -t package
+          pip install -r "${{ inputs.requirements_filepath }}" -t package
 
       - name: Create Zipfile
         working-directory: .
