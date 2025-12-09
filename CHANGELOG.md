@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.15.0](https://github.com/DND-IT/github-workflows/compare/v3.14.0...v3.15.0) (2025-12-09)
+
+### ✨ Features
+
+* new REQUIREMENTS_FILEPATH for lambda-python wf ([#77](https://github.com/DND-IT/github-workflows/issues/77)) ([667d44a](https://github.com/DND-IT/github-workflows/commit/667d44a309c7528054d492a42dde054bd1d9cd17))
+
 ## [3.14.0](https://github.com/DND-IT/github-workflows/compare/v3.13.0...v3.14.0) (2025-11-19)
 
 ### ✨ Features
