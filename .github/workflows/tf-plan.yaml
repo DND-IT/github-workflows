@@ -77,12 +77,12 @@ jobs:
       TF_VARS: ${{ inputs.tf_vars || vars.tf_vars }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           ref: ${{ inputs.gh_checkout_ref }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
         env:
           ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
           AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
@@ -105,14 +105,14 @@ jobs:
           merge-multiple: ${{ env.GH_ARTIFACT_MERGE_MULTIPLE }}
 
       - name: Terraform Format
-        uses: dflook/terraform-fmt-check@10eaa13fa61437aa51be2d12fafe95f152e3512d # v2
+        uses: dflook/terraform-fmt-check@59168426e242f665bf7b70644d706224e665056a # v2
         with:
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
           backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
 
       - name: Terraform Validate
-        uses: dflook/terraform-validate@03889814f1c6cf2fea714787218b2f4edc85c369 # v2
+        uses: dflook/terraform-validate@4cef5d8a4b92bcd88486e41e22a42942a382c9d6 # v2
         with:
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
@@ -120,7 +120,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        uses: dflook/terraform-plan@dc251c444763eed5defd065b866874b6343017ca # v2
+        uses: dflook/terraform-plan@7878bff63e2099cdc9be9a6f33cbbbf687f8f0fe # v2
         env:
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
