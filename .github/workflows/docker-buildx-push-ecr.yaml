@@ -97,7 +97,6 @@ jobs:
     permissions:
       id-token: write
       contents: read
-      packages: read
     strategy:
       matrix:
         include: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
