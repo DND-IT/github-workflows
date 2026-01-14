@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.17.0](https://github.com/DND-IT/github-workflows/compare/v3.16.0...v3.17.0) (2026-01-14)
+
+### ✨ Features
+
+* Hotfix revert packages permission from workflow ([#81](https://github.com/DND-IT/github-workflows/issues/81)) ([63dc469](https://github.com/DND-IT/github-workflows/commit/63dc469f3ba1f47bc92d3d067b65efceb089fce5))
+
 ## [3.16.0](https://github.com/DND-IT/github-workflows/compare/v3.15.0...v3.16.0) (2026-01-14)
 
 ### ✨ Features
