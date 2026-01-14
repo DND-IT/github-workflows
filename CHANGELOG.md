@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.16.0](https://github.com/DND-IT/github-workflows/compare/v3.15.0...v3.16.0) (2026-01-14)
+
+### ✨ Features
+
+* Add permissions for packages in workflow ([#80](https://github.com/DND-IT/github-workflows/issues/80)) ([518082e](https://github.com/DND-IT/github-workflows/commit/518082e9bd26c4bea45d43974a42f351b550997e))
+
 ## [3.15.0](https://github.com/DND-IT/github-workflows/compare/v3.14.0...v3.15.0) (2025-12-09)
 
 ### ✨ Features
