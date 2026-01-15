@@ -77,12 +77,12 @@ jobs:
       TF_VARS: ${{ inputs.tf_vars || vars.tf_vars }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           ref: ${{ inputs.gh_checkout_ref }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
         env:
           ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
           AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: Terraform Apply
         id: tf_apply
-        uses: dflook/terraform-apply@8f47d0ad9f3cb9e50fd6b3595c0cb98f00c518df # v2
+        uses: dflook/terraform-apply@5489b988934a50bf1489d5b7c5253b46520a7dca # v2
         env:
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36

@@ -62,12 +62,12 @@ jobs:
       TF_VARS: ${{ inputs.tf_vars || vars.tf_vars }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           ref: ${{ inputs.gh_checkout_ref }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5
         env:
           ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
           AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
@@ -125,7 +125,7 @@ jobs:
         shell: bash
 
       - name: Terraform Destroy
-        uses: dflook/terraform-destroy-workspace@c52c6297376d479a7eba6449db52efc19a64cb38 # v2
+        uses: dflook/terraform-destroy-workspace@fb0d0809a9f25427f61a9a242b68970952e2287b # v2
         if: ${{ steps.check_workspace.outputs.exists == 'true' }}
         id: first_try
         env:
@@ -145,7 +145,7 @@ jobs:
           variables: ${{ env.TF_VARS }}
 
       - name: Retry Terraform Destroy
-        uses: dflook/terraform-destroy-workspace@c52c6297376d479a7eba6449db52efc19a64cb38 # v2
+        uses: dflook/terraform-destroy-workspace@fb0d0809a9f25427f61a9a242b68970952e2287b # v2
         if: ${{ steps.check_workspace.outputs.exists == 'true' && failure() && steps.first_try.outputs.failure-reason == 'destroy-failed' }}
         env:
           TERRAFORM_PRE_RUN: |
