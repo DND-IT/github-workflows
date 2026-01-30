@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.18.0](https://github.com/DND-IT/github-workflows/compare/v3.17.0...v3.18.0) (2026-01-30)
+
+### ✨ Features
+
+* Add options to disable Docker build summary and record upload  ([#83](https://github.com/DND-IT/github-workflows/issues/83)) ([306d925](https://github.com/DND-IT/github-workflows/commit/306d92595bf85f47f06858cc12fc342eb7d580c2))
+
 ## [3.17.0](https://github.com/DND-IT/github-workflows/compare/v3.16.0...v3.17.0) (2026-01-14)
 
 ### ✨ Features
