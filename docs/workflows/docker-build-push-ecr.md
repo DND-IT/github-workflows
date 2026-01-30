@@ -30,6 +30,8 @@ This workflow builds a Docker image and pushes it to the Elastic Container Regis
 | `artifact_path` | <p>Artifact target path</p> | `string` | `false` | `""` |
 | `artifact_pattern` | <p>A glob pattern to the artifacts that should be downloaded. Ignored if name is specified.</p> | `string` | `false` | `""` |
 | `artifact_merge_multiple` | <p>When multiple artifacts are matched, this changes the behavior of the destination directories. If true, the downloaded artifacts will be in the same directory specified by path. If false, the downloaded artifacts will be extracted into individual named directories within the specified path. Optional. Default is 'false'.</p> | `boolean` | `false` | `""` |
+| `docker_build_summary` | <p>Enable or disable Docker build summary. Default is 'true'.</p> | `boolean` | `false` | `true` |
+| `docker_build_record_upload` | <p>Enable or disable Docker build record upload. Default is 'true'.</p> | `boolean` | `false` | `true` |
 <!-- action-docs-inputs source=".github/workflows/docker-build-push-ecr.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/docker-build-push-ecr.yaml" -->
@@ -148,6 +150,20 @@ jobs:
       # Type: boolean
       # Required: false
       # Default: ""
+
+      docker_build_summary:
+      # Enable or disable Docker build summary. Default is 'true'.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: true
+
+      docker_build_record_upload:
+      # Enable or disable Docker build record upload. Default is 'true'.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: true
 ```
 <!-- action-docs-usage source=".github/workflows/docker-build-push-ecr.yaml" project="dnd-it/github-workflows/.github/workflows/docker-build-push-ecr.yaml" version="v2" -->
 

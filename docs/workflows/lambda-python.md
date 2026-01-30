@@ -20,6 +20,7 @@ Usefull to deploy an AWS lambda function or layer.
 | --- | --- | --- | --- | --- |
 | `python_version` | <p>Python version. Check https://github.com/actions/setup-python for valid values</p> | `string` | `false` | `3.12` |
 | `source_dir` | <p>Directory of the Python source code. Should contain the requirements.txt file</p> | `string` | `true` | `""` |
+| `requirements_filepath` | <p>Path to the requirements.txt file, relative to source_dir</p> | `string` | `false` | `requirements.txt` |
 | `zip_filename` | <p>The zip file to create. It's relativ to the repository root</p> | `string` | `false` | `python_package.zip` |
 | `gh_artifact_name` | <p>Name of the artifact to upload</p> | `string` | `true` | `""` |
 | `gh_artifact_retention_days` | <p>Number of days to retain the artifact</p> | `number` | `false` | `30` |
@@ -50,6 +51,13 @@ jobs:
       # Type: string
       # Required: true
       # Default: ""
+
+      requirements_filepath:
+      # Path to the requirements.txt file, relative to source_dir
+      #
+      # Type: string
+      # Required: false
+      # Default: requirements.txt
 
       zip_filename:
       # The zip file to create. It's relativ to the repository root

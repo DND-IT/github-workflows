@@ -30,6 +30,28 @@ jobs:
       docker_context: tests/docker
       docker_push: false
 
+  test_docker_build_push_ecr_disable_summary:
+    uses: ./.github/workflows/docker-build-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-build-push
+      docker_context: tests/docker
+      docker_push: false
+      docker_build_summary: false
+
+  test_docker_build_push_ecr_disable_record_upload:
+    uses: ./.github/workflows/docker-build-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-build-push
+      docker_context: tests/docker
+      docker_push: false
+      docker_build_record_upload: false
+
   test_docker_build:
     uses: ./.github/workflows/docker-build.yaml
     with:
