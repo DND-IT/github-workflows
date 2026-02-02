@@ -89,7 +89,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: docker-artifacts
           path: tests/docker-artifacts/
