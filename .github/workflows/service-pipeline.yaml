@@ -47,6 +47,15 @@ on:
       new_release_version:
         description: "Version of the new release (e.g. 1.3.0)"
         value: ${{ jobs.release-info.outputs.new_release_version }}
+      image_pushed:
+        description: "Whether a docker image was pushed"
+        value: ${{ jobs.push.result == 'success' }}
+      image_sha:
+        description: "Short commit SHA used as the primary image tag"
+        value: ${{ jobs.build.outputs.sha }}
+      image_tags:
+        description: "All tags applied to the image (newline-separated)"
+        value: ${{ jobs.build.outputs.image-tags }}
     secrets:
       docker_secrets:
         description: "Docker build secrets (newline-separated id=value pairs)"
