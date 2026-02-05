@@ -32,15 +32,15 @@ jobs:
   build:
     name: Build Python
     runs-on: ubuntu-latest
-    
+
     env:
       PYTHON_VERSION: ${{ inputs.python_version }}
       SOURCE_DIR: ${{ inputs.source_dir }}
-    
+
     defaults:
       run:
         working-directory: ${{ env.SOURCE_DIR }}
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
