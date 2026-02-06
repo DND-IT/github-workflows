@@ -83,7 +83,7 @@ jobs:
           echo "TF_WORKSPACE=$SANITISED_WORKSPACE" >> $GITHUB_ENV
 
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: ${{ inputs.gh_checkout_ref }}
 
@@ -102,7 +102,7 @@ jobs:
           GH_ARTIFACT_NAME: ${{ inputs.gh_artifact_name || vars.gh_artifact_name }}
           GH_ARTIFACT_PATTERN: ${{ inputs.gh_artifact_pattern || vars.gh_artifact_pattern }}
           GH_ARTIFACT_MERGE_MULTIPLE: ${{ inputs.gh_artifact_merge_multiple || vars.gh_artifact_merge_multiple || false }}
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         if: env.GH_ARTIFACT_PATH != '' || env.GH_ARTIFACT_NAME != ''
         with:
           path: ${{ env.GH_ARTIFACT_PATH }}
