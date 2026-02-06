@@ -11,9 +11,13 @@ on:
         type: string
         required: true
       image_tag_keys:
-        description: 'Newline-separated list of keys to update (e.g., webapp.image.tag)'
+        description: 'Newline-separated list of keys to update (e.g., webapp.image.tag). Ignored when image_name is set.'
         type: string
-        default: 'webapp.image_tag'
+        default: ''
+      image_name:
+        description: 'Image name to search for (e.g., social-media). Finds all image blocks where the repository ends with this name and updates their tag. Takes precedence over image_tag_keys.'
+        type: string
+        default: ''
       values_files:
         description: 'Newline-separated list of file paths to update'
         type: string
@@ -58,8 +62,11 @@ jobs:
 
       - name: Update Helm values files
         run: |
+          IMAGE_TAG="${{ inputs.image_tag }}"
+          IMAGE_NAME="${{ inputs.image_name }}"
+
           # Validate inputs
-          if [ -z "${{ inputs.image_tag }}" ]; then
+          if [ -z "$IMAGE_TAG" ]; then
             echo "Error: image_tag input cannot be empty"
             exit 1
           fi
@@ -67,12 +74,22 @@ jobs:
             echo "Error: values_files input cannot be empty"
             exit 1
           fi
+          if [ -z "$IMAGE_NAME" ] && [ -z "${{ inputs.image_tag_keys }}" ]; then
+            echo "Error: either image_name or image_tag_keys must be provided"
+            exit 1
+          fi
 
           echo "Files to update:"
           echo "${{ inputs.values_files }}"
-          echo ""
-          echo "Keys to update:"
-          echo "${{ inputs.image_tag_keys }}"
+
+          if [ -n "$IMAGE_NAME" ]; then
+            echo ""
+            echo "Image name to search for: $IMAGE_NAME"
+          else
+            echo ""
+            echo "Keys to update:"
+            echo "${{ inputs.image_tag_keys }}"
+          fi
 
           # Process each file (newline-separated)
           while IFS= read -r file; do
@@ -80,28 +97,52 @@ jobs:
             [ -z "$file" ] && continue
 
             echo ""
-            echo "Updating $file with image tag: ${{ inputs.image_tag }}"
+            echo "Updating $file with image tag: $IMAGE_TAG"
 
-            # Update each key in the file
-            while IFS= read -r key; do
-              [ -z "$key" ] && continue
+            if [ -n "$IMAGE_NAME" ]; then
+              # --- IMAGE NAME SEARCH MODE ---
+              # Find all dot-notation paths to tag fields where sibling repository ends with the image name
+              TAG_PATHS=$(yq '
+                (.. | select(has("repository") and has("tag")) | select(.repository | test("'"${IMAGE_NAME}"'$"))).tag | path | "." + join(".")
+              ' "$file" 2>/dev/null)
 
-              # Check if key exists before updating
-              if yq e ".$key" "$file" >/dev/null 2>&1 && [ "$(yq e ".$key" "$file")" != "null" ]; then
-                echo "  Setting $key = ${{ inputs.image_tag }}"
-                # Get current value to check if update is needed
-                current_value=$(yq e ".$key" "$file")
-                if [ "$current_value" != "${{ inputs.image_tag }}" ]; then
-                  # Use sed to replace the value while preserving formatting
-                  sed -i "s|${key##*.}: .*|${key##*.}: ${{ inputs.image_tag }}|" "$file"
-                else
-                  echo "  Value already up to date"
-                fi
-              else
-                echo "  Key $key not found in $file, skipping"
-                exit 1
+              if [ -z "$TAG_PATHS" ]; then
+                echo "  No image blocks matching '$IMAGE_NAME' found in $file, skipping"
+                continue
               fi
-            done <<< "${{ inputs.image_tag_keys }}"
+
+              while IFS= read -r tag_path; do
+                [ -z "$tag_path" ] && continue
+                current_value=$(yq "$tag_path" "$file")
+                if [ "$current_value" = "$IMAGE_TAG" ]; then
+                  echo "  $tag_path already up to date"
+                  continue
+                fi
+                LINE=$(yq "$tag_path | line" "$file")
+                sed -i "${LINE}s|tag: .*|tag: \"${IMAGE_TAG}\"|" "$file"
+                echo "  $tag_path = $IMAGE_TAG (line $LINE)"
+              done <<< "$TAG_PATHS"
+            else
+              # --- EXPLICIT KEYS MODE ---
+              while IFS= read -r key; do
+                [ -z "$key" ] && continue
+
+                # Check if key exists before updating
+                if yq e ".$key" "$file" >/dev/null 2>&1 && [ "$(yq e ".$key" "$file")" != "null" ]; then
+                  echo "  Setting $key = $IMAGE_TAG"
+                  current_value=$(yq e ".$key" "$file")
+                  if [ "$current_value" != "$IMAGE_TAG" ]; then
+                    # Use yq to find the exact line, then sed to preserve formatting
+                    LINE=$(yq ".$key | line" "$file")
+                    sed -i "${LINE}s|${key##*.}: .*|${key##*.}: \"${IMAGE_TAG}\"|" "$file"
+                  else
+                    echo "  Value already up to date"
+                  fi
+                else
+                  echo "  Key $key not found in $file, skipping"
+                fi
+              done <<< "${{ inputs.image_tag_keys }}"
+            fi
           done <<< "${{ inputs.values_files }}"
 
       - name: Generate PR details
@@ -127,9 +168,11 @@ jobs:
             ${{ inputs.image_tag }}
             ```
 
+            **Image**: `${{ inputs.image_name || 'N/A' }}`
+
             **Keys to update**:
             ```
-            ${{ inputs.image_tag_keys }}
+            ${{ inputs.image_tag_keys || 'auto-detected via image_name' }}
             ```
 
             **Files to update**:

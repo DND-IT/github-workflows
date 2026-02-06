@@ -1,0 +1,8 @@
+environments:
+  - test
+
+config:
+  test:
+    aws_account_id: "123456789012"
+    aws_region: eu-central-1
+    aws_iam_role_name: test-role

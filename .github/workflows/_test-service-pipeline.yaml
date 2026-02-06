@@ -1,0 +1,120 @@
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_test-service-pipeline.yaml"
+      - ".github/workflows/service-pipeline.yaml"
+      - "tests/service-pipeline/**"
+
+jobs:
+  test_build:
+    name: Test Build Stage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare image metadata
+        id: meta
+        run: |
+          SERVICE="test-service-pipeline"
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+
+          TAGS="${SHORT_SHA}"
+          DOCKER_TAGS="${SERVICE}:${SHORT_SHA}"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_TAG="pr-${{ github.event.pull_request.number }}"
+            TAGS="${TAGS}
+          ${PR_TAG}"
+            DOCKER_TAGS="${DOCKER_TAGS},${SERVICE}:${PR_TAG}"
+          fi
+
+          echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo "${TAGS}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "docker_tags=${DOCKER_TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./tests/service-pipeline
+          file: ./tests/service-pipeline/Dockerfile
+          tags: ${{ steps.meta.outputs.docker_tags }}
+          outputs: type=docker,dest=/tmp/test-service-pipeline.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-service-pipeline-image
+          path: /tmp/test-service-pipeline.tar
+          retention-days: 1
+
+      - name: Verify artifact
+        run: |
+          docker load --input /tmp/test-service-pipeline.tar
+          docker run --rm test-service-pipeline:${{ steps.meta.outputs.sha }} | grep "service-pipeline test"
+          echo "✅ Build stage works correctly"
+
+  test_setup:
+    name: Test Setup Stage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Load configuration
+        id: config
+        uses: DND-IT/action-config@v1
+        with:
+          config-path: tests/service-pipeline/matrix-config.yaml
+
+      - name: Validate matrix output
+        run: |
+          MATRIX='${{ steps.config.outputs.matrix }}'
+          echo "Matrix output: ${MATRIX}"
+
+          if [ -z "$MATRIX" ] || [ "$MATRIX" = "null" ]; then
+            echo "❌ Matrix output is empty"
+            exit 1
+          fi
+
+          echo "✅ Setup stage works correctly"
+
+  test_build_with_secrets:
+    name: Test Build with Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image with secrets
+        uses: docker/build-push-action@v6
+        with:
+          context: ./tests/service-pipeline
+          file: ./tests/service-pipeline/secrets.Dockerfile
+          tags: test-service-pipeline-secrets:latest
+          outputs: type=docker,dest=/tmp/test-secrets.tar
+          secrets: |
+            SECRET_TOKEN=my-secret-value
+          build-args: |
+            CUSTOM_ARG=hello-from-build-arg
+
+      - name: Verify secret was mounted
+        run: |
+          docker load --input /tmp/test-secrets.tar
+          OUTPUT=$(docker run --rm test-service-pipeline-secrets:latest)
+          echo "Output: ${OUTPUT}"
+          echo "${OUTPUT}" | grep "my-secret-value" || { echo "❌ Secret not mounted"; exit 1; }
+          echo "${OUTPUT}" | grep "hello-from-build-arg" || { echo "❌ Build arg not passed"; exit 1; }
+          echo "✅ Secrets and build args work correctly"
