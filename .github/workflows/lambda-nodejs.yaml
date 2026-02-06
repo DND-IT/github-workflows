@@ -33,7 +33,7 @@ jobs:
         working-directory: ${{ env.SOURCE_DIR }}
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -47,7 +47,7 @@ jobs:
           zip -r lambda.zip .
 
       - name: Archive
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: ${{ inputs.gh_artifact_name }}
           path: ${{ inputs.gh_artifact_path }}
