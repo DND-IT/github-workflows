@@ -51,7 +51,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: test-service-pipeline-image
           path: /tmp/test-service-pipeline.tar
