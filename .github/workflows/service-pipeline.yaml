@@ -151,7 +151,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ inputs.service_name }}-image
           path: /tmp/${{ inputs.service_name }}.tar
@@ -187,7 +187,7 @@ jobs:
         include: ${{ fromJson(needs.setup.outputs.matrix) }}
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: ${{ inputs.service_name }}-image
           path: /tmp
