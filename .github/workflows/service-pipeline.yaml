@@ -1,0 +1,272 @@
+name: Service Pipeline
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: "Name of the service / ECR repository (e.g., social-media)"
+        required: true
+        type: string
+      service_path:
+        description: "Path to service directory containing the Dockerfile (e.g., backend)"
+        required: false
+        type: string
+        default: '.'
+      dockerfile_path:
+        description: "Path to the Dockerfile relative to service_path. Defaults to Dockerfile."
+        required: false
+        type: string
+      config_path:
+        description: "Path to the matrix config file with AWS environments"
+        required: true
+        type: string
+        default: '.github/matrix-config.yaml'
+      validate_pr_title:
+        description: "Validate PR title follows conventional commit format"
+        required: false
+        type: boolean
+        default: true
+      docker_build_args:
+        description: "Additional Docker build arguments (newline-separated KEY=VALUE pairs)"
+        required: false
+        type: string
+        default: ''
+      slack_channel:
+        description: "Slack channel ID for release notifications (empty to skip)"
+        required: false
+        type: string
+        default: ''
+      app_id:
+        description: "GitHub App ID for semantic-release authentication"
+        required: true
+        type: string
+    outputs:
+      new_release_published:
+        description: "Whether a new release was published ('true' or 'false')"
+        value: ${{ jobs.release-info.outputs.new_release_published }}
+      new_release_version:
+        description: "Version of the new release (e.g. 1.3.0)"
+        value: ${{ jobs.release-info.outputs.new_release_version }}
+      image_pushed:
+        description: "Whether a docker image was pushed"
+        value: ${{ jobs.push.result == 'success' }}
+      image_sha:
+        description: "Short commit SHA used as the primary image tag"
+        value: ${{ jobs.build.outputs.sha }}
+      image_tags:
+        description: "All tags applied to the image (newline-separated)"
+        value: ${{ jobs.build.outputs.image-tags }}
+    secrets:
+      docker_secrets:
+        description: "Docker build secrets (newline-separated id=value pairs)"
+        required: false
+      slack_bot_token:
+        required: false
+      app_private_key:
+        required: true
+
+concurrency:
+  group: service-pipeline-${{ inputs.service_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate-pr-title:
+    name: Validate PR Title
+    if: github.event_name == 'pull_request' && inputs.validate_pr_title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate conventional commit format
+        uses: amannn/action-semantic-pull-request@v6
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.config.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Load configuration
+        id: config
+        uses: DND-IT/action-config@v1
+        with:
+          config-path: ${{ inputs.config_path }}
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
+      image-tags: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare image metadata
+        id: meta
+        run: |
+          SERVICE="${{ inputs.service_name }}"
+          FULL_SHA="${{ github.sha }}"
+          SHORT_SHA="${FULL_SHA:0:7}"
+
+          TAGS="${SHORT_SHA}"
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TAGS="${TAGS}
+          pr-${{ github.event.pull_request.number }}"
+          fi
+
+          DOCKER_TAGS=$(echo "${TAGS}" | while read -r tag; do
+            [ -n "$tag" ] && echo "${SERVICE}:${tag}"
+          done | paste -sd "," -)
+
+          echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "tags<<EOF" >> $GITHUB_OUTPUT
+          echo "${TAGS}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "docker_tags=${DOCKER_TAGS}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and export
+        uses: docker/build-push-action@v6
+        env:
+          DOCKERFILE: ${{ inputs.dockerfile_path && format('{0}/{1}', inputs.service_path, inputs.dockerfile_path) || format('{0}/Dockerfile', inputs.service_path) }}
+        with:
+          context: ./${{ inputs.service_path }}
+          file: ${{ env.DOCKERFILE }}
+          tags: ${{ steps.meta.outputs.docker_tags }}
+          outputs: type=docker,dest=/tmp/${{ inputs.service_name }}.tar
+          secrets: ${{ secrets.docker_secrets }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.sha }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            ${{ inputs.docker_build_args }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ inputs.service_name }}-image
+          path: /tmp/${{ inputs.service_name }}.tar
+          retention-days: 1
+
+  release-info:
+    name: Release Info
+    if: github.ref_name == github.event.repository.default_branch && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    uses: DND-IT/github-workflows/.github/workflows/gh-release.yaml@v3
+    with:
+      use_semantic_release: true
+      dry_run: true
+      app_id: ${{ inputs.app_id }}
+      working_directory: ${{ inputs.service_path }}
+    secrets:
+      app_private_key: ${{ secrets.app_private_key }}
+
+  push:
+    name: Push (${{ matrix.environment }})
+    needs: [setup, build, release-info]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.setup.outputs.matrix) }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: ${{ inputs.service_name }}-image
+          path: /tmp
+
+      - name: Load image
+        run: docker load --input /tmp/${{ inputs.service_name }}.tar
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::${{ matrix.aws_account_id }}:role/${{ matrix.aws_iam_role_name }}
+          aws-region: ${{ matrix.aws_region }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag and push to ECR
+        run: |
+          ECR_REGISTRY="${{ steps.login-ecr.outputs.registry }}"
+          SERVICE="${{ inputs.service_name }}"
+          SHA="${{ needs.build.outputs.sha }}"
+          ALL_TAGS="${{ needs.build.outputs.image-tags }}"
+
+          # Tag all build tags
+          while IFS= read -r tag; do
+            [ -n "$tag" ] && docker tag "${SERVICE}:${tag}" "${ECR_REGISTRY}/${SERVICE}:${tag}"
+          done <<< "${ALL_TAGS}"
+
+          # Tag 'latest' on default branch
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/${{ github.event.repository.default_branch }}" ]; then
+            docker tag "${SERVICE}:${SHA}" "${ECR_REGISTRY}/${SERVICE}:latest"
+          fi
+
+          # Tag version if semantic release found a new version
+          if [ "${{ needs.release-info.outputs.new_release_published }}" = "true" ]; then
+            VERSION="${{ needs.release-info.outputs.new_release_version }}"
+            docker tag "${SERVICE}:${SHA}" "${ECR_REGISTRY}/${SERVICE}:${VERSION}"
+          fi
+
+          docker push --all-tags "${ECR_REGISTRY}/${SERVICE}"
+
+  release:
+    name: Create Release
+    needs: [push, release-info]
+    if: needs.release-info.outputs.new_release_published == 'true'
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    uses: DND-IT/github-workflows/.github/workflows/gh-release.yaml@v3
+    with:
+      use_semantic_release: true
+      app_id: ${{ inputs.app_id }}
+      working_directory: ${{ inputs.service_path }}
+    secrets:
+      app_private_key: ${{ secrets.app_private_key }}
+
+  notify:
+    name: Notify Slack
+    needs: [release, release-info]
+    if: |
+      always() &&
+      needs.release.result == 'success' &&
+      needs.release-info.outputs.new_release_published == 'true' &&
+      inputs.slack_channel != ''
+    uses: DND-IT/github-workflows/.github/workflows/notify-slack.yaml@v3
+    secrets:
+      slack_bot_token: ${{ secrets.slack_bot_token }}
+    with:
+      channel: ${{ inputs.slack_channel }}
+      notification_title: "New ${{ inputs.service_name }} release"
+      notification_message: "${{ inputs.service_name }} v${{ needs.release-info.outputs.new_release_version }} has been released!"
+      status: "success"
+      additional_fields: |
+        [
+          {"name": "Service", "value": "${{ inputs.service_name }}"},
+          {"name": "Version", "value": "v${{ needs.release-info.outputs.new_release_version }}"},
+          {"name": "Release", "value": "<${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.release-info.outputs.new_release_version }}|v${{ needs.release-info.outputs.new_release_version }}>"}
+        ]
+      include_workflow_link: true
+      include_triggered_by: true
