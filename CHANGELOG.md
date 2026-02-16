@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.19.1](https://github.com/DND-IT/github-workflows/compare/v3.19.0...v3.19.1) (2026-02-16)
+
+### 🐛 Bug Fixes
+
+* add argocd jobs ([2d7fe8f](https://github.com/DND-IT/github-workflows/commit/2d7fe8f19eb6903ad277c07333af2e9e057f8134))
+
 ## [3.19.0](https://github.com/DND-IT/github-workflows/compare/v3.18.0...v3.19.0) (2026-02-16)
 
 ### ✨ Features
