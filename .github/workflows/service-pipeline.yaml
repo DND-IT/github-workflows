@@ -36,6 +36,16 @@ on:
         required: false
         type: string
         default: ''
+      argocd_app_name:
+        description: "ArgoCD app name for feature branch image updates. Supports placeholders: {service_name}, {pr_number}. Empty to skip."
+        required: false
+        type: string
+        default: ''
+      argocd_image_params:
+        description: "ArgoCD app parameters to set with the image tag (comma-separated, e.g., 'image.tag' or 'generic.image_tag,frontend.image_tag')"
+        required: false
+        type: string
+        default: 'image.tag'
       app_id:
         description: "GitHub App ID for semantic-release authentication"
         required: true
@@ -61,6 +71,9 @@ on:
         description: "Docker build secrets (newline-separated id=value pairs)"
         required: false
       slack_bot_token:
+        required: false
+      argocd_auth_token:
+        description: "ArgoCD authentication token"
         required: false
       app_private_key:
         required: true
@@ -270,3 +283,40 @@ jobs:
         ]
       include_workflow_link: true
       include_triggered_by: true
+
+  argocd-prepare:
+    name: Prepare ArgoCD Command
+    needs: [build, push]
+    if: github.event_name == 'pull_request' && needs.push.result == 'success' && inputs.argocd_app_name != ''
+    runs-on: ubuntu-latest
+    outputs:
+      commands: ${{ steps.cmd.outputs.commands }}
+    steps:
+      - name: Build ArgoCD command
+        id: cmd
+        run: |
+          APP_NAME="${{ inputs.argocd_app_name }}"
+          APP_NAME="${APP_NAME//\{service_name\}/${{ inputs.service_name }}}"
+          APP_NAME="${APP_NAME//\{pr_number\}/${{ github.event.pull_request.number }}}"
+
+          IMAGE_TAG="${{ needs.build.outputs.sha }}"
+          PARAMS="${{ inputs.argocd_image_params }}"
+
+          CMD="app set ${APP_NAME}"
+          IFS=',' read -ra PARAM_ARRAY <<< "$PARAMS"
+          for param in "${PARAM_ARRAY[@]}"; do
+            param=$(echo "$param" | xargs)
+            CMD="${CMD} -p ${param}=${IMAGE_TAG}"
+          done
+
+          echo "commands=${CMD}" >> $GITHUB_OUTPUT
+
+  argocd-set-image:
+    name: Set Feature Branch Image Tag
+    needs: [argocd-prepare]
+    if: needs.argocd-prepare.result == 'success'
+    uses: DND-IT/github-workflows/.github/workflows/argocd-cli.yaml@v3
+    secrets:
+      argocd_auth_token: ${{ secrets.argocd_auth_token }}
+    with:
+      argocd_commands: ${{ needs.argocd-prepare.outputs.commands }}
