@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.19.0](https://github.com/DND-IT/github-workflows/compare/v3.18.0...v3.19.0) (2026-02-16)
+
+### ✨ Features
+
+* add service pipeline ([#82](https://github.com/DND-IT/github-workflows/issues/82)) ([2a86b14](https://github.com/DND-IT/github-workflows/commit/2a86b14c738ecd892002daacd9f4adc7a0fc1c72))
+
 ## [3.18.0](https://github.com/DND-IT/github-workflows/compare/v3.17.0...v3.18.0) (2026-01-30)
 
 ### ✨ Features
