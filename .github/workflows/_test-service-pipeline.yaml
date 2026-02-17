@@ -72,7 +72,7 @@ jobs:
 
       - name: Load configuration
         id: config
-        uses: DND-IT/action-config@v1
+        uses: DND-IT/action-config@v2
         with:
           config-path: tests/service-pipeline/matrix-config.yaml
 
