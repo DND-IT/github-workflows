@@ -104,7 +104,7 @@ jobs:
 
       - name: Load configuration
         id: config
-        uses: DND-IT/action-config@v1
+        uses: DND-IT/action-config@v2
         with:
           config-path: ${{ inputs.config_path }}
 
