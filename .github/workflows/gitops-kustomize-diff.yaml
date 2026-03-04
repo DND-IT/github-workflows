@@ -104,7 +104,8 @@ jobs:
         id: process-envs
         run: |
           mkdir -p ${{ env.OUTPUT_PATH }}
-          echo "## Kustomize Deployment Changes" > ${{ env.OUTPUT_PATH }}/all_diffs.md
+          echo "<!-- kustomize-diff-comment -->" > ${{ env.OUTPUT_PATH }}/all_diffs.md
+          echo "## Kustomize Deployment Changes" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
           echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
 
           KUSTOMIZE_ARGS="${{ inputs.kustomize_args }}"
@@ -149,8 +150,19 @@ jobs:
 
       - name: Post diff as comment on PR
         if: steps.process-envs.outputs.has_changes == 'true'
-        run: |
-          gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md --edit-last || \
-          gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.number }}
+          COMMENT_MARKER: '<!-- kustomize-diff-comment -->'
+        run: |
+          # Find existing comment by marker
+          COMMENT_ID=$(gh api "repos/${GH_REPO}/issues/${PR_NUMBER}/comments" --paginate --jq ".[] | select(.body | startswith(\"${COMMENT_MARKER}\")) | .id" | head -1)
+
+          if [ -n "$COMMENT_ID" ]; then
+            # Update existing comment
+            gh api "repos/${GH_REPO}/issues/comments/${COMMENT_ID}" -X PATCH --field "body=@${{ env.OUTPUT_PATH }}/all_diffs.md"
+          else
+            # Create new comment
+            gh pr comment "${PR_NUMBER}" --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md
+          fi
