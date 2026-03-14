@@ -188,7 +188,7 @@ jobs:
       - name: Generate a token
         id: generate-token
         if: inputs.auto_merge == true
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.app_private_key }}

@@ -85,7 +85,7 @@ jobs:
       - name: Generate GitHub App Token
         if: inputs.use_semantic_release == true && inputs.app_id != ''
         id: generate-token
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ inputs.app_id }}
           private-key: ${{ secrets.app_private_key }}
