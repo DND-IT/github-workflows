@@ -1,0 +1,5 @@
+site_name: TechDocs Test
+docs_dir: docs/
+
+plugins:
+  - techdocs-core
