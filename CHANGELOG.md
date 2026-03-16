@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.20.0](https://github.com/DND-IT/github-workflows/compare/v3.19.1...v3.20.0) (2026-03-16)
+
+### ✨ Features
+
+* add techdocs-publish reusable workflow ([#95](https://github.com/DND-IT/github-workflows/issues/95)) ([b174bda](https://github.com/DND-IT/github-workflows/commit/b174bdae25a5e3b5fa7de45fd873333cb8a61af9))
+
 ## [3.19.1](https://github.com/DND-IT/github-workflows/compare/v3.19.0...v3.19.1) (2026-02-16)
 
 ### 🐛 Bug Fixes
