@@ -200,3 +200,4 @@ jobs:
           method: chat.postMessage
           token: ${{ secrets.slack_bot_token }}
           payload-file-path: /tmp/slack-payload.json
+          errors: true
