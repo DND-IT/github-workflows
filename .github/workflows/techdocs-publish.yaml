@@ -56,7 +56,7 @@ jobs:
           python-version: ${{ inputs.python_version }}
 
       - name: Set up Node ${{ inputs.node_version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ inputs.node_version }}
 
