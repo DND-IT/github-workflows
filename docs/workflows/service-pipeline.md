@@ -131,11 +131,10 @@ jobs:
 The `config_path` file should follow the [action-config](https://github.com/DND-IT/action-config) format:
 
 ```yaml
-environments:
-  - dev
-  - prod
+settings:
+  dimension: environment
 
-config:
+environment:
   dev:
     aws_account_id: "123456789012"
     aws_region: eu-central-1
