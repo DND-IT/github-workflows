@@ -74,7 +74,7 @@ jobs:
         id: config
         uses: DND-IT/action-config@v3
         with:
-          config-path: tests/service-pipeline/matrix-config.yaml
+          config_path: tests/service-pipeline/matrix-config.yaml
 
       - name: Validate matrix output
         run: |
