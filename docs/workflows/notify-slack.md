@@ -28,13 +28,13 @@ title: Slack Notification
 
 <!-- action-docs-outputs source=".github/workflows/notify-slack.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/notify-slack.yaml" project="dnd-it/github-workflows/.github/workflows/notify-slack.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/notify-slack.yaml" project="dnd-it/github-workflows/.github/workflows/notify-slack.yaml" version="v3" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
     with:
       channel:
       # Slack channel ID or name to send notification to
@@ -127,7 +127,7 @@ jobs:
       # Required: false
       # Default: ""
 ```
-<!-- action-docs-usage source=".github/workflows/notify-slack.yaml" project="dnd-it/github-workflows/.github/workflows/notify-slack.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/notify-slack.yaml" project="dnd-it/github-workflows/.github/workflows/notify-slack.yaml" version="v3" -->
 
 ## Examples
 
@@ -144,7 +144,7 @@ jobs:
   notify:
     needs: [deploy]
     if: always()
-    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -179,7 +179,7 @@ jobs:
   notify:
     needs: [build, test, deploy]
     if: always()
-    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -209,7 +209,7 @@ jobs:
   notify:
     needs: [deploy]
     if: always()
-    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -238,7 +238,7 @@ jobs:
   notify:
     needs: [security_scan]
     if: always()
-    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -296,7 +296,7 @@ jobs:
   notify:
     needs: [cleanup-kubernetes, destroy-central, destroy-network, determine-status]
     if: always()
-    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
@@ -348,7 +348,7 @@ No, each workflow call sends to a single channel. To notify multiple channels, c
 
 ```yaml
 notify-team-a:
-  uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+  uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
   secrets:
     slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
   with:
@@ -356,7 +356,7 @@ notify-team-a:
     notification_title: "Deployment Complete"
 
 notify-team-b:
-  uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+  uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
   secrets:
     slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
   with:
@@ -384,7 +384,7 @@ Set the `environment` input to link the workflow to a GitHub environment:
 
 ```yaml
 notify:
-  uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v2
+  uses: dnd-it/github-workflows/.github/workflows/notify-slack.yaml@v3
   secrets:
     slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
   with:
