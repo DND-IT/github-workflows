@@ -56,6 +56,16 @@ jobs:
           kubectl rollout status deployment/datadog-agent-cluster-agent -n monitoring --timeout=5m
           kubectl rollout status daemonset/datadog-agent -n monitoring --timeout=5m
 
+      - name: Check DatadogAgent CRD status
+        run: |
+          CONDITIONS=$(kubectl get datadogagent datadog-agent -n monitoring -o json 2>/dev/null \
+            | jq -r '.status.conditions[]? | select(.status == "True" and (.type | test("Error|Degraded"))) | "\(.type): \(.message)"')
+          if [ -n "$CONDITIONS" ]; then
+            echo "DatadogAgent has error conditions:"
+            echo "$CONDITIONS"
+            exit 1
+          fi
+
       - name: Check Datadog operator for reconciliation errors
         run: |
           ERRORS=$(kubectl logs -n monitoring deployment/datadog-operator --since=3m 2>/dev/null | grep '"level":"ERROR"' || true)
