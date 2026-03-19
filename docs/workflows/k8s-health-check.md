@@ -43,7 +43,7 @@ jobs:
 
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
-| `environment` | <p>GitHub environment to use for resolving variables (AWS_OIDC_ROLE_ARN, AWS_REGION).</p> | `string` | `false` | `""` |
+| `environment` | <p>GitHub environment to use for resolving variables (AWS<em>OIDC</em>ROLE<em>ARN, AWS</em>REGION).</p> | `string` | `false` | `""` |
 | `aws_account_id` | <p>The AWS account ID.</p> | `string` | `false` | `""` |
 | `aws_region` | <p>The AWS region.</p> | `string` | `false` | `""` |
 | `aws_role_name` | <p>The name of the role to assume with OIDC.</p> | `string` | `false` | `""` |
