@@ -1,0 +1,71 @@
+# Kubernetes Health Check Workflow
+# Validates that key cluster components are healthy after a Terraform apply.
+# Checks rollout status for: Karpenter, Datadog (operator, cluster-agent, node-agent), Lacework.
+name: Kubernetes Health Check
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "GitHub environment to use for resolving variables (AWS_OIDC_ROLE_ARN, AWS_REGION)."
+        type: string
+      aws_account_id:
+        description: "The AWS account ID."
+        type: string
+      aws_region:
+        description: "The AWS region."
+        type: string
+      aws_role_name:
+        description: "The name of the role to assume with OIDC."
+        type: string
+      aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume."
+        type: string
+
+jobs:
+  health-check:
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
+      ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Configure kubectl
+        run: |
+          EKS_CLUSTER_NAME=$(aws eks list-clusters --region "$AWS_REGION" --query 'clusters[0]' --output text)
+          aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Check Karpenter rollout
+        run: kubectl rollout status deployment/karpenter -n kube-system --timeout=5m
+
+      - name: Check Datadog rollout
+        run: |
+          kubectl rollout status deployment/datadog-operator -n monitoring --timeout=5m
+          kubectl rollout status deployment/datadog-agent-cluster-agent -n monitoring --timeout=5m
+          kubectl rollout status daemonset/datadog-agent -n monitoring --timeout=5m
+
+      - name: Check Datadog operator for reconciliation errors
+        run: |
+          ERRORS=$(kubectl logs -n monitoring deployment/datadog-operator --since=3m 2>/dev/null | grep '"level":"ERROR"' || true)
+          if [ -n "$ERRORS" ]; then
+            echo "Datadog operator reconciliation errors detected:"
+            echo "$ERRORS"
+            exit 1
+          fi
+
+      - name: Check Lacework rollout
+        run: |
+          if kubectl get namespace lacework &>/dev/null; then
+            kubectl rollout status daemonset/lacework-agent -n lacework --timeout=5m
+            kubectl rollout status deployment/lacework-agent-cluster -n lacework --timeout=5m
+          else
+            echo "Lacework not deployed, skipping"
+          fi
