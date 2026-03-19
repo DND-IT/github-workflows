@@ -104,9 +104,9 @@ jobs:
 
       - name: Load configuration
         id: config
-        uses: DND-IT/action-config@v1
+        uses: DND-IT/action-config@v3
         with:
-          config-path: ${{ inputs.config_path }}
+          config_path: ${{ inputs.config_path }}
 
   build:
     name: Build
