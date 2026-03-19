@@ -10,4 +10,4 @@ jobs:
   test_k8s_health_check:
     uses: ./.github/workflows/k8s-health-check.yaml
     with:
-      environment: sandbox
+      environment: platform-dev

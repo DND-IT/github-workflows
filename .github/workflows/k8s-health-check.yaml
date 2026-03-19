@@ -41,6 +41,10 @@ jobs:
       - name: Configure kubectl
         run: |
           EKS_CLUSTER_NAME=$(aws eks list-clusters --region "$AWS_REGION" --query 'clusters[0]' --output text)
+          if [ "$EKS_CLUSTER_NAME" = "None" ] || [ -z "$EKS_CLUSTER_NAME" ]; then
+            echo "No EKS cluster found in region $AWS_REGION for account $(aws sts get-caller-identity --query Account --output text)"
+            exit 1
+          fi
           aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
 
       - name: Check Karpenter rollout
