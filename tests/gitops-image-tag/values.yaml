@@ -1,0 +1,9 @@
+webapp:
+  image:
+    repository: registry.example.com/my-app
+    tag: "1.0.0"
+
+sidecar:
+  image:
+    repository: registry.example.com/sidecar
+    tag: "2.0.0"
