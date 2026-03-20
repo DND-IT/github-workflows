@@ -112,6 +112,7 @@ Documentation: [GitHub Actions - Documentation GitHub](https://docs.github.com/e
 ## Releases
 
 Release pipeline is triggered on each PR merged to main. Depending on the commit message (see [Conventional Commit Message](https://www.conventionalcommits.org/en/v1.0.0/)) a new github release will be created.
+If you need to force a minor version bump after maintenance-only changes (for example, Renovate dependency updates), create a PR with a `feat:` commit message.
 
 If the commit message starts with:
 
