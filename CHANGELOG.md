@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.21.0](https://github.com/DND-IT/github-workflows/compare/v3.20.0...v3.21.0) (2026-03-20)
+
+### ✨ Features
+
+* release bump path after renovate-only merges ([#106](https://github.com/DND-IT/github-workflows/issues/106)) ([4e68e55](https://github.com/DND-IT/github-workflows/commit/4e68e55e40eca37cafc3261b0bd7017c5743b2b1))
+
 ## [3.20.0](https://github.com/DND-IT/github-workflows/compare/v3.19.1...v3.20.0) (2026-03-16)
 
 ### ✨ Features
