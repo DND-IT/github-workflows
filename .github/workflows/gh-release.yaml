@@ -96,7 +96,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref_name }}
           fetch-depth: 0
           fetch-tags: true
           token: ${{ inputs.app_id != '' && steps.generate-token.outputs.token || github.token }}
