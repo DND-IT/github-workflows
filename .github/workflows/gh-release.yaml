@@ -158,8 +158,29 @@ jobs:
             echo "Using embedded default cliff config"
           fi
 
+      - name: Check for existing tags
+        id: check-tags
+        run: |
+          SERVICE_NAME="${{ inputs.service_name }}"
+
+          if [ -n "$SERVICE_NAME" ]; then
+            PATTERN="^${SERVICE_NAME}-v[0-9]"
+            MATCHING_TAGS=$(git tag --list | grep -E "$PATTERN" || true)
+          else
+            MATCHING_TAGS=$(git tag --list | grep -E "^v[0-9]" || true)
+          fi
+
+          if [ -n "$MATCHING_TAGS" ]; then
+            echo "has_tags=true" >> $GITHUB_OUTPUT
+            echo "Found existing tags matching pattern"
+          else
+            echo "has_tags=false" >> $GITHUB_OUTPUT
+            echo "No existing tags found — first release"
+          fi
+
       - name: Generate changelog
         id: cliff
+        if: steps.check-tags.outputs.has_tags == 'true'
         uses: orhun/git-cliff-action@v4
         with:
           config: ${{ steps.config.outputs.config_path }}
@@ -172,25 +193,46 @@ jobs:
         env:
           OUTPUT: /tmp/RELEASE_NOTES.md
 
+      - name: Generate changelog (first release)
+        id: cliff-first
+        if: steps.check-tags.outputs.has_tags == 'false'
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: ${{ steps.config.outputs.config_path }}
+          args: >-
+            --unreleased
+            --strip header
+            ${{ inputs.service_path != '' && format('--include-path "{0}/**"', inputs.service_path) || '' }}
+        env:
+          OUTPUT: /tmp/RELEASE_NOTES.md
+
       - name: Create release
         id: release
         env:
           GH_TOKEN: ${{ inputs.app_id != '' && steps.generate-token.outputs.token || github.token }}
         run: |
           SERVICE_NAME="${{ inputs.service_name }}"
-          CLIFF_VERSION="${{ steps.cliff.outputs.version }}"
+          HAS_TAGS="${{ steps.check-tags.outputs.has_tags }}"
           IS_DRY_RUN="${{ inputs.dry_run == true || github.event_name == 'pull_request' }}"
 
-          # Strip service name prefix if present
-          if [ -n "$SERVICE_NAME" ]; then
-            VERSION="${CLIFF_VERSION#${SERVICE_NAME}-}"
-          else
-            VERSION="${CLIFF_VERSION#v}"
-          fi
+          if [ "$HAS_TAGS" = "true" ]; then
+            CLIFF_VERSION="${{ steps.cliff.outputs.version }}"
 
-          # Handle first release (no prior tags)
-          if [ -z "$VERSION" ] || [ "$VERSION" = "$CLIFF_VERSION" ]; then
-            # Check if there are any conventional commits
+            # Strip service name prefix if present
+            if [ -n "$SERVICE_NAME" ]; then
+              VERSION="${CLIFF_VERSION#${SERVICE_NAME}-v}"
+            else
+              VERSION="${CLIFF_VERSION#v}"
+            fi
+
+            # If version is empty or unchanged, nothing to release
+            if [ -z "$VERSION" ] || [ "$VERSION" = "$CLIFF_VERSION" ]; then
+              echo "No new version computed, nothing to release"
+              echo "new_release_published=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          else
+            # First release — check for conventional commits
             COMMIT_COUNT=$(git log --oneline --format="%s" | grep -cE "^(feat|fix|refactor|perf|docs?|test|chore|ci|style|build)" || true)
             if [ "$COMMIT_COUNT" -gt 0 ]; then
               VERSION="0.1.0"
