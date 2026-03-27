@@ -1,0 +1,28 @@
+name: Publish TechDocs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yaml'
+  workflow_dispatch:
+
+
+jobs:
+  publish:
+    name: Publish TechDocs
+    uses: DND-IT/github-workflows/.github/workflows/techdocs-publish.yaml@main
+    permissions:
+      id-token: write
+      contents: read
+    with:
+
+      entity_name: github-workflows
+      entity_namespace: dnd-it
+      entity_kind: Component
+      requirements_file: requirements.txt
+      s3_bucket_name: fission-backstage-techdocs-5ivved6q
+      aws_region: eu-central-1
+      aws_role_arn: arn:aws:iam::730335665754:role/techdocs-publish
