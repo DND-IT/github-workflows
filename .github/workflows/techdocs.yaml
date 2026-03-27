@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - 'docs/**'
-      - 'mkdocs.yml'
+      - 'mkdocs.yaml'
   workflow_dispatch:
 
 
