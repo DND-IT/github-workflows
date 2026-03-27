@@ -3,3 +3,4 @@ mkdocs-material~=9.6
 mkdocs-include-markdown-plugin~=7.2
 mkdocs-awesome-nav~=3.2
 pymdown-extensions~=10.9
+mkdocs-techdocs-core
