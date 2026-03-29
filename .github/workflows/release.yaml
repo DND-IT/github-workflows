@@ -20,11 +20,8 @@ jobs:
   release:
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
     uses: ./.github/workflows/gh-release.yaml
     with:
-      use_semantic_release: true
       update_version_aliases: true
       app_id: ${{ vars.FISSION_GH_APP_ID }}
     secrets:
@@ -39,7 +36,7 @@ jobs:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
       channel: "C09LG2L8EQ5"
-      notification_title: "New ${{ github.event.repository.name }} release 🚀"
+      notification_title: "New ${{ github.event.repository.name }} release"
       notification_message: "Version v${{ needs.release.outputs.new_release_version }} has been released!"
       status: "success"
       additional_fields: |

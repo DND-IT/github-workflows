@@ -1,0 +1,56 @@
+name: Test GitOps Image Tag Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_test-gitops-image-tag.yaml"
+      - ".github/workflows/gitops-image-tag.yaml"
+
+jobs:
+  test_image_mode_dry_run:
+    name: Test image mode (dry-run)
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: "abc1234"
+      image_name: "my-app"
+      values_files: "tests/gitops-image-tag/values.yaml"
+      create_pr: false
+      dry_run: true
+
+  test_key_mode_dry_run:
+    name: Test key mode (dry-run)
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: "abc1234"
+      image_tag_keys: |
+        webapp.image.tag
+        sidecar.image.tag
+      values_files: "tests/gitops-image-tag/values.yaml"
+      create_pr: false
+      dry_run: true
+
+  test_validation_fails_without_mode:
+    name: Test validation (no image_name or keys)
+    uses: ./.github/workflows/gitops-image-tag.yaml
+    with:
+      image_tag: "abc1234"
+      values_files: "tests/gitops-image-tag/values.yaml"
+      create_pr: false
+      dry_run: true
+    # This job is expected to fail — validation rejects missing image_name + image_tag_keys
+    continue-on-error: true
+
+  validate_failure:
+    name: Validate input validation works
+    needs: test_validation_fails_without_mode
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check that validation job failed
+        run: |
+          if [ "${{ needs.test_validation_fails_without_mode.result }}" != "failure" ]; then
+            echo "::error::Expected validation job to fail when neither image_name nor image_tag_keys is provided"
+            exit 1
+          fi
+          echo "Input validation correctly rejected missing mode inputs"
