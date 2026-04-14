@@ -2,6 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: github-workflows
+  namespace: dnd-it
   description: DAI standardized github workflows
   annotations:
     github.com/project-slug: DND-IT/github-workflows
