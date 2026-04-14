@@ -18,5 +18,5 @@ metadata:
 spec:
   type: library
   lifecycle: production
-  owner: group:dai
+  owner: group:default/dai
   system: fission
