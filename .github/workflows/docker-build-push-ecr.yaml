@@ -90,7 +90,7 @@ jobs:
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6
+        uses: aws-actions/configure-aws-credentials@ec61189d14ec14c8efccab744f656cffd0e33f37 # v6
         env:
           ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
           AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
@@ -100,7 +100,7 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@c962da2960ed15f492addc26fffa274485265950 # v2
+        uses: aws-actions/amazon-ecr-login@376925c9d111252e87ae59691e5a442dd100ef6a # v2
 
       - name: Sanitize Image Tag
         run: |
@@ -109,7 +109,7 @@ jobs:
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Build and export
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
