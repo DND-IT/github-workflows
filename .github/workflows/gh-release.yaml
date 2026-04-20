@@ -1,23 +1,23 @@
-name: Github Semantic Release [Alpha]
+name: GitHub Release (git-cliff)
 
 on:
   workflow_call:
     inputs:
-      tag:
-        description: "The tag to release (for manual releases). If not provided, uses semantic-release for automatic versioning."
+      service_name:
+        description: "Name of the service (used for scoped tag prefix, e.g., 'titan-api'). Leave empty for whole-repo releases."
         type: string
         required: false
-      tag_format:
-        description: "The format of the tag to release. If not provided, uses the tagFormat from .releaserc.json or semantic-release default (v${version})."
+        default: ''
+      service_path:
+        description: "Path to the service directory for monorepo filtering (e.g., 'services/titan-api'). Only commits touching this path trigger releases."
         type: string
         required: false
-      use_semantic_release:
-        description: "Use semantic-release for automatic versioning and changelog generation"
-        type: boolean
-        default: true
-      working_directory:
-        description: "The working directory where the project is located (relative to the repository root)."
+        default: ''
+      cliff_config:
+        description: "Path to git-cliff configuration file. If not found, uses an embedded default."
         type: string
+        required: false
+        default: cliff.toml
       update_version_aliases:
         description: "Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release."
         type: boolean
@@ -26,17 +26,22 @@ on:
         description: "Run in dry-run mode to preview the release without creating it."
         type: boolean
         default: false
+      metadata_file:
+        description: "File path containing extra metadata to append to the release version (e.g., build info). Empty to skip."
+        type: string
+        required: false
+        default: ''
       app_id:
-        description: "GitHub App ID (for generating a token if using GitHub App authentication)"
+        description: "GitHub App ID for authentication"
         type: string
         required: false
     secrets:
       app_private_key:
-        description: "GitHub App private key (for generating a token if using GitHub App authentication)"
+        description: "GitHub App private key for authentication"
         required: false
     outputs:
       new_release_published:
-        description: "Whether a new release was published (true or false)"
+        description: "Whether a new release was published ('true' or 'false')"
         value: ${{ jobs.release.outputs.new_release_published }}
       new_release_version:
         description: "Version of the new release (e.g. 1.3.0)"
@@ -51,7 +56,7 @@ on:
         description: "Patch version of the new release (e.g. 0)"
         value: ${{ jobs.release.outputs.new_release_patch_version }}
       new_release_git_tag:
-        description: "The Git tag associated with the new release (e.g. v1.3.0)"
+        description: "The Git tag associated with the new release"
         value: ${{ jobs.release.outputs.new_release_git_tag }}
       new_release_git_head:
         description: "The sha of the last commit being part of the new release"
@@ -70,20 +75,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write
-      pull-requests: write
     outputs:
-      new_release_published: ${{ steps.semantic.outputs.new_release_published }}
-      new_release_version: ${{ steps.semantic.outputs.new_release_version }}
-      new_release_major_version: ${{ steps.semantic.outputs.new_release_major_version }}
-      new_release_minor_version: ${{ steps.semantic.outputs.new_release_minor_version }}
-      new_release_patch_version: ${{ steps.semantic.outputs.new_release_patch_version }}
-      new_release_git_tag: ${{ steps.semantic.outputs.new_release_git_tag }}
-      new_release_git_head: ${{ steps.semantic.outputs.new_release_git_head }}
+      new_release_published: ${{ steps.release.outputs.new_release_published }}
+      new_release_version: ${{ steps.release.outputs.new_release_version }}
+      new_release_major_version: ${{ steps.release.outputs.new_release_major_version }}
+      new_release_minor_version: ${{ steps.release.outputs.new_release_minor_version }}
+      new_release_patch_version: ${{ steps.release.outputs.new_release_patch_version }}
+      new_release_git_tag: ${{ steps.release.outputs.new_release_git_tag }}
+      new_release_git_head: ${{ steps.release.outputs.new_release_git_head }}
       dry_run: ${{ inputs.dry_run == true || github.event_name == 'pull_request' }}
     steps:
       - name: Generate GitHub App Token
-        if: inputs.use_semantic_release == true && inputs.app_id != ''
+        if: inputs.app_id != ''
         id: generate-token
         uses: actions/create-github-app-token@v3
         with:
@@ -91,68 +94,240 @@ jobs:
           private-key: ${{ secrets.app_private_key }}
 
       - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          persist-credentials: true
-          token: ${{ (inputs.use_semantic_release == true && inputs.app_id != '') && steps.generate-token.outputs.token || github.token }}
-
-      - name: Configure Git for semantic-release
-        if: inputs.use_semantic_release == true && inputs.app_id != ''
-        run: |
-          git config --global user.name "${{ env.GIT_USER_NAME }}"
-          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
+          fetch-tags: true
+          token: ${{ inputs.app_id != '' && steps.generate-token.outputs.token || github.token }}
 
       - name: Temporarily merge PR branch
-        if: ${{ github.event_name == 'pull_request' }}
+        if: github.event_name == 'pull_request'
         run: |
-          git config --global user.name "${{ env.GIT_USER_NAME }}"
-          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
+          git config user.name "${{ env.GIT_USER_NAME }}"
+          git config user.email "${{ env.GIT_USER_EMAIL }}"
           git checkout ${{ github.event.pull_request.base.ref }}
           git merge --squash origin/${{ github.event.pull_request.head.ref }}
           git commit -m "${{ github.event.pull_request.title }}"
 
-      - name: Semantic Release
-        if: inputs.use_semantic_release == true
-        id: semantic
-        uses: cycjimmy/semantic-release-action@v5
-        with:
-          dry_run: ${{ inputs.dry_run || github.event_name == 'pull_request' }}
-          unset_gha_env: ${{ github.event_name == 'pull_request' }}
-          ci: ${{ github.event_name == 'pull_request' && false || true }}
-          tag_format: ${{ inputs.tag_format }}
-          working_directory: ${{ inputs.working_directory }}
-          branches: |
-            [
-              'main',
-              'master'
-            ]
-          semantic_version: 24.2.0
-          extra_plugins: |
-            @semantic-release/changelog@6.0.3
-            @semantic-release/git@10.0.1
-            conventional-changelog-conventionalcommits@8.0.0
-        env:
-          GITHUB_TOKEN: ${{ (inputs.app_id != '') && steps.generate-token.outputs.token || github.token }}
-
-      - name: Manual Release
-        if: inputs.use_semantic_release == false && inputs.tag != '' && inputs.dry_run == false
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2
-        with:
-          tag_name: ${{ inputs.tag }}
-          generate_release_notes: true
-
-      - name: Update major and minor version tags
-        if: inputs.use_semantic_release == true && inputs.update_version_aliases == true && inputs.dry_run == false && github.event_name != 'pull_request' && steps.semantic.outputs.new_release_published == 'true'
-        env:
-          GITHUB_TOKEN: ${{ (inputs.app_id != '') && steps.generate-token.outputs.token || github.token }}
+      - name: Prepare git-cliff config
+        id: config
         run: |
-          # Update major version tag (e.g., v3)
-          git tag -fa "v${{ steps.semantic.outputs.new_release_major_version }}" -m "Update major version tag to ${{ steps.semantic.outputs.new_release_version }}"
-          git push origin "v${{ steps.semantic.outputs.new_release_major_version }}" --force
+          CONFIG="${{ inputs.cliff_config }}"
 
-          # Update minor version tag (e.g., v3.6)
-          git tag -fa "v${{ steps.semantic.outputs.new_release_major_version }}.${{ steps.semantic.outputs.new_release_minor_version }}" -m "Update minor version tag to ${{ steps.semantic.outputs.new_release_version }}"
-          git push origin "v${{ steps.semantic.outputs.new_release_major_version }}.${{ steps.semantic.outputs.new_release_minor_version }}" --force
+          if [ -n "$CONFIG" ] && [ -f "$CONFIG" ]; then
+            echo "config_path=$CONFIG" >> $GITHUB_OUTPUT
+            echo "Using cliff config: $CONFIG"
+          else
+            # Write embedded default config
+            cat > /tmp/cliff-default.toml << 'CLIFF_EOF'
+          [changelog]
+          body = """
+          {% if version -%}
+              ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+          {% else -%}
+              ## [unreleased]
+          {% endif -%}
 
-          echo "✅ Updated version aliases: v${{ steps.semantic.outputs.new_release_major_version }}, v${{ steps.semantic.outputs.new_release_major_version }}.${{ steps.semantic.outputs.new_release_minor_version }}"
+          {% for group, commits in commits | group_by(attribute="group") %}
+              ### {{ group | striptags | trim | upper_first }}
+              {% for commit in commits %}
+                  - {% if commit.scope %}*({{ commit.scope }})* {% endif %}{{ commit.message | upper_first }}\
+              {% endfor %}
+          {% endfor %}
+          """
+          trim = true
+
+          [git]
+          conventional_commits = true
+          filter_unconventional = true
+          commit_parsers = [
+              { message = "^feat", group = "Features" },
+              { message = "^fix", group = "Bug Fixes" },
+              { message = "^refactor", group = "Refactor" },
+              { message = "^doc", group = "Documentation" },
+              { message = "^perf", group = "Performance" },
+              { message = "^test", group = "Testing" },
+              { message = "^chore\\(release\\)", skip = true },
+              { message = "^chore\\(deps\\)", skip = true },
+              { message = "^chore|^ci", group = "Miscellaneous" },
+          ]
+          filter_commits = false
+          sort_commits = "oldest"
+          CLIFF_EOF
+            echo "config_path=/tmp/cliff-default.toml" >> $GITHUB_OUTPUT
+            echo "Using embedded default cliff config"
+          fi
+
+      - name: Check for existing tags
+        id: check-tags
+        run: |
+          SERVICE_NAME="${{ inputs.service_name }}"
+
+          if [ -n "$SERVICE_NAME" ]; then
+            PATTERN="^${SERVICE_NAME}-v[0-9]"
+            MATCHING_TAGS=$(git tag --list | grep -E "$PATTERN" || true)
+          else
+            MATCHING_TAGS=$(git tag --list | grep -E "^v[0-9]" || true)
+          fi
+
+          if [ -n "$MATCHING_TAGS" ]; then
+            echo "has_tags=true" >> $GITHUB_OUTPUT
+            echo "Found existing tags matching pattern"
+          else
+            echo "has_tags=false" >> $GITHUB_OUTPUT
+            echo "No existing tags found — first release"
+          fi
+
+      - name: Generate changelog
+        id: cliff
+        if: steps.check-tags.outputs.has_tags == 'true'
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: ${{ steps.config.outputs.config_path }}
+          args: >-
+            --bump
+            --unreleased
+            --strip header
+            ${{ inputs.service_name != '' && format('--tag-pattern "^{0}-v[0-9]"', inputs.service_name) || '' }}
+            ${{ inputs.service_path != '' && format('--include-path "{0}/**"', inputs.service_path) || '' }}
+        env:
+          OUTPUT: /tmp/RELEASE_NOTES.md
+
+      - name: Generate changelog (first release)
+        id: cliff-first
+        if: steps.check-tags.outputs.has_tags == 'false'
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: ${{ steps.config.outputs.config_path }}
+          args: >-
+            --unreleased
+            --strip header
+            ${{ inputs.service_path != '' && format('--include-path "{0}/**"', inputs.service_path) || '' }}
+        env:
+          OUTPUT: /tmp/RELEASE_NOTES.md
+
+      - name: Create release
+        id: release
+        env:
+          GH_TOKEN: ${{ inputs.app_id != '' && steps.generate-token.outputs.token || github.token }}
+        run: |
+          SERVICE_NAME="${{ inputs.service_name }}"
+          HAS_TAGS="${{ steps.check-tags.outputs.has_tags }}"
+          IS_DRY_RUN="${{ inputs.dry_run == true || github.event_name == 'pull_request' }}"
+
+          if [ "$HAS_TAGS" = "true" ]; then
+            CLIFF_VERSION="${{ steps.cliff.outputs.version }}"
+
+            # Strip service name prefix if present
+            if [ -n "$SERVICE_NAME" ]; then
+              VERSION="${CLIFF_VERSION#${SERVICE_NAME}-v}"
+            else
+              VERSION="${CLIFF_VERSION#v}"
+            fi
+
+            # If version is empty or unchanged, nothing to release
+            if [ -z "$VERSION" ] || [ "$VERSION" = "$CLIFF_VERSION" ]; then
+              echo "No new version computed, nothing to release"
+              echo "new_release_published=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          else
+            # First release — check for conventional commits
+            COMMIT_COUNT=$(git log --oneline --format="%s" | grep -cE "^(feat|fix|refactor|perf|docs?|test|chore|ci|style|build)" || true)
+            if [ "$COMMIT_COUNT" -gt 0 ]; then
+              VERSION="0.1.0"
+              echo "First release detected, defaulting to $VERSION"
+            else
+              echo "No conventional commits found, nothing to release"
+              echo "new_release_published=false" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+
+          # Build tag
+          if [ -n "$SERVICE_NAME" ]; then
+            TAG="${SERVICE_NAME}-v${VERSION}"
+          else
+            TAG="v${VERSION}"
+          fi
+
+          # Append metadata if provided
+          if [ -n "${{ inputs.metadata_file }}" ] && [ -f "${{ inputs.metadata_file }}" ]; then
+            METADATA=$(cat "${{ inputs.metadata_file }}")
+            if [ -n "$METADATA" ]; then
+              TAG="${TAG}+${METADATA}"
+              VERSION="${VERSION}+${METADATA}"
+            fi
+          fi
+
+          # Check if tag already exists
+          if git tag --list | grep -qx "$TAG"; then
+            echo "Tag $TAG already exists, nothing to release"
+            echo "new_release_published=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Parse version components
+          SEMVER="${VERSION%%+*}"
+          MAJOR=$(echo "$SEMVER" | cut -d. -f1)
+          MINOR=$(echo "$SEMVER" | cut -d. -f2)
+          PATCH=$(echo "$SEMVER" | cut -d. -f3)
+
+          echo "Version: $VERSION"
+          echo "Tag: $TAG"
+          echo "Major: $MAJOR, Minor: $MINOR, Patch: $PATCH"
+
+          # Set outputs
+          echo "new_release_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "new_release_major_version=$MAJOR" >> $GITHUB_OUTPUT
+          echo "new_release_minor_version=$MINOR" >> $GITHUB_OUTPUT
+          echo "new_release_patch_version=$PATCH" >> $GITHUB_OUTPUT
+          echo "new_release_git_tag=$TAG" >> $GITHUB_OUTPUT
+          echo "new_release_git_head=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+          if [ "$IS_DRY_RUN" = "true" ]; then
+            echo "Dry run: would create tag $TAG with version $VERSION"
+            echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "--- Release Notes Preview ---"
+            cat /tmp/RELEASE_NOTES.md || echo "(no release notes generated)"
+            exit 0
+          fi
+
+          # Create tag and release
+          git config user.name "${{ env.GIT_USER_NAME }}"
+          git config user.email "${{ env.GIT_USER_EMAIL }}"
+          git tag -a "$TAG" -m "chore(release): $TAG"
+          git push origin "$TAG"
+
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file /tmp/RELEASE_NOTES.md \
+            --target "${{ github.sha }}"
+
+          echo "new_release_published=true" >> $GITHUB_OUTPUT
+
+      - name: Update version alias tags
+        if: steps.release.outputs.new_release_published == 'true' && inputs.update_version_aliases == true && inputs.dry_run == false && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ inputs.app_id != '' && steps.generate-token.outputs.token || github.token }}
+        run: |
+          SERVICE_NAME="${{ inputs.service_name }}"
+          MAJOR="${{ steps.release.outputs.new_release_major_version }}"
+          MINOR="${{ steps.release.outputs.new_release_minor_version }}"
+          VERSION="${{ steps.release.outputs.new_release_version }}"
+
+          if [ -n "$SERVICE_NAME" ]; then
+            MAJOR_TAG="${SERVICE_NAME}-v${MAJOR}"
+            MINOR_TAG="${SERVICE_NAME}-v${MAJOR}.${MINOR}"
+          else
+            MAJOR_TAG="v${MAJOR}"
+            MINOR_TAG="v${MAJOR}.${MINOR}"
+          fi
+
+          git tag -fa "$MAJOR_TAG" -m "Update major version alias to $VERSION"
+          git push origin "$MAJOR_TAG" --force
+
+          git tag -fa "$MINOR_TAG" -m "Update minor version alias to $VERSION"
+          git push origin "$MINOR_TAG" --force
+
+          echo "Updated version aliases: $MAJOR_TAG, $MINOR_TAG"
