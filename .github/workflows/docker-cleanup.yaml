@@ -1,0 +1,100 @@
+name: Docker Cleanup PR Images
+
+on:
+  workflow_call:
+    inputs:
+      aws_account_id:
+        description: "AWS Account ID"
+        type: string
+      aws_region:
+        description: "AWS Region"
+        type: string
+      aws_role_name:
+        description: "AWS Role Name"
+        type: string
+      aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+      image_name:
+        description: "Image/repository name"
+        type: string
+      pr_number:
+        description: "PR number to clean up. Deletes every tag matching pr-{N} or pr-{N}-*."
+        type: string
+        required: true
+    secrets:
+      ghcr_token:
+        description: "GitHub token for GHCR cleanup. Only used when ECR inputs are not set."
+        required: false
+
+jobs:
+  cleanup:
+    name: Cleanup PR ${{ inputs.pr_number }} Images
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+    steps:
+      # ── ECR cleanup ──
+      - name: Configure AWS credentials
+        if: inputs.aws_role_name != '' || inputs.aws_oidc_role_arn != ''
+        uses: aws-actions/configure-aws-credentials@v6
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+          AWS_REGION: ${{ inputs.aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Delete PR tags from ECR
+        if: inputs.aws_role_name != '' || inputs.aws_oidc_role_arn != ''
+        env:
+          ECR_REPO: ${{ inputs.image_name }}
+          AWS_REGION: ${{ inputs.aws_region || 'eu-central-1' }}
+          PR: ${{ inputs.pr_number }}
+        run: |
+          IMAGE_IDS=$(aws ecr list-images \
+            --repository-name "${ECR_REPO}" \
+            --region "${AWS_REGION}" \
+            --filter "tagStatus=TAGGED" \
+            --query 'imageIds[*]' \
+            --output json \
+            | jq --arg pr "pr-${PR}" \
+                '[.[] | select(.imageTag == $pr or (.imageTag | startswith($pr + "-")))]')
+
+          if [ "$IMAGE_IDS" = "[]" ] || [ -z "$IMAGE_IDS" ]; then
+            echo "No pr-${PR} tags found in ${ECR_REPO}"
+            exit 0
+          fi
+
+          echo "Deleting pr-${PR} tags from ${ECR_REPO}:"
+          echo "$IMAGE_IDS" | jq -r '.[].imageTag'
+
+          aws ecr batch-delete-image \
+            --repository-name "${ECR_REPO}" \
+            --region "${AWS_REGION}" \
+            --image-ids "$IMAGE_IDS"
+
+      # ── GHCR cleanup ──
+      - name: Delete PR tags from GHCR
+        if: inputs.aws_role_name == '' && inputs.aws_oidc_role_arn == ''
+        env:
+          GH_TOKEN: ${{ secrets.ghcr_token || github.token }}
+          IMAGE_NAME: ${{ inputs.image_name }}
+          OWNER: ${{ github.repository_owner }}
+          PR: ${{ inputs.pr_number }}
+        run: |
+          VERSIONS=$(gh api --paginate "/orgs/${OWNER}/packages/container/${IMAGE_NAME}/versions" \
+            --jq "[.[] | select(.metadata.container.tags[] | . == \"pr-${PR}\" or startswith(\"pr-${PR}-\")) | .id] | unique")
+
+          if [ "$VERSIONS" = "[]" ] || [ -z "$VERSIONS" ]; then
+            echo "No pr-${PR} tags found in ${IMAGE_NAME}"
+            exit 0
+          fi
+
+          echo "$VERSIONS" | jq -r '.[]' | while read -r VERSION_ID; do
+            echo "Deleting version ${VERSION_ID}"
+            gh api --method DELETE \
+              "/orgs/${OWNER}/packages/container/${IMAGE_NAME}/versions/${VERSION_ID}"
+          done

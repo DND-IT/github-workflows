@@ -1,0 +1,115 @@
+name: Docker Push
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        type: string
+      # ECR inputs — when aws_role_name or aws_oidc_role_arn is set, ECR auth is used
+      aws_account_id:
+        description: "AWS Account ID"
+        type: string
+      aws_region:
+        description: "AWS Region"
+        type: string
+      aws_role_name:
+        description: "AWS Role Name"
+        type: string
+      aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+      # Image inputs
+      image_name:
+        description: "Name of the Docker image / ECR repository"
+        type: string
+      image_ref:
+        description: "Full GHCR image reference to pull (from build workflow output)"
+        type: string
+        required: true
+      # Tag inputs
+      version_tag:
+        description: "Semantic version tag to apply (e.g. 1.7.1). Only applied when non-empty."
+        type: string
+      prerelease_tag:
+        description: "Prerelease tag to apply (e.g. 1.7.1-rc.pr42). Only applied when non-empty."
+        type: string
+      additional_tags:
+        description: "Extra tags to apply (newline-separated)."
+        type: string
+    secrets:
+      ghcr_token:
+        description: "GitHub token for GHCR auth. Only used when ECR inputs are not set."
+        required: false
+
+jobs:
+  push:
+    name: Push
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+      packages: read
+    steps:
+      # ── Pull from GHCR build cache ──
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.ghcr_token || github.token }}
+
+      - name: Pull image from GHCR
+        run: docker pull "${{ inputs.image_ref }}"
+
+      # ── ECR auth (when AWS role is provided) ──
+      - name: Configure AWS credentials
+        if: inputs.aws_role_name != '' || inputs.aws_oidc_role_arn != ''
+        uses: aws-actions/configure-aws-credentials@v6
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+          AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        if: inputs.aws_role_name != '' || inputs.aws_oidc_role_arn != ''
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # ── Tag and push ──
+      - name: Tag and push
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry || format('ghcr.io/{0}', github.repository_owner) }}
+          REPOSITORY: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
+          IMAGE_REF: ${{ inputs.image_ref }}
+          VERSION_TAG: ${{ inputs.version_tag }}
+          PRERELEASE_TAG: ${{ inputs.prerelease_tag }}
+          ADDITIONAL_TAGS: ${{ inputs.additional_tags }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          # Tag latest on default branch
+          if [ "$BRANCH" = "${{ github.event.repository.default_branch }}" ]; then
+            docker tag "$IMAGE_REF" "$REGISTRY/$REPOSITORY:latest"
+          fi
+
+          # Version tag (e.g. 1.7.1)
+          if [ -n "$VERSION_TAG" ]; then
+            docker tag "$IMAGE_REF" "$REGISTRY/$REPOSITORY:$VERSION_TAG"
+          fi
+
+          # Prerelease tag (e.g. 1.7.1-rc.pr42)
+          if [ -n "$PRERELEASE_TAG" ]; then
+            docker tag "$IMAGE_REF" "$REGISTRY/$REPOSITORY:$PRERELEASE_TAG"
+          fi
+
+          # Additional tags (e.g. short SHA, pr-N)
+          if [ -n "$ADDITIONAL_TAGS" ]; then
+            while IFS= read -r tag; do
+              [ -n "$tag" ] && docker tag "$IMAGE_REF" "$REGISTRY/$REPOSITORY:$tag"
+            done <<< "$ADDITIONAL_TAGS"
+          fi
+
+          docker push --all-tags "$REGISTRY/$REPOSITORY"

@@ -19,55 +19,75 @@ on:
       dockerfile_path:
         description: "Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile"
         type: string
-      artifact_name:
-        description: "Name of the artifact to upload. If not set, it will be derived from the image name"
-        type: string
-      artifact_retention_days:
-        description: "Number of days to retain the artifact"
-        type: number
       docker_target:
         description: "Build target"
         type: string
+      build_args:
+        description: "Additional Docker build arguments (newline-separated KEY=VALUE pairs)"
+        type: string
+        default: ""
+    outputs:
+      sha:
+        description: "Full commit SHA used as image tag"
+        value: ${{ jobs.build.outputs.sha }}
+      image_ref:
+        description: "Full GHCR image reference (for docker pull in downstream jobs)"
+        value: ${{ jobs.build.outputs.image_ref }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
-      id-token: write
       contents: read
+      packages: write
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
+      image_ref: ${{ steps.meta.outputs.image_ref }}
     env:
-      IMAGE_TAG: ${{ github.event.pull_request.head.sha || github.sha }}
+      SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       IMAGE_NAME: ${{ inputs.image_name || vars.image_name || github.event.repository.name }}
-      DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }} # upstream defaults to {DOCKER_CTX}/Dockerfile
+      DOCKERFILE_PATH: ${{ inputs.dockerfile_path || vars.dockerfile_path }}
     steps:
       - name: Check out code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@v6
+
+      - name: Prepare metadata
+        id: meta
+        run: |
+          CACHE_REPO="ghcr.io/${{ github.repository }}/build-cache"
+          CACHE_REPO="${CACHE_REPO,,}"
+          IMAGE_REF="${CACHE_REPO}:${{ env.IMAGE_NAME }}-${SHA}"
+          echo "sha=${SHA}" >> $GITHUB_OUTPUT
+          echo "image_ref=${IMAGE_REF}" >> $GITHUB_OUTPUT
+          echo "cache_repo=${CACHE_REPO}" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4
+        uses: docker/setup-buildx-action@v4
 
-      - name: Build and export
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Build and push to GHCR
+        uses: docker/build-push-action@v7
         env:
-          DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.'}}
+          DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.' }}
           DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
         with:
           context: ${{ env.DOCKER_CTX }}
           file: ${{ env.DOCKERFILE_PATH }}
           secrets: ${{ secrets.docker_secrets }}
-          # platforms: linux/amd64,linux/arm64 # TODO add support for multi-arch builds
-          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-          outputs: type=docker,dest=/tmp/${{ env.IMAGE_NAME }}.tar
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          push: true
+          tags: ${{ steps.meta.outputs.image_ref }}
+          cache-from: type=registry,ref=${{ steps.meta.outputs.cache_repo }}:${{ env.IMAGE_NAME }}
+          cache-to: type=registry,ref=${{ steps.meta.outputs.cache_repo }}:${{ env.IMAGE_NAME }},mode=max
           target: ${{ env.DOCKER_TARGET }}
-
-      - name: Upload artifact
-        env:
-          ARTIFACT_RETENTION_DAYS: ${{ inputs.artifact_retention_days || vars.artifact_retention_days || 5 }}
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
-        with:
-          name: ${{ inputs.artifact_name || env.IMAGE_NAME }}-${{ env.IMAGE_TAG }}
-          path: /tmp/${{ inputs.artifact_name || env.IMAGE_NAME }}.tar
-          retention-days: ${{ env.ARTIFACT_RETENTION_DAYS }}
+          build-args: |
+            VERSION=${{ steps.meta.outputs.sha }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ steps.meta.outputs.sha }}
+            ${{ inputs.build_args }}

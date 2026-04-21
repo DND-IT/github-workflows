@@ -1,322 +1,274 @@
-name: Service Pipeline
+name: _Lib Service Pipeline
 
 on:
   workflow_call:
     inputs:
       service_name:
-        description: "Name of the service / ECR repository (e.g., social-media)"
+        description: "Name of the service (must match a target in matrix-config.yaml)"
         required: true
         type: string
       service_path:
-        description: "Path to service directory containing the Dockerfile (e.g., backend)"
-        required: false
-        type: string
-        default: '.'
-      dockerfile_path:
-        description: "Path to the Dockerfile relative to service_path. Defaults to Dockerfile."
+        description: "Service directory (Docker context, release include-path). Overrides the value resolved from matrix config."
         required: false
         type: string
       config_path:
-        description: "Path to the matrix config file with AWS environments"
-        required: true
-        type: string
-        default: '.github/matrix-config.yaml'
-      validate_pr_title:
-        description: "Validate PR title follows conventional commit format"
+        description: "Path to the matrix config file. Defaults to action-config's default."
         required: false
-        type: boolean
-        default: true
+        type: string
+      slack_channel:
+        description: "Slack channel ID for release notifications. Overrides the value resolved from matrix config."
+        required: false
+        type: string
+      dockerfile_path:
+        description: "Path to the Dockerfile relative to service directory. Defaults to Dockerfile."
+        required: false
+        type: string
+      pr_environment:
+        description: "Environment to push to on pull requests"
+        required: false
+        type: string
+        default: dev
       docker_build_args:
         description: "Additional Docker build arguments (newline-separated KEY=VALUE pairs)"
         required: false
         type: string
         default: ''
-      slack_channel:
-        description: "Slack channel ID for release notifications (empty to skip)"
+      release:
+        description: "Release strategy: 'auto' releases on push to main, 'gated' releases only when merged to release branch. Defaults to value from matrix-config.yaml."
         required: false
         type: string
-        default: ''
-      argocd_app_name:
-        description: "ArgoCD app name for feature branch image updates. Supports placeholders: {service_name}, {pr_number}. Empty to skip."
-        required: false
-        type: string
-        default: ''
-      argocd_image_params:
-        description: "ArgoCD app parameters to set with the image tag (comma-separated, e.g., 'image.tag' or 'generic.image_tag,frontend.image_tag')"
-        required: false
-        type: string
-        default: 'image.tag'
       app_id:
-        description: "GitHub App ID for semantic-release authentication"
+        description: "GitHub App ID for authentication"
         required: true
         type: string
     outputs:
-      new_release_published:
+      published:
         description: "Whether a new release was published ('true' or 'false')"
-        value: ${{ jobs.release-info.outputs.new_release_published }}
-      new_release_version:
+        value: ${{ jobs.release.outputs.published }}
+      version:
         description: "Version of the new release (e.g. 1.3.0)"
-        value: ${{ jobs.release-info.outputs.new_release_version }}
-      image_pushed:
-        description: "Whether a docker image was pushed"
-        value: ${{ jobs.push.result == 'success' }}
+        value: ${{ jobs.release.outputs.version }}
       image_sha:
-        description: "Short commit SHA used as the primary image tag"
+        description: "Full commit SHA used as the primary image tag"
         value: ${{ jobs.build.outputs.sha }}
-      image_tags:
-        description: "All tags applied to the image (newline-separated)"
-        value: ${{ jobs.build.outputs.image-tags }}
+      image_ref:
+        description: "Full GHCR image reference"
+        value: ${{ jobs.build.outputs.image_ref }}
     secrets:
       docker_secrets:
         description: "Docker build secrets (newline-separated id=value pairs)"
         required: false
       slack_bot_token:
         required: false
-      argocd_auth_token:
-        description: "ArgoCD authentication token"
-        required: false
       app_private_key:
         required: true
 
+env:
+  GIT_USER_NAME: "tamedia-fission[bot]"
+  GIT_USER_EMAIL: "238147500+tamedia-fission[bot]@users.noreply.github.com"
+
 concurrency:
-  group: service-pipeline-${{ inputs.service_name }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: service-pipeline-${{ inputs.service_name }}-${{ github.event.action == 'closed' && format('cleanup-pr-{0}', github.event.pull_request.number) || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
 
 jobs:
-  validate-pr-title:
-    name: Validate PR Title
-    if: github.event_name == 'pull_request' && inputs.validate_pr_title
-    runs-on: ubuntu-latest
-    steps:
-      - name: Validate conventional commit format
-        uses: amannn/action-semantic-pull-request@v6
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+  # ──────────────────────────────────────────────
+  # Stage 0: Setup & Validation
+  # ──────────────────────────────────────────────
 
   setup:
     name: Setup
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.config.outputs.matrix }}
+      environments: ${{ steps.config.outputs.matrix }}
+      ecr_repository: ${{ steps.config.outputs.ecr_repository }}
+      service_path: ${{ inputs.service_path || steps.config.outputs.directory }}
+      charts_dir: ${{ steps.config.outputs.charts_dir }}
+      aws_iam_role_name: ${{ steps.config.outputs.aws_iam_role_name }}
+      aws_region: ${{ steps.config.outputs.aws_region }}
+      slack_channel: ${{ inputs.slack_channel || steps.config.outputs.slack_channel }}
+      release: ${{ inputs.release || steps.config.outputs.release || 'auto' }}
+      version_strategy: ${{ steps.config.outputs.version_strategy || 'semver' }}
+      tag_prefix: ${{ steps.config.outputs.tag_prefix || format('{0}-v', inputs.service_name) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Load configuration
-        id: config
-        uses: DND-IT/action-config@v3
+      - id: config
+        uses: DND-IT/action-config@v2
         with:
           config_path: ${{ inputs.config_path }}
+          target: ${{ inputs.service_name }}
+          environment: ${{ github.event_name == 'pull_request' && inputs.pr_environment || '' }}
+
+
+  # ──────────────────────────────────────────────
+  # Stage 1: Build Image
+  # ──────────────────────────────────────────────
 
   build:
     name: Build
+    needs: [setup]
+    if: github.event.action != 'closed'
+    uses: ./.github/workflows/docker-build.yaml
+    with:
+      image_name: ${{ inputs.service_name }}
+      docker_context: ${{ needs.setup.outputs.service_path }}
+      dockerfile_path: ${{ inputs.dockerfile_path && format('{0}/{1}', needs.setup.outputs.service_path, inputs.dockerfile_path) || '' }}
+      build_args: ${{ inputs.docker_build_args }}
+    secrets:
+      docker_secrets: ${{ secrets.docker_secrets }}
+
+  # ──────────────────────────────────────────────
+  # Stage 2: Release
+  # ──────────────────────────────────────────────
+
+  release:
+    name: Release
+    needs: [setup, build]
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
-    outputs:
-      sha: ${{ steps.meta.outputs.sha }}
-      image-tags: ${{ steps.meta.outputs.tags }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Prepare image metadata
-        id: meta
-        run: |
-          SERVICE="${{ inputs.service_name }}"
-          FULL_SHA="${{ github.sha }}"
-          SHORT_SHA="${FULL_SHA:0:7}"
-
-          TAGS="${SHORT_SHA}"
-
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TAGS="${TAGS}
-          pr-${{ github.event.pull_request.number }}"
-          fi
-
-          DOCKER_TAGS=$(echo "${TAGS}" | while read -r tag; do
-            [ -n "$tag" ] && echo "${SERVICE}:${tag}"
-          done | paste -sd "," -)
-
-          echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "tags<<EOF" >> $GITHUB_OUTPUT
-          echo "${TAGS}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "docker_tags=${DOCKER_TAGS}" >> $GITHUB_OUTPUT
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build and export
-        uses: docker/build-push-action@v7
-        env:
-          DOCKERFILE: ${{ inputs.dockerfile_path && format('{0}/{1}', inputs.service_path, inputs.dockerfile_path) || format('{0}/Dockerfile', inputs.service_path) }}
-        with:
-          context: ./${{ inputs.service_path }}
-          file: ${{ env.DOCKERFILE }}
-          tags: ${{ steps.meta.outputs.docker_tags }}
-          outputs: type=docker,dest=/tmp/${{ inputs.service_name }}.tar
-          secrets: ${{ secrets.docker_secrets }}
-          build-args: |
-            VERSION=${{ steps.meta.outputs.sha }}
-            BUILD_DATE=${{ github.event.head_commit.timestamp }}
-            VCS_REF=${{ github.sha }}
-            ${{ inputs.docker_build_args }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ inputs.service_name }}-image
-          path: /tmp/${{ inputs.service_name }}.tar
-          retention-days: 1
-
-  release-info:
-    name: Release Info
-    if: github.ref_name == github.event.repository.default_branch && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
       issues: write
       pull-requests: write
-    uses: DND-IT/github-workflows/.github/workflows/gh-release.yaml@v3
-    with:
-      use_semantic_release: true
-      dry_run: true
-      app_id: ${{ inputs.app_id }}
-      working_directory: ${{ inputs.service_path }}
-    secrets:
-      app_private_key: ${{ secrets.app_private_key }}
+    env:
+      IS_MAIN: ${{ github.ref_name == github.event.repository.default_branch }}
+    outputs:
+      published: ${{ steps.releaser.outputs.release-published }}
+      version: ${{ steps.releaser.outputs.version }}
+    steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.app_private_key }}
 
-  push:
-    name: Push (${{ matrix.environment }})
-    needs: [setup, build, release-info]
-    if: always() && needs.build.result == 'success'
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Configure Git
+        if: env.IS_MAIN == 'true'
+        run: |
+          git config --global user.name "${{ env.GIT_USER_NAME }}"
+          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
+          git pull --rebase
+
+      - name: Release
+        id: releaser
+        uses: DND-IT/action-releaser@v0
+        with:
+          version-strategy: ${{ needs.setup.outputs.version_strategy }}
+          tag-prefix: ${{ needs.setup.outputs.tag_prefix }}
+          cliff-config: ${{ needs.setup.outputs.service_path }}/cliff.toml
+          include-path: ${{ needs.setup.outputs.service_path }}/**
+          release-mode: ${{ env.IS_MAIN == 'true' && needs.setup.outputs.release == 'gated' && 'pr' || 'direct' }}
+          dry-run: ${{ env.IS_MAIN != 'true' }}
+          github-token: ${{ steps.generate-token.outputs.token }}
+
+
+  # ──────────────────────────────────────────────
+  # Stage 3: Tag and Push Images
+  # ──────────────────────────────────────────────
+
+  tag-push:
+    name: Tag & Push ${{ matrix.environment }}
+    needs: [setup, build, release]
+    if: needs.release.outputs.published == 'true' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJson(needs.setup.outputs.matrix) }}
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: ${{ inputs.service_name }}-image
-          path: /tmp
+        include: ${{ fromJson(needs.setup.outputs.environments) }}
+    uses: ./.github/workflows/docker-push.yaml
+    with:
+      image_name: ${{ needs.setup.outputs.ecr_repository || inputs.service_name }}
+      image_ref: ${{ needs.build.outputs.image_ref }}
+      aws_account_id: ${{ matrix.aws_account_id }}
+      aws_role_name: ${{ needs.setup.outputs.aws_iam_role_name }}
+      aws_region: ${{ needs.setup.outputs.aws_region }}
+      version_tag: ${{ needs.release.outputs.published == 'true' && github.event_name != 'pull_request' && needs.release.outputs.version || '' }}
+      additional_tags: |-
+        ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.pull_request.number, needs.build.outputs.sha) || needs.build.outputs.sha }}
+        ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || '' }}
 
-      - name: Load image
-        run: docker load --input /tmp/${{ inputs.service_name }}.tar
+  # ──────────────────────────────────────────────
+  # Stage 4: Deploy
+  # ──────────────────────────────────────────────
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v6
-        with:
-          role-to-assume: arn:aws:iam::${{ matrix.aws_account_id }}:role/${{ matrix.aws_iam_role_name }}
-          aws-region: ${{ matrix.aws_region }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Tag and push to ECR
-        run: |
-          ECR_REGISTRY="${{ steps.login-ecr.outputs.registry }}"
-          SERVICE="${{ inputs.service_name }}"
-          SHA="${{ needs.build.outputs.sha }}"
-          ALL_TAGS="${{ needs.build.outputs.image-tags }}"
-
-          # Tag all build tags
-          while IFS= read -r tag; do
-            [ -n "$tag" ] && docker tag "${SERVICE}:${tag}" "${ECR_REGISTRY}/${SERVICE}:${tag}"
-          done <<< "${ALL_TAGS}"
-
-          # Tag 'latest' on default branch
-          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/${{ github.event.repository.default_branch }}" ]; then
-            docker tag "${SERVICE}:${SHA}" "${ECR_REGISTRY}/${SERVICE}:latest"
-          fi
-
-          # Tag version if semantic release found a new version
-          if [ "${{ needs.release-info.outputs.new_release_published }}" = "true" ]; then
-            VERSION="${{ needs.release-info.outputs.new_release_version }}"
-            docker tag "${SERVICE}:${SHA}" "${ECR_REGISTRY}/${SERVICE}:${VERSION}"
-          fi
-
-          docker push --all-tags "${ECR_REGISTRY}/${SERVICE}"
-
-  release:
-    name: Create Release
-    needs: [push, release-info]
-    if: needs.release-info.outputs.new_release_published == 'true'
+  deploy:
+    name: Deploy
+    needs: [setup, build, release, tag-push]
+    if: needs.release.outputs.published == 'true'
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-      issues: write
       pull-requests: write
-    uses: DND-IT/github-workflows/.github/workflows/gh-release.yaml@v3
-    with:
-      use_semantic_release: true
-      app_id: ${{ inputs.app_id }}
-      working_directory: ${{ inputs.service_path }}
-    secrets:
-      app_private_key: ${{ secrets.app_private_key }}
+    steps:
+      - name: Generate GitHub App Token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ inputs.app_id }}
+          private-key: ${{ secrets.app_private_key }}
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+
+      - name: Pull latest
+        run: git pull --rebase
+
+      - name: Deploy
+        id: deployer
+        uses: DND-IT/action-deployer@v0
+        with:
+          service: ${{ inputs.service_name }}
+          version: ${{ needs.release.outputs.version }}
+          sha: ${{ needs.build.outputs.sha }}
+          token: ${{ steps.generate-token.outputs.token }}
+          git_user_name: ${{ env.GIT_USER_NAME }}
+          git_user_email: ${{ env.GIT_USER_EMAIL }}
+
+  # ──────────────────────────────────────────────
+  # Auxiliary jobs
+  # ──────────────────────────────────────────────
 
   notify:
     name: Notify Slack
-    needs: [release, release-info]
-    if: |
-      always() &&
-      needs.release.result == 'success' &&
-      needs.release-info.outputs.new_release_published == 'true' &&
-      inputs.slack_channel != ''
+    needs: [setup, release]
+    if: needs.release.outputs.published == 'true' && needs.setup.outputs.slack_channel != ''
     uses: DND-IT/github-workflows/.github/workflows/notify-slack.yaml@v3
     secrets:
       slack_bot_token: ${{ secrets.slack_bot_token }}
     with:
-      channel: ${{ inputs.slack_channel }}
+      channel: ${{ needs.setup.outputs.slack_channel }}
       notification_title: "New ${{ inputs.service_name }} release"
-      notification_message: "${{ inputs.service_name }} v${{ needs.release-info.outputs.new_release_version }} has been released!"
+      notification_message: "${{ inputs.service_name }} ${{ needs.release.outputs.version }} has been released!"
       status: "success"
       additional_fields: |
         [
           {"name": "Service", "value": "${{ inputs.service_name }}"},
-          {"name": "Version", "value": "v${{ needs.release-info.outputs.new_release_version }}"},
-          {"name": "Release", "value": "<${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.release-info.outputs.new_release_version }}|v${{ needs.release-info.outputs.new_release_version }}>"}
+          {"name": "Version", "value": "${{ needs.release.outputs.version }}"},
+          {"name": "Release", "value": "<${{ github.server_url }}/${{ github.repository }}/releases|${{ needs.release.outputs.version }}>"}
         ]
       include_workflow_link: true
       include_triggered_by: true
 
-  argocd-prepare:
-    name: Prepare ArgoCD Command
-    needs: [build, push]
-    if: github.event_name == 'pull_request' && needs.push.result == 'success' && inputs.argocd_app_name != ''
-    runs-on: ubuntu-latest
-    outputs:
-      commands: ${{ steps.cmd.outputs.commands }}
-    steps:
-      - name: Build ArgoCD command
-        id: cmd
-        run: |
-          APP_NAME="${{ inputs.argocd_app_name }}"
-          APP_NAME="${APP_NAME//\{service_name\}/${{ inputs.service_name }}}"
-          APP_NAME="${APP_NAME//\{pr_number\}/${{ github.event.pull_request.number }}}"
-
-          IMAGE_TAG="${{ needs.build.outputs.sha }}"
-          PARAMS="${{ inputs.argocd_image_params }}"
-
-          CMD="app set ${APP_NAME}"
-          IFS=',' read -ra PARAM_ARRAY <<< "$PARAMS"
-          for param in "${PARAM_ARRAY[@]}"; do
-            param=$(echo "$param" | xargs)
-            CMD="${CMD} -p ${param}=${IMAGE_TAG}"
-          done
-
-          echo "commands=${CMD}" >> $GITHUB_OUTPUT
-
-  argocd-set-image:
-    name: Set Feature Branch Image Tag
-    needs: [argocd-prepare]
-    if: needs.argocd-prepare.result == 'success'
-    uses: DND-IT/github-workflows/.github/workflows/argocd-cli.yaml@v3
-    secrets:
-      argocd_auth_token: ${{ secrets.argocd_auth_token }}
+  cleanup:
+    name: Cleanup PR Images
+    needs: [setup]
+    if: github.event.action == 'closed' && github.event_name == 'pull_request'
+    uses: ./.github/workflows/docker-cleanup.yaml
     with:
-      argocd_commands: ${{ needs.argocd-prepare.outputs.commands }}
+      image_name: ${{ needs.setup.outputs.ecr_repository }}
+      aws_account_id: ${{ fromJson(needs.setup.outputs.environments)[0].aws_account_id }}
+      aws_role_name: ${{ needs.setup.outputs.aws_iam_role_name }}
+      aws_region: ${{ needs.setup.outputs.aws_region }}
+      pr_number: ${{ github.event.pull_request.number }}
