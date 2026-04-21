@@ -1,0 +1,42 @@
+# git-cliff config for action-releaser — used for the global repo release and
+# every per-workflow release. action-releaser scopes each release by the
+# include-path it passes, so a single cliff.toml works for all of them.
+[changelog]
+header = "# Changelog\n\nAll notable changes to this project.\n"
+body = """
+{% if version %}\
+## {{ version }} — {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+## Unreleased
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+
+### {{ group | upper_first }}
+{% for commit in commits %}\
+- {{ commit.message | upper_first }}{% if commit.breaking %} [**BREAKING**]{% endif %}
+{% endfor %}\
+{% endfor %}\n
+"""
+trim = true
+footer = ""
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+commit_parsers = [
+  { message = "^feat", group = "Features" },
+  { message = "^fix", group = "Bug Fixes" },
+  { message = "^perf", group = "Performance" },
+  { message = "^refactor", group = "Refactor" },
+  { message = "^docs", group = "Documentation" },
+  { message = "^test", group = "Tests" },
+  { message = "^chore\\(release\\):", skip = true },
+  { message = "^chore", group = "Chores" },
+  { message = "^ci", group = "CI" },
+  { message = "^build", group = "Build" },
+]
+filter_commits = false
+tag_pattern = "*-v[0-9]*|v[0-9]*"
+topo_order = false
+sort_commits = "newest"

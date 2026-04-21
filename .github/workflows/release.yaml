@@ -1,5 +1,16 @@
 name: Release Github Reusable Workflows
 
+# Two release scopes run in parallel:
+#   1. Global repo release (tag prefix `v`, covers every change).
+#   2. Per-workflow release (tag prefix `<workflow>-v`, covers only that
+#      workflow file). Lets downstream consumers pin to a specific
+#      workflow version independently of the global release.
+#
+# action-releaser decides whether to publish by inspecting commits that
+# touched the `include-path` since the last matching tag. A commit that only
+# touches service-pipeline.yaml bumps `service-pipeline-v*` and `v*`; it does
+# not bump other per-workflow tags.
+
 on:
   push:
     branches:
@@ -13,38 +24,123 @@ on:
     paths-ignore:
       - '**.md'
       - 'docs/**'
-
   workflow_dispatch:
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DRY_RUN: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  release:
+  discover:
+    name: Discover releasable workflows
+    runs-on: ubuntu-latest
+    outputs:
+      workflows: ${{ steps.list.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: list
+        name: Build matrix from .github/workflows
+        run: |
+          WORKFLOWS=$(find .github/workflows -maxdepth 1 -type f -name '*.yaml' \
+            | grep -vE '/(_test-|release\.yaml$)' \
+            | xargs -I {} basename {} .yaml \
+            | sort \
+            | jq -Rcn '[inputs]')
+          echo "workflows=$WORKFLOWS" >> "$GITHUB_OUTPUT"
+          echo "Discovered workflows:"
+          echo "$WORKFLOWS" | jq -r '.[]' | sed 's/^/  - /'
+
+  release-workflow:
+    name: Release ${{ matrix.workflow }}
+    needs: [discover]
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        workflow: ${{ fromJson(needs.discover.outputs.workflows) }}
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
       pull-requests: write
-    uses: ./.github/workflows/gh-release.yaml
-    with:
-      use_semantic_release: true
-      update_version_aliases: true
-      app_id: ${{ vars.FISSION_GH_APP_ID }}
-    secrets:
-      app_private_key: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
+    steps:
+      - name: Generate GitHub App Token
+        id: token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.FISSION_GH_APP_ID }}
+          private-key: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ steps.token.outputs.token }}
+
+      - uses: DND-IT/action-releaser@v0
+        with:
+          version-strategy: semver
+          tag-prefix: ${{ matrix.workflow }}-v
+          cliff-config: cliff.toml
+          include-path: .github/workflows/${{ matrix.workflow }}.yaml
+          release-mode: direct
+          dry-run: ${{ env.DRY_RUN }}
+          github-token: ${{ steps.token.outputs.token }}
+
+  release-global:
+    name: Global release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      published: ${{ steps.releaser.outputs.release-published }}
+      version: ${{ steps.releaser.outputs.version }}
+      release_url: ${{ steps.releaser.outputs.release-url }}
+    steps:
+      - name: Generate GitHub App Token
+        id: token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.FISSION_GH_APP_ID }}
+          private-key: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+          token: ${{ steps.token.outputs.token }}
+
+      - id: releaser
+        uses: DND-IT/action-releaser@v0
+        with:
+          version-strategy: semver
+          tag-prefix: v
+          cliff-config: cliff.toml
+          release-mode: direct
+          dry-run: ${{ env.DRY_RUN }}
+          github-token: ${{ steps.token.outputs.token }}
 
   notify-slack:
     name: Notify Slack of Release
-    needs: [release]
-    if: success() && needs.release.outputs.new_release_published == 'true' && needs.release.outputs.dry_run == 'false'
+    needs: [release-global]
+    if: success() && needs.release-global.outputs.published == 'true' && github.event_name != 'pull_request'
     uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
       channel: "C09LG2L8EQ5"
-      notification_title: "New ${{ github.event.repository.name }} release 🚀"
-      notification_message: "Version v${{ needs.release.outputs.new_release_version }} has been released!"
+      notification_title: "New ${{ github.event.repository.name }} release"
+      notification_message: "${{ needs.release-global.outputs.version }} has been released!"
       status: "success"
       additional_fields: |
         [
-          {"name": "Version", "value": "<${{ github.server_url }}/${{ github.repository }}/releases/tag/v${{ needs.release.outputs.new_release_version }}|v${{ needs.release.outputs.new_release_version }}>"},
+          {"name": "Version", "value": "<${{ needs.release-global.outputs.release_url || format('{0}/{1}/releases/tag/{2}', github.server_url, github.repository, needs.release-global.outputs.version) }}|${{ needs.release-global.outputs.version }}>"},
           {"name": "Repository", "value": "<${{ github.server_url }}/${{ github.repository }}|${{ github.repository }}>"}
         ]
       include_workflow_link: true

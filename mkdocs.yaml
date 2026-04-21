@@ -40,8 +40,6 @@ theme:
       example: octicons/beaker-16
       quote: octicons/quote-16
   features:
-    - navigation.tabs.sticky
-    - navigation.tabs
     - content.code.copy
     - navigation.indexes
 

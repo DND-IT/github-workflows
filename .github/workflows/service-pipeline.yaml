@@ -24,7 +24,7 @@ on:
         required: false
         type: string
       pr_environment:
-        description: "Environment to push to on pull requests"
+        description: "Environment to push PR preview images to and run PR preview deploys against."
         required: false
         type: string
         default: dev
@@ -34,7 +34,7 @@ on:
         type: string
         default: ''
       release:
-        description: "Release strategy: 'auto' releases on push to main, 'gated' releases only when merged to release branch. Defaults to value from matrix-config.yaml."
+        description: "Release strategy: 'auto' publishes on every main push with a release-worthy commit; 'gated' publishes only when the release PR merges. Defaults to value from matrix-config.yaml, then 'auto'."
         required: false
         type: string
       app_id:
@@ -44,12 +44,12 @@ on:
     outputs:
       published:
         description: "Whether a new release was published ('true' or 'false')"
-        value: ${{ jobs.release.outputs.published }}
+        value: ${{ jobs.deploy.outputs.published }}
       version:
         description: "Version of the new release (e.g. 1.3.0)"
-        value: ${{ jobs.release.outputs.version }}
+        value: ${{ jobs.setup.outputs.version }}
       image_sha:
-        description: "Full commit SHA used as the primary image tag"
+        description: "Short commit SHA used as the primary image tag"
         value: ${{ jobs.build.outputs.sha }}
       image_ref:
         description: "Full GHCR image reference"
@@ -67,15 +67,13 @@ env:
   GIT_USER_NAME: "tamedia-fission[bot]"
   GIT_USER_EMAIL: "238147500+tamedia-fission[bot]@users.noreply.github.com"
 
+# One concurrency group per PR (or per ref on push) covers every job. Any PR
+# event — including `closed` — cancels an in-flight run for the same PR.
 concurrency:
-  group: service-pipeline-${{ inputs.service_name }}-${{ github.event.action == 'closed' && format('cleanup-pr-{0}', github.event.pull_request.number) || github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+  group: service-pipeline-${{ inputs.service_name }}-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # ──────────────────────────────────────────────
-  # Stage 0: Setup & Validation
-  # ──────────────────────────────────────────────
-
   setup:
     name: Setup
     runs-on: ubuntu-latest
@@ -83,28 +81,51 @@ jobs:
       environments: ${{ steps.config.outputs.matrix }}
       ecr_repository: ${{ steps.config.outputs.ecr_repository }}
       service_path: ${{ inputs.service_path || steps.config.outputs.directory }}
-      charts_dir: ${{ steps.config.outputs.charts_dir }}
       aws_iam_role_name: ${{ steps.config.outputs.aws_iam_role_name }}
       aws_region: ${{ steps.config.outputs.aws_region }}
       slack_channel: ${{ inputs.slack_channel || steps.config.outputs.slack_channel }}
       release: ${{ inputs.release || steps.config.outputs.release || 'auto' }}
       version_strategy: ${{ steps.config.outputs.version_strategy || 'semver' }}
-      tag_prefix: ${{ steps.config.outputs.tag_prefix || format('{0}-v', inputs.service_name) }}
+      tag_prefix: ${{ steps.config.outputs.tag_prefix || 'v' }}
+      would_publish: ${{ steps.plan.outputs.release-published }}
+      version: ${{ steps.plan.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - id: config
-        uses: DND-IT/action-config@v2
+        uses: DND-IT/action-config@v3
         with:
           config_path: ${{ inputs.config_path }}
           target: ${{ inputs.service_name }}
           environment: ${{ github.event_name == 'pull_request' && inputs.pr_environment || '' }}
 
+      - name: Validate release strategy
+        env:
+          RELEASE: ${{ inputs.release || steps.config.outputs.release || 'auto' }}
+        run: |
+          if [ "$RELEASE" != "auto" ] && [ "$RELEASE" != "gated" ]; then
+            echo "::error::Invalid 'release' value: '$RELEASE'. Must be 'auto' or 'gated'."
+            exit 1
+          fi
 
-  # ──────────────────────────────────────────────
-  # Stage 1: Build Image
-  # ──────────────────────────────────────────────
+      # Dry-run to learn the next version BEFORE the image push — so tag-push
+      # applies the version tag and the GitHub release is published only after
+      # every env's ECR has the tagged image.
+      - name: Plan release
+        id: plan
+        if: github.event.action != 'closed'
+        uses: DND-IT/action-releaser@v0
+        with:
+          version-strategy: ${{ steps.config.outputs.version_strategy || 'semver' }}
+          tag-prefix: ${{ steps.config.outputs.tag_prefix || 'v' }}
+          cliff-config: ${{ inputs.service_path || steps.config.outputs.directory }}/cliff.toml
+          include-path: ${{ inputs.service_path || steps.config.outputs.directory }}/**
+          release-mode: ${{ (inputs.release || steps.config.outputs.release || 'auto') == 'gated' && 'pr' || 'direct' }}
+          dry-run: true
+          github-token: ${{ github.token }}
 
   build:
     name: Build
@@ -114,73 +135,20 @@ jobs:
     with:
       image_name: ${{ inputs.service_name }}
       docker_context: ${{ needs.setup.outputs.service_path }}
-      dockerfile_path: ${{ inputs.dockerfile_path && format('{0}/{1}', needs.setup.outputs.service_path, inputs.dockerfile_path) || '' }}
+      dockerfile_path: ${{ inputs.dockerfile_path && format('{0}/{1}', needs.setup.outputs.service_path || '.', inputs.dockerfile_path) || '' }}
       build_args: ${{ inputs.docker_build_args }}
     secrets:
       docker_secrets: ${{ secrets.docker_secrets }}
 
-  # ──────────────────────────────────────────────
-  # Stage 2: Release
-  # ──────────────────────────────────────────────
-
-  release:
-    name: Release
-    needs: [setup, build]
-    if: github.event.action != 'closed'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-    env:
-      IS_MAIN: ${{ github.ref_name == github.event.repository.default_branch }}
-    outputs:
-      published: ${{ steps.releaser.outputs.release-published }}
-      version: ${{ steps.releaser.outputs.version }}
-    steps:
-      - name: Generate GitHub App Token
-        id: generate-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ inputs.app_id }}
-          private-key: ${{ secrets.app_private_key }}
-
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
-          fetch-depth: 0
-          persist-credentials: true
-          token: ${{ steps.generate-token.outputs.token }}
-
-      - name: Configure Git
-        if: env.IS_MAIN == 'true'
-        run: |
-          git config --global user.name "${{ env.GIT_USER_NAME }}"
-          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
-          git pull --rebase
-
-      - name: Release
-        id: releaser
-        uses: DND-IT/action-releaser@v0
-        with:
-          version-strategy: ${{ needs.setup.outputs.version_strategy }}
-          tag-prefix: ${{ needs.setup.outputs.tag_prefix }}
-          cliff-config: ${{ needs.setup.outputs.service_path }}/cliff.toml
-          include-path: ${{ needs.setup.outputs.service_path }}/**
-          release-mode: ${{ env.IS_MAIN == 'true' && needs.setup.outputs.release == 'gated' && 'pr' || 'direct' }}
-          dry-run: ${{ env.IS_MAIN != 'true' }}
-          github-token: ${{ steps.generate-token.outputs.token }}
-
-
-  # ──────────────────────────────────────────────
-  # Stage 3: Tag and Push Images
-  # ──────────────────────────────────────────────
-
   tag-push:
     name: Tag & Push ${{ matrix.environment }}
-    needs: [setup, build, release]
-    if: needs.release.outputs.published == 'true' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    needs: [setup, build]
+    # On PR events, setup's matrix is already filtered to pr_environment by
+    # action-config. On push events, the full matrix runs, gated on would_publish
+    # so non-release commits don't advance ECR tags.
+    if: |
+      github.event.action != 'closed' &&
+      (github.event_name == 'pull_request' || needs.setup.outputs.would_publish == 'true')
     strategy:
       fail-fast: false
       matrix:
@@ -192,23 +160,30 @@ jobs:
       aws_account_id: ${{ matrix.aws_account_id }}
       aws_role_name: ${{ needs.setup.outputs.aws_iam_role_name }}
       aws_region: ${{ needs.setup.outputs.aws_region }}
-      version_tag: ${{ needs.release.outputs.published == 'true' && github.event_name != 'pull_request' && needs.release.outputs.version || '' }}
+      version_tag: ${{ github.event_name != 'pull_request' && needs.setup.outputs.version || '' }}
       additional_tags: |-
         ${{ github.event_name == 'pull_request' && format('pr-{0}-{1}', github.event.pull_request.number, needs.build.outputs.sha) || needs.build.outputs.sha }}
         ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || '' }}
 
-  # ──────────────────────────────────────────────
-  # Stage 4: Deploy
-  # ──────────────────────────────────────────────
-
+  # One job handles PR preview deploys AND main-branch publish+deploy. Release
+  # is published only after tag-push succeeds, preserving the invariant:
+  # "GitHub release exists ⇒ image is in every ECR".
   deploy:
     name: Deploy
-    needs: [setup, build, release, tag-push]
-    if: needs.release.outputs.published == 'true'
+    needs: [setup, build, tag-push]
+    if: |
+      (github.event_name == 'pull_request' && github.event.action != 'closed') ||
+      (github.event_name != 'pull_request' &&
+       github.ref_name == github.event.repository.default_branch &&
+       needs.setup.outputs.would_publish == 'true')
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      issues: write
       pull-requests: write
+    outputs:
+      published: ${{ steps.releaser.outputs.release-published }}
+      release_url: ${{ steps.releaser.outputs.release-url }}
     steps:
       - name: Generate GitHub App Token
         id: generate-token
@@ -220,43 +195,57 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          fetch-depth: 0
+          persist-credentials: true
           token: ${{ steps.generate-token.outputs.token }}
 
-      - name: Pull latest
-        run: git pull --rebase
+      - name: Configure Git
+        if: github.event_name != 'pull_request'
+        run: |
+          git config --global user.name "${{ env.GIT_USER_NAME }}"
+          git config --global user.email "${{ env.GIT_USER_EMAIL }}"
+
+      - name: Publish release
+        id: releaser
+        if: github.event_name != 'pull_request'
+        uses: DND-IT/action-releaser@v0
+        with:
+          version-strategy: ${{ needs.setup.outputs.version_strategy }}
+          tag-prefix: ${{ needs.setup.outputs.tag_prefix }}
+          cliff-config: ${{ needs.setup.outputs.service_path }}/cliff.toml
+          include-path: ${{ needs.setup.outputs.service_path }}/**
+          release-mode: ${{ needs.setup.outputs.release == 'gated' && 'pr' || 'direct' }}
+          dry-run: false
+          github-token: ${{ steps.generate-token.outputs.token }}
 
       - name: Deploy
-        id: deployer
         uses: DND-IT/action-deployer@v0
         with:
           service: ${{ inputs.service_name }}
-          version: ${{ needs.release.outputs.version }}
+          version: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || needs.setup.outputs.version }}
           sha: ${{ needs.build.outputs.sha }}
+          environment: ${{ github.event_name == 'pull_request' && inputs.pr_environment || '' }}
           token: ${{ steps.generate-token.outputs.token }}
           git_user_name: ${{ env.GIT_USER_NAME }}
           git_user_email: ${{ env.GIT_USER_EMAIL }}
 
-  # ──────────────────────────────────────────────
-  # Auxiliary jobs
-  # ──────────────────────────────────────────────
-
   notify:
     name: Notify Slack
-    needs: [setup, release]
-    if: needs.release.outputs.published == 'true' && needs.setup.outputs.slack_channel != ''
+    needs: [setup, deploy]
+    if: needs.deploy.outputs.published == 'true' && needs.setup.outputs.slack_channel != ''
     uses: DND-IT/github-workflows/.github/workflows/notify-slack.yaml@v3
     secrets:
       slack_bot_token: ${{ secrets.slack_bot_token }}
     with:
       channel: ${{ needs.setup.outputs.slack_channel }}
       notification_title: "New ${{ inputs.service_name }} release"
-      notification_message: "${{ inputs.service_name }} ${{ needs.release.outputs.version }} has been released!"
+      notification_message: "${{ inputs.service_name }} ${{ needs.setup.outputs.version }} has been released!"
       status: "success"
       additional_fields: |
         [
           {"name": "Service", "value": "${{ inputs.service_name }}"},
-          {"name": "Version", "value": "${{ needs.release.outputs.version }}"},
-          {"name": "Release", "value": "<${{ github.server_url }}/${{ github.repository }}/releases|${{ needs.release.outputs.version }}>"}
+          {"name": "Version", "value": "${{ needs.setup.outputs.version }}"},
+          {"name": "Release", "value": "<${{ needs.deploy.outputs.release_url || format('{0}/{1}/releases/tag/{2}{3}', github.server_url, github.repository, needs.setup.outputs.tag_prefix, needs.setup.outputs.version) }}|${{ needs.setup.outputs.version }}>"}
         ]
       include_workflow_link: true
       include_triggered_by: true
@@ -267,7 +256,7 @@ jobs:
     if: github.event.action == 'closed' && github.event_name == 'pull_request'
     uses: ./.github/workflows/docker-cleanup.yaml
     with:
-      image_name: ${{ needs.setup.outputs.ecr_repository }}
+      image_name: ${{ needs.setup.outputs.ecr_repository || inputs.service_name }}
       aws_account_id: ${{ fromJson(needs.setup.outputs.environments)[0].aws_account_id }}
       aws_role_name: ${{ needs.setup.outputs.aws_iam_role_name }}
       aws_region: ${{ needs.setup.outputs.aws_region }}

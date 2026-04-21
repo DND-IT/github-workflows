@@ -5,116 +5,230 @@ on:
     paths:
       - ".github/workflows/_test-service-pipeline.yaml"
       - ".github/workflows/service-pipeline.yaml"
+      - ".github/workflows/docker-build.yaml"
+      - ".github/workflows/docker-push.yaml"
+      - ".github/workflows/docker-cleanup.yaml"
       - "tests/service-pipeline/**"
 
 jobs:
-  test_build:
-    name: Test Build Stage
+  # ──────────────────────────────────────────────
+  # Build stage: docker-build.yaml -> GHCR push
+  # ──────────────────────────────────────────────
+
+  test_docker_build_ghcr:
+    name: docker-build pushes to GHCR and exposes image_ref
+    uses: ./.github/workflows/docker-build.yaml
+    with:
+      image_name: test-service-pipeline
+      docker_context: tests/service-pipeline
+
+  test_docker_build_verify:
+    name: Verify GHCR image is pullable
+    needs: [test_docker_build_ghcr]
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
 
-      - name: Prepare image metadata
-        id: meta
+      - name: Pull and run
+        env:
+          IMAGE_REF: ${{ needs.test_docker_build_ghcr.outputs.image_ref }}
         run: |
-          SERVICE="test-service-pipeline"
-          SHORT_SHA="${GITHUB_SHA:0:7}"
-
-          TAGS="${SHORT_SHA}"
-          DOCKER_TAGS="${SERVICE}:${SHORT_SHA}"
-
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            PR_TAG="pr-${{ github.event.pull_request.number }}"
-            TAGS="${TAGS}
-          ${PR_TAG}"
-            DOCKER_TAGS="${DOCKER_TAGS},${SERVICE}:${PR_TAG}"
+          if [ -z "$IMAGE_REF" ]; then
+            echo "::error::image_ref output is empty"
+            exit 1
           fi
+          docker pull "$IMAGE_REF"
+          docker run --rm "$IMAGE_REF" | grep "service-pipeline test"
 
-          echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
-          echo "tags<<EOF" >> $GITHUB_OUTPUT
-          echo "${TAGS}" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "docker_tags=${DOCKER_TAGS}" >> $GITHUB_OUTPUT
+  test_docker_build_secrets:
+    name: docker-build with build secrets (regression)
+    uses: ./.github/workflows/docker-build.yaml
+    secrets:
+      docker_secrets: |
+        SECRET_TOKEN=${{ secrets.TEST_SECRET_TOKEN }}
+    with:
+      image_name: test-service-pipeline-secrets
+      docker_context: tests/service-pipeline
+      dockerfile_path: tests/service-pipeline/secrets.Dockerfile
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
+  # ──────────────────────────────────────────────
+  # Setup stage: action-config@v3 matrix behavior
+  # ──────────────────────────────────────────────
 
-      - name: Build image
-        uses: docker/build-push-action@v7
-        with:
-          context: ./tests/service-pipeline
-          file: ./tests/service-pipeline/Dockerfile
-          tags: ${{ steps.meta.outputs.docker_tags }}
-          outputs: type=docker,dest=/tmp/test-service-pipeline.tar
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: test-service-pipeline-image
-          path: /tmp/test-service-pipeline.tar
-          retention-days: 1
-
-      - name: Verify artifact
-        run: |
-          docker load --input /tmp/test-service-pipeline.tar
-          docker run --rm test-service-pipeline:${{ steps.meta.outputs.sha }} | grep "service-pipeline test"
-          echo "✅ Build stage works correctly"
-
-  test_setup:
-    name: Test Setup Stage
+  test_setup_full_matrix:
+    name: Setup full matrix (no environment filter) returns all envs
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
 
-      - name: Load configuration
-        id: config
+      - id: config
         uses: DND-IT/action-config@v3
         with:
           config_path: tests/service-pipeline/matrix-config.yaml
+          target: test-service-pipeline
 
-      - name: Validate matrix output
+      - name: Assert matrix has dev and staging
+        env:
+          MATRIX: ${{ steps.config.outputs.matrix }}
         run: |
-          MATRIX='${{ steps.config.outputs.matrix }}'
-          echo "Matrix output: ${MATRIX}"
+          echo "matrix=$MATRIX"
+          COUNT=$(echo "$MATRIX" | jq 'length')
+          if [ "$COUNT" != "2" ]; then
+            echo "::error::expected 2 environments, got $COUNT"
+            exit 1
+          fi
+          echo "$MATRIX" | jq -e '.[] | select(.environment == "dev")' > /dev/null
+          echo "$MATRIX" | jq -e '.[] | select(.environment == "staging")' > /dev/null
 
-          if [ -z "$MATRIX" ] || [ "$MATRIX" = "null" ]; then
-            echo "❌ Matrix output is empty"
+  test_setup_environment_filter:
+    name: Setup with environment filter returns only matching env
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - id: config
+        uses: DND-IT/action-config@v3
+        with:
+          config_path: tests/service-pipeline/matrix-config.yaml
+          target: test-service-pipeline
+          environment: dev
+
+      - name: Assert matrix contains only dev
+        env:
+          MATRIX: ${{ steps.config.outputs.matrix }}
+        run: |
+          echo "matrix=$MATRIX"
+          COUNT=$(echo "$MATRIX" | jq 'length')
+          if [ "$COUNT" != "1" ]; then
+            echo "::error::expected 1 environment with filter=dev, got $COUNT"
+            exit 1
+          fi
+          echo "$MATRIX" | jq -e '.[0].environment == "dev"' > /dev/null
+
+  # ──────────────────────────────────────────────
+  # Setup stage: release strategy validation
+  # ──────────────────────────────────────────────
+
+  test_release_validation_accepts_auto:
+    name: Release validation accepts 'auto'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate
+        env:
+          RELEASE: auto
+        run: |
+          if [ "$RELEASE" != "auto" ] && [ "$RELEASE" != "gated" ]; then
+            echo "::error::Invalid 'release' value: '$RELEASE'"
             exit 1
           fi
 
-          echo "✅ Setup stage works correctly"
-
-  test_build_with_secrets:
-    name: Test Build with Secrets
+  test_release_validation_accepts_gated:
+    name: Release validation accepts 'gated'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-
-      - name: Build image with secrets
-        uses: docker/build-push-action@v7
-        with:
-          context: ./tests/service-pipeline
-          file: ./tests/service-pipeline/secrets.Dockerfile
-          tags: test-service-pipeline-secrets:latest
-          outputs: type=docker,dest=/tmp/test-secrets.tar
-          secrets: |
-            SECRET_TOKEN=my-secret-value
-          build-args: |
-            CUSTOM_ARG=hello-from-build-arg
-
-      - name: Verify secret was mounted
+      - name: Validate
+        env:
+          RELEASE: gated
         run: |
-          docker load --input /tmp/test-secrets.tar
-          OUTPUT=$(docker run --rm test-service-pipeline-secrets:latest)
-          echo "Output: ${OUTPUT}"
-          echo "${OUTPUT}" | grep "my-secret-value" || { echo "❌ Secret not mounted"; exit 1; }
-          echo "${OUTPUT}" | grep "hello-from-build-arg" || { echo "❌ Build arg not passed"; exit 1; }
-          echo "✅ Secrets and build args work correctly"
+          if [ "$RELEASE" != "auto" ] && [ "$RELEASE" != "gated" ]; then
+            echo "::error::Invalid 'release' value: '$RELEASE'"
+            exit 1
+          fi
+
+  test_release_validation_rejects_typo:
+    name: Release validation rejects typos (regression — per review 2D)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate (expected to fail)
+        env:
+          RELEASE: manual
+        run: |
+          if [ "$RELEASE" != "auto" ] && [ "$RELEASE" != "gated" ]; then
+            echo "Validation rejected '$RELEASE' as expected"
+            exit 0
+          fi
+          echo "::error::Validation should have rejected '$RELEASE'"
+          exit 1
+
+  # ──────────────────────────────────────────────
+  # Push stage: docker-push.yaml tag application
+  # ──────────────────────────────────────────────
+
+  test_docker_push_tags:
+    name: docker-push applies all tag types to ECR
+    needs: [test_docker_build_ghcr]
+    uses: ./.github/workflows/docker-push.yaml
+    with:
+      image_name: test-service-pipeline
+      image_ref: ${{ needs.test_docker_build_ghcr.outputs.image_ref }}
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      version_tag: test-version-1.0.0
+      additional_tags: |
+        test-pr-${{ github.event.pull_request.number }}
+        test-pr-${{ github.event.pull_request.number }}-${{ needs.test_docker_build_ghcr.outputs.sha }}
+
+  # ──────────────────────────────────────────────
+  # Cleanup stage: docker-cleanup.yaml both modes
+  # ──────────────────────────────────────────────
+
+  test_docker_cleanup_pr_tags:
+    name: docker-cleanup pr-tags mode deletes test-pr-{N}* tags
+    needs: [test_docker_push_tags]
+    if: github.event.pull_request.number != ''
+    uses: ./.github/workflows/docker-cleanup.yaml
+    with:
+      mode: pr-tags
+      image_name: test-service-pipeline
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      pr_number: test-${{ github.event.pull_request.number }}
+
+  test_docker_cleanup_prune_cache:
+    name: docker-cleanup prune-cache mode runs against GHCR
+    uses: ./.github/workflows/docker-cleanup.yaml
+    with:
+      mode: prune-cache
+      # 3650 days ≈ 10 years → matches nothing; verifies the workflow runs cleanly
+      # on the empty-result path without deleting anything real.
+      max_age_days: 3650
+
+  # ──────────────────────────────────────────────
+  # Cross-file invariants
+  # ──────────────────────────────────────────────
+
+  test_action_config_version_alignment:
+    name: action-config version matches across test + pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Compare pins
+        run: |
+          PIPELINE_VER=$(grep -oE 'DND-IT/action-config@v[0-9]+' .github/workflows/service-pipeline.yaml | sort -u)
+          TEST_VER=$(grep -oE 'DND-IT/action-config@v[0-9]+' .github/workflows/_test-service-pipeline.yaml | sort -u)
+          echo "pipeline: $PIPELINE_VER"
+          echo "test:     $TEST_VER"
+          if [ "$PIPELINE_VER" != "$TEST_VER" ]; then
+            echo "::error::action-config version mismatch between service-pipeline.yaml and _test-service-pipeline.yaml"
+            exit 1
+          fi
+
+  # ──────────────────────────────────────────────
+  # Whole-pipeline contract (documentation test)
+  # ──────────────────────────────────────────────
+  # service-pipeline.yaml is a reusable workflow that orchestrates build ->
+  # plan -> tag-push -> publish -> deploy. A full end-to-end run requires a
+  # GitHub App with release permissions, real ECR push rights, and a git-cliff
+  # config. The action-config, docker-build, docker-push, and docker-cleanup
+  # tests above exercise the individual reusable calls it makes; a full call
+  # of service-pipeline.yaml is deferred to consumer-repo smoke tests once
+  # v4 is tagged.

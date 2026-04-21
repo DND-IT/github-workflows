@@ -1,44 +1,64 @@
-name: Docker Cleanup PR Images
+name: Docker Cleanup
+
+# Two modes:
+# - mode: 'pr-tags' (default) — deletes every tag matching pr-{N} or pr-{N}-*
+#   in the given image repo. Uses ECR if AWS credentials are passed, else GHCR.
+# - mode: 'prune-cache' — deletes GHCR versions in the build-cache repo older
+#   than `max_age_days`. Intended for a scheduled invocation by the consumer
+#   repo so transient per-commit images don't accumulate forever.
 
 on:
   workflow_call:
     inputs:
+      mode:
+        description: "'pr-tags' (delete PR tags for a specific PR) or 'prune-cache' (delete GHCR build-cache versions older than max_age_days)."
+        type: string
+        default: pr-tags
+      # pr-tags mode
       aws_account_id:
-        description: "AWS Account ID"
+        description: "AWS Account ID (pr-tags mode, ECR)"
         type: string
       aws_region:
         description: "AWS Region"
         type: string
       aws_role_name:
-        description: "AWS Role Name"
+        description: "AWS Role Name (pr-tags mode, ECR)"
         type: string
       aws_oidc_role_arn:
-        description: "AWS OIDC IAM role to assume"
+        description: "AWS OIDC IAM role to assume (pr-tags mode, ECR)"
         type: string
       image_name:
-        description: "Image/repository name"
+        description: "Image/repository name (pr-tags mode)"
         type: string
       pr_number:
         description: "PR number to clean up. Deletes every tag matching pr-{N} or pr-{N}-*."
         type: string
-        required: true
+      # prune-cache mode
+      cache_repo:
+        description: "GHCR package name holding build-cache images. Defaults to '{repo}/build-cache'."
+        type: string
+      max_age_days:
+        description: "Delete build-cache versions older than this many days. Defaults to 14."
+        type: number
+        default: 14
     secrets:
       ghcr_token:
-        description: "GitHub token for GHCR cleanup. Only used when ECR inputs are not set."
+        description: "GitHub token for GHCR access. Defaults to github.token."
         required: false
 
 jobs:
-  cleanup:
-    name: Cleanup PR ${{ inputs.pr_number }} Images
+  # ──────────────────────────────────────────────
+  # Mode: pr-tags (ECR)
+  # ──────────────────────────────────────────────
+  pr-tags-ecr:
+    name: Delete PR ${{ inputs.pr_number }} tags from ECR
+    if: inputs.mode == 'pr-tags' && (inputs.aws_role_name != '' || inputs.aws_oidc_role_arn != '')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
-      packages: write
     steps:
-      # ── ECR cleanup ──
       - name: Configure AWS credentials
-        if: inputs.aws_role_name != '' || inputs.aws_oidc_role_arn != ''
         uses: aws-actions/configure-aws-credentials@v6
         env:
           ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
@@ -47,8 +67,7 @@ jobs:
           role-to-assume: ${{ env.ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Delete PR tags from ECR
-        if: inputs.aws_role_name != '' || inputs.aws_oidc_role_arn != ''
+      - name: Delete PR tags
         env:
           ECR_REPO: ${{ inputs.image_name }}
           AWS_REGION: ${{ inputs.aws_region || 'eu-central-1' }}
@@ -76,9 +95,18 @@ jobs:
             --region "${AWS_REGION}" \
             --image-ids "$IMAGE_IDS"
 
-      # ── GHCR cleanup ──
-      - name: Delete PR tags from GHCR
-        if: inputs.aws_role_name == '' && inputs.aws_oidc_role_arn == ''
+  # ──────────────────────────────────────────────
+  # Mode: pr-tags (GHCR fallback when AWS not set)
+  # ──────────────────────────────────────────────
+  pr-tags-ghcr:
+    name: Delete PR ${{ inputs.pr_number }} tags from GHCR
+    if: inputs.mode == 'pr-tags' && inputs.aws_role_name == '' && inputs.aws_oidc_role_arn == ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Delete PR tags
         env:
           GH_TOKEN: ${{ secrets.ghcr_token || github.token }}
           IMAGE_NAME: ${{ inputs.image_name }}
@@ -97,4 +125,49 @@ jobs:
             echo "Deleting version ${VERSION_ID}"
             gh api --method DELETE \
               "/orgs/${OWNER}/packages/container/${IMAGE_NAME}/versions/${VERSION_ID}"
+          done
+
+  # ──────────────────────────────────────────────
+  # Mode: prune-cache
+  # ──────────────────────────────────────────────
+  prune-cache:
+    name: Prune build-cache older than ${{ inputs.max_age_days }} days
+    if: inputs.mode == 'prune-cache'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Delete stale cache versions
+        env:
+          GH_TOKEN: ${{ secrets.ghcr_token || github.token }}
+          OWNER: ${{ github.repository_owner }}
+          CACHE_REPO: ${{ inputs.cache_repo || format('{0}/build-cache', github.event.repository.name) }}
+          MAX_AGE_DAYS: ${{ inputs.max_age_days }}
+        run: |
+          CUTOFF=$(date -u -d "${MAX_AGE_DAYS} days ago" +%s 2>/dev/null || date -u -v-"${MAX_AGE_DAYS}"d +%s)
+          PACKAGE=$(echo "$CACHE_REPO" | jq -rR '@uri')
+
+          VERSIONS=$(gh api --paginate "/orgs/${OWNER}/packages/container/${PACKAGE}/versions" \
+            --jq "[.[] | {id: .id, updated_at: .updated_at, tags: .metadata.container.tags}]" 2>/dev/null || echo "[]")
+
+          if [ "$VERSIONS" = "[]" ] || [ -z "$VERSIONS" ]; then
+            echo "No versions found in ${CACHE_REPO}"
+            exit 0
+          fi
+
+          STALE=$(echo "$VERSIONS" | jq --argjson cutoff "$CUTOFF" \
+            '[.[] | select((.updated_at | fromdateiso8601) < $cutoff) | .id]')
+
+          COUNT=$(echo "$STALE" | jq 'length')
+          if [ "$COUNT" = "0" ]; then
+            echo "No stale versions in ${CACHE_REPO} (cutoff: ${MAX_AGE_DAYS} days)"
+            exit 0
+          fi
+
+          echo "Deleting ${COUNT} stale versions from ${CACHE_REPO}:"
+          echo "$STALE" | jq -r '.[]' | while read -r VERSION_ID; do
+            echo "  - version ${VERSION_ID}"
+            gh api --method DELETE \
+              "/orgs/${OWNER}/packages/container/${PACKAGE}/versions/${VERSION_ID}" || echo "    (failed, continuing)"
           done

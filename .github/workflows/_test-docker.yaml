@@ -57,7 +57,6 @@ jobs:
     with:
       image_name: test-docker-build
       docker_context: tests/docker
-      artifact_retention_days: 1
 
   test_docker_build_secrets:
     uses: ./.github/workflows/docker-build.yaml
