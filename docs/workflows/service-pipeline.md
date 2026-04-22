@@ -42,8 +42,24 @@ from `@v3`.
 `tag-push` runs across every environment in the matrix before the GitHub
 release is published. If any environment's push fails, the release is not
 created — preserving the invariant "GitHub release exists ⇒ image is in every
-ECR". The `release` step of the `deploy` job runs last, only after all
-`tag-push` matrix legs succeed.
+ECR". The `release` job runs only after every `tag-push` matrix leg succeeds.
+
+### Partial tag-push failure
+
+`tag-push` runs with `fail-fast: false`, so if one environment's push fails
+the others still complete. In that partial-failure state, **some** ECRs hold
+the version tag but the GitHub release is not published and `deploy` does not
+run. Treat the published GitHub release as the authoritative signal, not the
+presence of a version tag in any single ECR. To recover: re-run the workflow
+after fixing the failing environment, or delete the orphaned ECR tag
+manually before retrying.
+
+### Release determinism
+
+The `setup` job runs `action-releaser` in dry-run mode to compute the next
+version; the `release` job re-runs it for real after all ECR pushes succeed.
+Both checkouts pin to the triggering commit SHA, so both invocations see
+identical git state and produce the same version.
 
 ### PR preview deploys
 
