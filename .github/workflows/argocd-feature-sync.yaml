@@ -1,0 +1,62 @@
+name: ArgoCD Feature Sync
+
+on:
+  workflow_call:
+    inputs:
+      service_name:
+        description: "Service name. Used as the app label selector value (app=<service_name>) and as the default suffix of feature_label."
+        required: true
+        type: string
+      argocd_server:
+        description: "ArgoCD server URL (host, e.g. argocd.example.com)."
+        required: true
+        type: string
+      feature_label:
+        description: "PR label that gates the sync. The job is skipped on PRs without this label. Defaults to feature:<service_name>."
+        required: false
+        type: string
+        default: ""
+      helm_value_path:
+        description: "Helm parameter path to set with the PR image tag. Defaults to generic.image.tag (the standard generic helm subchart path)."
+        required: false
+        type: string
+        default: "generic.image.tag"
+      image_tag:
+        description: "Image tag to set on the ArgoCD application. Defaults to pr-<PR number>."
+        required: false
+        type: string
+        default: ""
+    secrets:
+      argocd_auth_token:
+        required: true
+
+jobs:
+  sync:
+    name: Sync feature image
+    # Run only on PR events that aren't 'closed' AND only when the PR carries
+    # the gating label. Defaults to feature:<service_name>; the caller may
+    # override via the feature_label input.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action != 'closed' &&
+      contains(
+        github.event.pull_request.labels.*.name,
+        (inputs.feature_label != '' && inputs.feature_label) || format('feature:{0}', inputs.service_name)
+      )
+    uses: DND-IT/github-workflows/.github/workflows/argocd-cli.yaml@service-pipeline
+    secrets:
+      argocd_auth_token: ${{ secrets.argocd_auth_token }}
+    with:
+      argocd_server: ${{ inputs.argocd_server }}
+      pre_run: |
+        set -euo pipefail
+        PR_NUMBER="${{ github.event.pull_request.number }}"
+        IMAGE_TAG="${{ inputs.image_tag != '' && inputs.image_tag || format('pr-{0}', github.event.pull_request.number) }}"
+        APP_NAME=$(argocd app list -l app=${{ inputs.service_name }},type=feature -o name | grep -- "-${PR_NUMBER}$" | head -1 || true)
+        if [ -z "${APP_NAME}" ]; then
+          echo "::warning::No ArgoCD app matched 'app=${{ inputs.service_name }},type=feature' with suffix -${PR_NUMBER}. Has the ApplicationSet synced this PR yet?"
+        fi
+        echo "APP_NAME=${APP_NAME}" >> "$GITHUB_ENV"
+        echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
+      argocd_commands: |
+        app set ${APP_NAME} -p ${{ inputs.helm_value_path }}=${IMAGE_TAG}
