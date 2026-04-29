@@ -62,5 +62,13 @@ jobs:
         fi
         echo "Resolved app: ${APP_NAME}"
         echo "APP_NAME=${APP_NAME}" >> "$GITHUB_ENV"
+      # Two-step: set the helm parameter, then sync immediately. The parameter
+      # set is reverted by the owning ApplicationSet on its next reconcile
+      # (~15s), but the sync deploys the rendered chart in the meantime — so
+      # pods boot with the correct image even though the spec rolls back.
+      # Each subsequent PR push re-runs this flow, keeping running pods aligned
+      # with HEAD. A manual UI sync between pushes will revert to the chart
+      # default; re-push to recover.
       argocd_commands: |
         app set ${APP_NAME} -p ${{ inputs.helm_value_path }}=${{ inputs.image_tag }}
+        app sync ${APP_NAME}
