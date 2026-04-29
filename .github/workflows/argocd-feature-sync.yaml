@@ -11,16 +11,15 @@ on:
         description: "ArgoCD server URL (host, e.g. argocd.example.com)."
         required: true
         type: string
+      helm_value_path:
+        description: "Helm parameter path to set with the PR image tag. Required — chart layout differs by repo (e.g. generic.image.tag vs image.tag vs web.image.tag)."
+        required: true
+        type: string
       feature_label:
         description: "PR label that gates the sync. The job is skipped on PRs without this label. Defaults to feature:<service_name>."
         required: false
         type: string
         default: ""
-      helm_value_path:
-        description: "Helm parameter path to set with the PR image tag. Defaults to generic.image.tag (the standard generic helm subchart path)."
-        required: false
-        type: string
-        default: "generic.image.tag"
       image_tag:
         description: "Image tag to set on the ArgoCD application. Defaults to pr-<PR number>."
         required: false
