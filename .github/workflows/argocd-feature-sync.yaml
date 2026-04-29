@@ -12,16 +12,15 @@ on:
         required: true
         type: string
       helm_value_path:
-        description: "Helm parameter path to set with the PR image tag. Required — chart layout differs by repo (e.g. generic.image.tag vs image.tag vs web.image.tag)."
+        description: "Helm parameter path to set with the image tag. Required — chart layout differs by repo (e.g. generic.image.tag vs image.tag vs web.image.tag)."
+        required: true
+        type: string
+      image_tag:
+        description: "Image tag to set on the ArgoCD application. Required — pass the tag that was just pushed to ECR (e.g. needs.pipeline.outputs.image_sha) so the feature deploy reflects the build that just ran."
         required: true
         type: string
       feature_label:
         description: "PR label that gates the sync. The job is skipped on PRs without this label. Defaults to feature:<service_name>."
-        required: false
-        type: string
-        default: ""
-      image_tag:
-        description: "Image tag to set on the ArgoCD application. Defaults to pr-<PR number>."
         required: false
         type: string
         default: ""
@@ -50,12 +49,10 @@ jobs:
       pre_run: |
         set -euo pipefail
         PR_NUMBER="${{ github.event.pull_request.number }}"
-        IMAGE_TAG="${{ inputs.image_tag != '' && inputs.image_tag || format('pr-{0}', github.event.pull_request.number) }}"
         APP_NAME=$(argocd app list -l app=${{ inputs.service_name }},type=feature -o name | grep -- "-${PR_NUMBER}$" | head -1 || true)
         if [ -z "${APP_NAME}" ]; then
           echo "::warning::No ArgoCD app matched 'app=${{ inputs.service_name }},type=feature' with suffix -${PR_NUMBER}. Has the ApplicationSet synced this PR yet?"
         fi
         echo "APP_NAME=${APP_NAME}" >> "$GITHUB_ENV"
-        echo "IMAGE_TAG=${IMAGE_TAG}" >> "$GITHUB_ENV"
       argocd_commands: |
-        app set ${APP_NAME} -p ${{ inputs.helm_value_path }}=${IMAGE_TAG}
+        app set ${APP_NAME} -p ${{ inputs.helm_value_path }}=${{ inputs.image_tag }}
