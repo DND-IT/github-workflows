@@ -49,10 +49,18 @@ jobs:
       pre_run: |
         set -euo pipefail
         PR_NUMBER="${{ github.event.pull_request.number }}"
-        APP_NAME=$(argocd app list -l app=${{ inputs.service_name }},type=feature -o name | grep -- "-${PR_NUMBER}$" | head -1 || true)
+        # Selector matches what the standard fission-argocd ApplicationSet
+        # template sets on per-PR Applications: app=<svc>, deployment-type=feature.
+        # The trailing "-${PR_NUMBER}$" grep filters to this PR only (the prod
+        # app shares the app=<svc> label but doesn't end in a PR number).
+        APP_NAME=$(argocd app list -l app=${{ inputs.service_name }},deployment-type=feature -o name | grep -- "-${PR_NUMBER}$" | head -1 || true)
         if [ -z "${APP_NAME}" ]; then
-          echo "::warning::No ArgoCD app matched 'app=${{ inputs.service_name }},type=feature' with suffix -${PR_NUMBER}. Has the ApplicationSet synced this PR yet?"
+          echo "::error::No ArgoCD app matched 'app=${{ inputs.service_name }},deployment-type=feature' with suffix -${PR_NUMBER}."
+          echo "::error::Either the fission-argocd ApplicationSet has not yet spawned an Application for this PR (it polls every ~30 minutes), or the PR is missing the gating label."
+          echo "::error::Check: argocd app list -l app=${{ inputs.service_name }},deployment-type=feature"
+          exit 1
         fi
+        echo "Resolved app: ${APP_NAME}"
         echo "APP_NAME=${APP_NAME}" >> "$GITHUB_ENV"
       argocd_commands: |
         app set ${APP_NAME} -p ${{ inputs.helm_value_path }}=${{ inputs.image_tag }}
