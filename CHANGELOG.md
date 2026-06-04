@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.21.1](https://github.com/DND-IT/github-workflows/compare/v3.21.0...v3.21.1) (2026-06-04)
+
+### 🐛 Bug Fixes
+
+* **gitops-helm-diff:** give PR comments a per-invocation identity ([#121](https://github.com/DND-IT/github-workflows/issues/121)) ([bf9e853](https://github.com/DND-IT/github-workflows/commit/bf9e853b7b36d941fd87720d77f658ea77ba42f1)), closes [#120](https://github.com/DND-IT/github-workflows/issues/120)
+
+### 📚 Documentation
+
+* add missing package ([9549dbc](https://github.com/DND-IT/github-workflows/commit/9549dbc76a2df7add69b81d62fd2f093bb674e76))
+
 ## [3.21.0](https://github.com/DND-IT/github-workflows/compare/v3.20.0...v3.21.0) (2026-03-20)
 
 ### ✨ Features
