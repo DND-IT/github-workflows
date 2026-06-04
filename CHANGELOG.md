@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.22.0](https://github.com/DND-IT/github-workflows/compare/v3.21.1...v3.22.0) (2026-06-04)
+
+### ✨ Features
+
+* **gitops-helm-diff:** aggregate all charts into one PR comment ([#122](https://github.com/DND-IT/github-workflows/issues/122)) ([afe7065](https://github.com/DND-IT/github-workflows/commit/afe70656a87edef4949f3289f22e6d3c533d1de4)), closes [#121](https://github.com/DND-IT/github-workflows/issues/121)
+
 ## [3.21.1](https://github.com/DND-IT/github-workflows/compare/v3.21.0...v3.21.1) (2026-06-04)
 
 ### 🐛 Bug Fixes
