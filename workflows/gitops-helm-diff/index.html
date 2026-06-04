@@ -1970,7 +1970,7 @@
 </tr>
 <tr>
 <td><code>comment_header</code></td>
-<td><p>Unique identity for the PR comment. Lets multiple invocations (e.g. one per chart in a matrix) post separate comments that each update in place instead of overwriting each other. Defaults to helm<em>chart</em>path.</p></td>
+<td><p>Identity for this chart's section within the single aggregated PR comment. Multiple invocations (e.g. one per chart in a matrix) merge into one comment, each owning a section keyed by this value. Defaults to helm<em>chart</em>path.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
@@ -2046,7 +2046,7 @@
 </span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="w">      </span><span class="c1"># Default: dnd-it</span>
 </span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>
 </span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="w">      </span><span class="nt">comment_header</span><span class="p">:</span>
-</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="w">      </span><span class="c1"># Unique identity for the PR comment. Lets multiple invocations (e.g. one per chart in a matrix) post separate comments that each update in place instead of overwriting each other. Defaults to helm_chart_path.</span>
+</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="w">      </span><span class="c1"># Identity for this chart&#39;s section within the single aggregated PR comment. Multiple invocations (e.g. one per chart in a matrix) merge into one comment, each owning a section keyed by this value. Defaults to helm_chart_path.</span>
 </span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a><span class="w">      </span><span class="c1"># Required: false</span>
