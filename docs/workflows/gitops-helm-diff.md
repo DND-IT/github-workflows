@@ -18,6 +18,7 @@ This GitHub Action generates a diff of Helm chart templates between the current 
 | `helm_release_name` | <p>Name to use for the Helm release when templating</p> | `string` | `false` | `app` |
 | `helm_repo_url` | <p>URL of the Helm repository to add</p> | `string` | `false` | `https://dnd-it.github.io/helm-charts` |
 | `helm_repo_name` | <p>Name to give to the Helm repository</p> | `string` | `false` | `dnd-it` |
+| `comment_header` | <p>Unique identity for the PR comment. Lets multiple invocations (e.g. one per chart in a matrix) post separate comments that each update in place instead of overwriting each other. Defaults to helm<em>chart</em>path.</p> | `string` | `false` | `""` |
 | `debug` | <p>Enable debug output</p> | `string` | `false` | `false` |
 <!-- action-docs-inputs source=".github/workflows/gitops-helm-diff.yaml" -->
 
@@ -81,6 +82,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: dnd-it
+
+      comment_header:
+      # Unique identity for the PR comment. Lets multiple invocations (e.g. one per chart in a matrix) post separate comments that each update in place instead of overwriting each other. Defaults to helm_chart_path.
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
 
       debug:
       # Enable debug output

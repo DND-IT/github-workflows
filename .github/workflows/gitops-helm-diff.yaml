@@ -31,6 +31,10 @@ on:
         description: 'Name to give to the Helm repository'
         type: string
         default: 'dnd-it'
+      comment_header:
+        description: 'Unique identity for the PR comment. Lets multiple invocations (e.g. one per chart in a matrix) post separate comments that each update in place instead of overwriting each other. Defaults to helm_chart_path.'
+        type: string
+        default: ''
       debug:
         description: 'Enable debug output'
         type: string
@@ -41,6 +45,7 @@ env:
   ENVIRONMENTS_PATH: ${{ inputs.environments_path }}
   OUTPUT_PATH: ${{ inputs.output_path }}
   HELM_RELEASE_NAME: ${{ inputs.helm_release_name }}
+  COMMENT_HEADER: ${{ inputs.comment_header || inputs.helm_chart_path }}
 
 jobs:
   diff:
@@ -122,7 +127,10 @@ jobs:
         id: process-envs
         run: |
           mkdir -p ${{ env.OUTPUT_PATH }}
-          echo "## Helm Deployment Changes" > ${{ env.OUTPUT_PATH }}/all_diffs.md
+          # Sticky-comment marker: gives this invocation a stable identity so re-runs
+          # update in place, and multiple invocations (e.g. one per chart) don't collide.
+          echo "<!-- gitops-helm-diff:${COMMENT_HEADER} -->" > ${{ env.OUTPUT_PATH }}/all_diffs.md
+          echo "## Helm Deployment Changes" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
           echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
 
           HAS_CHANGES=false
@@ -170,8 +178,25 @@ jobs:
 
       - name: Post diff as comment on PR
         if: steps.process-envs.outputs.has_changes == 'true'
-        run: |
-          gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md --edit-last || \
-          gh pr comment ${{ github.event.number }} --repo ${{ github.repository }} --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          MARKER="<!-- gitops-helm-diff:${COMMENT_HEADER} -->"
+
+          # Find an existing comment with this invocation's marker so we update it
+          # in place instead of overwriting another chart's comment.
+          # --paginate applies --jq per page, so emit one id per line and pick the last.
+          COMMENT_ID=$(gh api \
+            "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --paginate \
+            --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | tail -n1)
+
+          if [ -n "$COMMENT_ID" ]; then
+            gh api --method PATCH \
+              "repos/${{ github.repository }}/issues/comments/${COMMENT_ID}" \
+              -F body=@${{ env.OUTPUT_PATH }}/all_diffs.md
+          else
+            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} \
+              --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md
+          fi
