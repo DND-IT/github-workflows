@@ -32,7 +32,7 @@ on:
         type: string
         default: 'dnd-it'
       comment_header:
-        description: 'Unique identity for the PR comment. Lets multiple invocations (e.g. one per chart in a matrix) post separate comments that each update in place instead of overwriting each other. Defaults to helm_chart_path.'
+        description: 'Identity for this chart''s section within the single aggregated PR comment. Multiple invocations (e.g. one per chart in a matrix) merge into one comment, each owning a section keyed by this value. Defaults to helm_chart_path.'
         type: string
         default: ''
       debug:
@@ -127,11 +127,14 @@ jobs:
         id: process-envs
         run: |
           mkdir -p ${{ env.OUTPUT_PATH }}
-          # Sticky-comment marker: gives this invocation a stable identity so re-runs
-          # update in place, and multiple invocations (e.g. one per chart) don't collide.
-          echo "<!-- gitops-helm-diff:${COMMENT_HEADER} -->" > ${{ env.OUTPUT_PATH }}/all_diffs.md
-          echo "## Helm Deployment Changes" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-          echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+          SECTION_FILE=${{ env.OUTPUT_PATH }}/chart_section.md
+
+          # Build this chart's section for the single aggregated PR comment. The
+          # section is wrapped in markers keyed by COMMENT_HEADER so the post step
+          # can splice it into the shared comment without touching other charts.
+          echo "<!-- gitops-helm-diff:chart=${COMMENT_HEADER}:start -->" > "$SECTION_FILE"
+          echo "### Chart: \`${COMMENT_HEADER}\`" >> "$SECTION_FILE"
+          echo "" >> "$SECTION_FILE"
 
           HAS_CHANGES=false
 
@@ -161,18 +164,21 @@ jobs:
             # Check if diff exists and add to summary
             if [ -s ${{ env.OUTPUT_PATH }}/diff-$ENV.txt ]; then
               HAS_CHANGES=true
-              echo "### Environment: $ENV" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo "#### Environment: $ENV" >> "$SECTION_FILE"
+              echo "" >> "$SECTION_FILE"
 
-              echo "<details><summary>Changes detected for $ENV environment:</summary>" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo '```diff' >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              cat ${{ env.OUTPUT_PATH }}/diff-$ENV.txt >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo '```' >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "</details>" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
-              echo "" >> ${{ env.OUTPUT_PATH }}/all_diffs.md
+              echo "<details><summary>Changes detected for $ENV environment:</summary>" >> "$SECTION_FILE"
+              echo "" >> "$SECTION_FILE"
+              echo '```diff' >> "$SECTION_FILE"
+              cat ${{ env.OUTPUT_PATH }}/diff-$ENV.txt >> "$SECTION_FILE"
+              echo '```' >> "$SECTION_FILE"
+              echo "</details>" >> "$SECTION_FILE"
+              echo "" >> "$SECTION_FILE"
             fi
           done
+
+          echo "<!-- gitops-helm-diff:chart=${COMMENT_HEADER}:end -->" >> "$SECTION_FILE"
+          echo "" >> "$SECTION_FILE"
 
           echo "has_changes=$HAS_CHANGES" >> $GITHUB_OUTPUT
 
@@ -181,22 +187,80 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.number }}
+          REPO: ${{ github.repository }}
         run: |
-          MARKER="<!-- gitops-helm-diff:${COMMENT_HEADER} -->"
+          set -euo pipefail
 
-          # Find an existing comment with this invocation's marker so we update it
-          # in place instead of overwriting another chart's comment.
-          # --paginate applies --jq per page, so emit one id per line and pick the last.
-          COMMENT_ID=$(gh api \
-            "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
-            --paginate \
-            --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id" | tail -n1)
+          # All chart invocations on a PR share ONE comment identified by this marker.
+          # Each chart owns a section between its own start/end markers; this step
+          # splices our section into the shared comment, leaving other charts intact.
+          MARKER="<!-- gitops-helm-diff -->"
+          TITLE="## Helm Deployment Changes"
+          START="<!-- gitops-helm-diff:chart=${COMMENT_HEADER}:start -->"
+          END="<!-- gitops-helm-diff:chart=${COMMENT_HEADER}:end -->"
+          SECTION_FILE=${{ env.OUTPUT_PATH }}/chart_section.md
 
-          if [ -n "$COMMENT_ID" ]; then
-            gh api --method PATCH \
-              "repos/${{ github.repository }}/issues/comments/${COMMENT_ID}" \
-              -F body=@${{ env.OUTPUT_PATH }}/all_diffs.md
-          else
-            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} \
-              --body-file ${{ env.OUTPUT_PATH }}/all_diffs.md
-          fi
+          # Print $1 with OUR chart section (start..end inclusive) removed.
+          strip_our_section() {
+            awk -v s="$START" -v e="$END" '
+              index($0, s) { skip = 1 }
+              !skip        { print }
+              index($0, e) { skip = 0 }
+            ' "$1"
+          }
+
+          # Print only chart-section blocks from $1 (used to salvage sections from
+          # duplicate comments created by a first-post race before deleting them).
+          extract_sections() {
+            awk '
+              /<!-- gitops-helm-diff:chart=.*:start -->/ { insec = 1 }
+              insec                                      { print }
+              /<!-- gitops-helm-diff:chart=.*:end -->/   { insec = 0 }
+            ' "$1"
+          }
+
+          list_marker_comment_ids() {
+            # Oldest-first (API returns ascending id); --jq runs per page under --paginate.
+            gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+              --jq ".[] | select(.body | startswith(\"${MARKER}\")) | .id"
+          }
+
+          attempt=0
+          max_attempts=5
+          while :; do
+            attempt=$((attempt + 1))
+            mapfile -t IDS < <(list_marker_comment_ids)
+
+            if [ "${#IDS[@]}" -eq 0 ]; then
+              # No shared comment yet: create one with the title and our section.
+              { printf '%s\n%s\n\n' "$MARKER" "$TITLE"; cat "$SECTION_FILE"; } > body.md
+              gh pr comment "$PR_NUMBER" --repo "$REPO" --body-file body.md
+            else
+              CANON="${IDS[0]}"
+              gh api "repos/${REPO}/issues/comments/${CANON}" --jq .body > base.md
+              # Fold any duplicate comments' sections into the canonical one, then remove them.
+              for dup in "${IDS[@]:1}"; do
+                gh api "repos/${REPO}/issues/comments/${dup}" --jq .body > dup.md
+                extract_sections dup.md >> base.md
+                gh api --method DELETE "repos/${REPO}/issues/comments/${dup}" || true
+              done
+              # Replace our section: drop the old one (if any), append the fresh one.
+              strip_our_section base.md > body.md
+              cat "$SECTION_FILE" >> body.md
+              gh api --method PATCH "repos/${REPO}/issues/comments/${CANON}" -F body=@body.md
+            fi
+
+            # Verify our section survived a possible concurrent writer; retry if not.
+            sleep "$attempt"
+            if list_marker_comment_ids | head -n1 | grep -q . \
+               && gh api "repos/${REPO}/issues/comments/$(list_marker_comment_ids | head -n1)" \
+                    --jq .body | grep -qF "$START"; then
+              echo "Chart section for '${COMMENT_HEADER}' is present in the shared comment."
+              break
+            fi
+            if [ "$attempt" -ge "$max_attempts" ]; then
+              echo "::warning::Could not confirm helm-diff section for '${COMMENT_HEADER}' after ${max_attempts} attempts (likely a concurrent update race)."
+              break
+            fi
+            echo "Section missing after write (concurrent update); retrying (${attempt}/${max_attempts})..."
+          done
