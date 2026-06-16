@@ -115,7 +115,7 @@ jobs:
       - name: Semantic Release
         if: inputs.use_semantic_release == true
         id: semantic
-        uses: cycjimmy/semantic-release-action@v5
+        uses: cycjimmy/semantic-release-action@v6.0.0
         with:
           dry_run: ${{ inputs.dry_run || github.event_name == 'pull_request' }}
           unset_gha_env: ${{ github.event_name == 'pull_request' }}
