@@ -31,6 +31,9 @@ jobs:
       create_pr: false
       dry_run: true
 
+  # Intentionally red: this job MUST fail (neither image_name nor image_tag_keys
+  # is given). Reusable-workflow jobs can't use continue-on-error, so its failure
+  # marks the run red by design. validate_failure below asserts it failed.
   test_validation_fails_without_mode:
     name: Test validation (no image_name or keys)
     uses: ./.github/workflows/gitops-image-tag.yaml
@@ -39,12 +42,11 @@ jobs:
       values_files: "tests/gitops-image-tag/values.yaml"
       create_pr: false
       dry_run: true
-    # This job is expected to fail — validation rejects missing image_name + image_tag_keys
-    continue-on-error: true
 
   validate_failure:
     name: Validate input validation works
     needs: test_validation_fails_without_mode
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Check that validation job failed
