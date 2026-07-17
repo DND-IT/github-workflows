@@ -122,6 +122,21 @@ If the commit message starts with:
 
 otherwise no new release will be created.
 
+### Release scopes
+
+Every merge to main produces two kinds of releases:
+
+- **Umbrella release** — a whole-repo tag (`v<major>.<minor>.<patch>`, e.g. `v4.0.2`) covering all changes. Existing consumers that pin `@v4` keep working unchanged.
+- **Per-workflow releases** — each reusable workflow is versioned independently with a scoped tag `"<workflow>-v<major>.<minor>.<patch>"` (e.g. `gitops-image-tag-v0.1.0`). Only workflows whose file changed in the merge are bumped, based on the conventional-commit type of the commits touching that file. The first release of any workflow is `v0.1.0`.
+
+Scoped releases also maintain moving major/minor alias tags (`gitops-image-tag-v0`, `gitops-image-tag-v0.1`), so consumers can pin a single workflow at whatever granularity they want:
+
+```yaml
+uses: DND-IT/github-workflows/.github/workflows/gitops-image-tag.yaml@gitops-image-tag-v0
+```
+
+Test workflows (`_test-*.yaml`) are excluded from per-workflow releases.
+
 ## Contributing
 
 Before creating a new shared workflow, check if something similar already exists. If it does, consider updating the existing workflow instead of creating a new one.

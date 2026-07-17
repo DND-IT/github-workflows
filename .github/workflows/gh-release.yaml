@@ -178,6 +178,18 @@ jobs:
             echo "No existing tags found — first release"
           fi
 
+      - name: Compute commit path filter
+        id: filter
+        run: |
+          SERVICE_PATH="${{ inputs.service_path }}"
+          if [ -z "$SERVICE_PATH" ]; then
+            echo "include_path=" >> $GITHUB_OUTPUT
+          elif [ -f "$SERVICE_PATH" ]; then
+            echo "include_path=$SERVICE_PATH" >> $GITHUB_OUTPUT
+          else
+            echo "include_path=${SERVICE_PATH%/}/**" >> $GITHUB_OUTPUT
+          fi
+
       - name: Generate changelog
         id: cliff
         if: steps.check-tags.outputs.has_tags == 'true'
@@ -189,7 +201,7 @@ jobs:
             --unreleased
             --strip header
             ${{ inputs.service_name != '' && format('--tag-pattern "^{0}-v[0-9]"', inputs.service_name) || '' }}
-            ${{ inputs.service_path != '' && format('--include-path "{0}/**"', inputs.service_path) || '' }}
+            ${{ steps.filter.outputs.include_path != '' && format('--include-path "{0}"', steps.filter.outputs.include_path) || '' }}
         env:
           OUTPUT: /tmp/RELEASE_NOTES.md
 
@@ -202,7 +214,7 @@ jobs:
           args: >-
             --unreleased
             --strip header
-            ${{ inputs.service_path != '' && format('--include-path "{0}/**"', inputs.service_path) || '' }}
+            ${{ steps.filter.outputs.include_path != '' && format('--include-path "{0}"', steps.filter.outputs.include_path) || '' }}
         env:
           OUTPUT: /tmp/RELEASE_NOTES.md
 
@@ -212,6 +224,7 @@ jobs:
           GH_TOKEN: ${{ inputs.app_id != '' && steps.generate-token.outputs.token || github.token }}
         run: |
           SERVICE_NAME="${{ inputs.service_name }}"
+          SERVICE_PATH="${{ inputs.service_path }}"
           HAS_TAGS="${{ steps.check-tags.outputs.has_tags }}"
           IS_DRY_RUN="${{ inputs.dry_run == true || github.event_name == 'pull_request' }}"
 
@@ -232,8 +245,8 @@ jobs:
               exit 0
             fi
           else
-            # First release — check for conventional commits
-            COMMIT_COUNT=$(git log --oneline --format="%s" | grep -cE "^(feat|fix|refactor|perf|docs?|test|chore|ci|style|build)" || true)
+            # First release — check for conventional commits touching this scope
+            COMMIT_COUNT=$(git log --format="%s" -- "${SERVICE_PATH:-.}" | grep -cE "^(feat|fix|refactor|perf|docs?|test|chore|ci|style|build)" || true)
             if [ "$COMMIT_COUNT" -gt 0 ]; then
               VERSION="0.1.0"
               echo "First release detected, defaulting to $VERSION"
