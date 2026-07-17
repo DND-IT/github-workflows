@@ -18,5 +18,24 @@
 - [ ] I have executed `make gen_docs_run` on my pull request
 <!--- Please see https://github.com/antonbabenko/pre-commit-terraform#how-to-install for how to install -->
 
-## Github Conventional Commit Release
-[https://dnd-it.github.io/github-workflows/workflows/gh-release/](https://dnd-it.github.io/github-workflows/workflows/gh-release/)
+## How Releasing Works
+Releases are cut automatically on merge to `main` by [git-cliff / gh-release](https://dnd-it.github.io/github-workflows/workflows/gh-release/), driven by [Conventional Commits](https://www.conventionalcommits.org/).
+
+**Commit type → version bump**
+
+| Type | Bump | In changelog |
+|------|------|--------------|
+| `feat!:` / `BREAKING CHANGE:` | major | yes |
+| `feat:` | minor | yes |
+| `fix:`, `perf:`, `revert:` | patch | yes |
+| `refactor:`, `docs:` | none | yes |
+| `chore(deps):`, `chore(release):` | none | skipped |
+| `chore:`, `ci:`, `style:`, `test:`, `build:` | none | mostly hidden |
+
+**Choosing a merge strategy**
+- **Single logical change → Squash and merge.** The PR title becomes the one conventional commit and the single changelog entry, so keep the title conventional.
+- **Multiple independent fixes/features → Rebase and merge.** Each commit is preserved and itemized separately in the changelog. With squash, only the PR title survives and the other commits are lost from the notes.
+
+**Notes**
+- Multiple release-worthy commits still produce a **single release** — the highest bump wins (a `feat:` alongside `fix:`es yields one minor release).
+- Changes limited to `**.md` or `docs/**` do **not** trigger a release.
