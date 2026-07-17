@@ -46,8 +46,13 @@ on:
         required: false
         type: string
         default: 'image.tag'
+      argocd_server:
+        description: "ArgoCD server URL. Falls back to vars.argocd_server if not provided."
+        required: false
+        type: string
+        default: ''
       app_id:
-        description: "GitHub App ID for semantic-release authentication"
+        description: "GitHub App ID for release authentication"
         required: true
         type: string
     outputs:
@@ -177,12 +182,12 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    uses: DND-IT/github-workflows/.github/workflows/gh-release.yaml@v3
+    uses: ./.github/workflows/gh-release.yaml
     with:
-      use_semantic_release: true
+      service_name: ${{ inputs.service_name }}
+      service_path: ${{ inputs.service_path }}
       dry_run: true
       app_id: ${{ inputs.app_id }}
-      working_directory: ${{ inputs.service_path }}
     secrets:
       app_private_key: ${{ secrets.app_private_key }}
 
@@ -235,7 +240,7 @@ jobs:
             docker tag "${SERVICE}:${SHA}" "${ECR_REGISTRY}/${SERVICE}:latest"
           fi
 
-          # Tag version if semantic release found a new version
+          # Tag version if a new release was detected
           if [ "${{ needs.release-info.outputs.new_release_published }}" = "true" ]; then
             VERSION="${{ needs.release-info.outputs.new_release_version }}"
             docker tag "${SERVICE}:${SHA}" "${ECR_REGISTRY}/${SERVICE}:${VERSION}"
@@ -251,11 +256,11 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
-    uses: DND-IT/github-workflows/.github/workflows/gh-release.yaml@v3
+    uses: ./.github/workflows/gh-release.yaml
     with:
-      use_semantic_release: true
+      service_name: ${{ inputs.service_name }}
+      service_path: ${{ inputs.service_path }}
       app_id: ${{ inputs.app_id }}
-      working_directory: ${{ inputs.service_path }}
     secrets:
       app_private_key: ${{ secrets.app_private_key }}
 
@@ -267,7 +272,7 @@ jobs:
       needs.release.result == 'success' &&
       needs.release-info.outputs.new_release_published == 'true' &&
       inputs.slack_channel != ''
-    uses: DND-IT/github-workflows/.github/workflows/notify-slack.yaml@v3
+    uses: ./.github/workflows/notify-slack.yaml
     secrets:
       slack_bot_token: ${{ secrets.slack_bot_token }}
     with:
@@ -315,8 +320,9 @@ jobs:
     name: Set Feature Branch Image Tag
     needs: [argocd-prepare]
     if: needs.argocd-prepare.result == 'success'
-    uses: DND-IT/github-workflows/.github/workflows/argocd-cli.yaml@v3
+    uses: ./.github/workflows/argocd-cli.yaml
     secrets:
       argocd_auth_token: ${{ secrets.argocd_auth_token }}
     with:
       argocd_commands: ${{ needs.argocd-prepare.outputs.commands }}
+      argocd_server: ${{ inputs.argocd_server }}
