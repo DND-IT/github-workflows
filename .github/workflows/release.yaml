@@ -18,10 +18,53 @@ on:
 
 jobs:
   release:
+    name: Umbrella release (whole repo)
     permissions:
       contents: write
     uses: ./.github/workflows/gh-release.yaml
     with:
+      update_version_aliases: true
+      app_id: ${{ vars.FISSION_GH_APP_ID }}
+    secrets:
+      app_private_key: ${{ secrets.FISSION_GH_APP_PRIVATE_KEY }}
+
+  prepare-matrix:
+    name: Enumerate per-workflow release targets
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build workflow matrix
+        id: build
+        run: |
+          matrix=$(
+            for f in .github/workflows/*.yaml; do
+              b=$(basename "$f")
+              case "$b" in
+                _test-*|release.yaml) continue ;;
+              esac
+              grep -q 'workflow_call:' "$f" || continue
+              printf '{"name":"%s","path":"%s"}\n' "${b%.yaml}" "$f"
+            done | jq -sc '{include: .}'
+          )
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "$matrix" | jq .
+
+  release-workflow:
+    name: Release ${{ matrix.name }}
+    needs: prepare-matrix
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      service_name: ${{ matrix.name }}
+      service_path: ${{ matrix.path }}
       update_version_aliases: true
       app_id: ${{ vars.FISSION_GH_APP_ID }}
     secrets:

@@ -67,6 +67,35 @@ jobs:
           fi
           echo "Scoped tag format correct: $TAG"
 
+  test_file_scoped_dry_run:
+    name: Test dry-run (scoped to a single workflow file)
+    uses: ./.github/workflows/gh-release.yaml
+    with:
+      service_name: gitops-image-tag
+      service_path: .github/workflows/gitops-image-tag.yaml
+      dry_run: true
+
+  test_file_scoped_outputs:
+    name: Validate file-scoped outputs
+    needs: test_file_scoped_dry_run
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display outputs
+        run: |
+          echo "new_release_published: ${{ needs.test_file_scoped_dry_run.outputs.new_release_published }}"
+          echo "new_release_version: ${{ needs.test_file_scoped_dry_run.outputs.new_release_version }}"
+          echo "new_release_git_tag: ${{ needs.test_file_scoped_dry_run.outputs.new_release_git_tag }}"
+
+      - name: Validate file-scoped tag format
+        if: needs.test_file_scoped_dry_run.outputs.new_release_published == 'true'
+        run: |
+          TAG="${{ needs.test_file_scoped_dry_run.outputs.new_release_git_tag }}"
+          if [[ "$TAG" != gitops-image-tag-v* ]]; then
+            echo "::error::Expected tag to start with 'gitops-image-tag-v', got: $TAG"
+            exit 1
+          fi
+          echo "File-scoped tag format correct: $TAG"
+
   test_pr_dry_run:
     name: Test PR context (auto dry-run)
     uses: ./.github/workflows/gh-release.yaml
