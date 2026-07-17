@@ -133,6 +133,7 @@ Scoped releases also maintain moving major/minor alias tags (`gitops-image-tag-v
 
 ```yaml
 uses: DND-IT/github-workflows/.github/workflows/gitops-image-tag.yaml@gitops-image-tag-v0
+# or @gitops-image-tag-v0.1  / @gitops-image-tag-v0.1.1  — umbrella @v4 still works
 ```
 
 Test workflows (`_test-*.yaml`) are excluded from per-workflow releases.
