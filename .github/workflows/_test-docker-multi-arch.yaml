@@ -62,6 +62,20 @@ jobs:
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/amd64,linux/arm64"
 
+  test_docker_buildx_build_args:
+    uses: ./.github/workflows/docker-buildx-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-buildx-push
+      docker_context: tests/docker
+      dockerfile_path: tests/docker/build-args.Dockerfile
+      docker_push: false
+      docker_platforms: "linux/arm64"
+      docker_build_args: |
+        TEST_BUILD_ARG=expected-value
+
   ## Cleanups
   # TODO: enable after tests finished
   # cleanup_docker_ecr:
