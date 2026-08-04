@@ -59,6 +59,9 @@ on:
       tf_pre_run:
         description: "Command to run before Terraform is executed."
         type: string
+      tf_workspace:
+        description: "Terraform workspace"
+        type: string
 jobs:
   plan:
     permissions:
@@ -76,6 +79,12 @@ jobs:
       TF_VAR_FILES: ${{ inputs.tf_var_files || vars.tf_var_files }}
       TF_VARS: ${{ inputs.tf_vars || vars.tf_vars }}
     steps:
+      - name: Sanitise Environment Variables
+        run: |
+          WORKSPACE="${{ inputs.tf_workspace || vars.tf_workspace || 'default' }}"
+          SANITISED_WORKSPACE="${WORKSPACE//\//-}"
+          echo "TF_WORKSPACE=$SANITISED_WORKSPACE" >> $GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -118,6 +127,14 @@ jobs:
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
           backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
 
+      - name: Use Workspace
+        uses: dflook/terraform-new-workspace@ac5eff4d33ad43d8b9c45bcaf4c58cae69313b13 # v2
+        with:
+          workspace: ${{ env.TF_WORKSPACE }}
+          path: ${{ env.TF_DIR }}
+          backend_config: ${{ env.TF_BACKEND_CONFIGS }}
+          backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
+
       - name: Terraform Plan
         id: plan
         uses: dflook/terraform-plan@7878bff63e2099cdc9be9a6f33cbbbf687f8f0fe # v2
@@ -132,6 +149,7 @@ jobs:
         with:
           label: ${{ env.ENVIRONMENT }}
           add_github_comment: ${{ inputs.gh_comment }}
+          workspace: ${{ env.TF_WORKSPACE }}
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
           backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}

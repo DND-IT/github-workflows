@@ -31,6 +31,7 @@ This workflow applies the Terraform configuration.
 | `tf_var_files` | <p>List of tfvars files to use, one per line. Paths should be relative to the GitHub Actions workspace.</p> | `string` | `false` | `""` |
 | `tf_vars` | <p>Variables to set for the Terraform plan. This should be valid Terraform syntax.</p> | `string` | `false` | `""` |
 | `tf_pre_run` | <p>Command to run before Terraform is executed.</p> | `string` | `false` | `""` |
+| `tf_workspace` | <p>Terraform workspace</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/tf-apply.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/tf-apply.yaml" -->
@@ -156,6 +157,13 @@ jobs:
 
       tf_pre_run:
       # Command to run before Terraform is executed.
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      tf_workspace:
+      # Terraform workspace
       #
       # Type: string
       # Required: false

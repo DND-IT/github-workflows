@@ -122,6 +122,47 @@ jobs:
         workspace_key_prefix=github-workflows
       tf_var_files: tests/terraform/s3/environment/sandbox.tfvars
 
+  test_tf_plan_workspace:
+    uses: ./.github/workflows/tf-plan.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/s3
+      tf_workspace: tf_plan_apply_workspace
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-plan-apply-workspace.tfstate
+        workspace_key_prefix=github-workflows
+      tf_var_files: tests/terraform/s3/environment/sandbox.tfvars
+
+  test_tf_apply_workspace:
+    needs: test_tf_plan_workspace
+    uses: ./.github/workflows/tf-apply.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/s3
+      tf_workspace: tf_plan_apply_workspace
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-plan-apply-workspace.tfstate
+        workspace_key_prefix=github-workflows
+      tf_var_files: tests/terraform/s3/environment/sandbox.tfvars
+
+  test_tf_cleanup_plan_apply_workspace:
+    needs: test_tf_apply_workspace
+    uses: ./.github/workflows/tf-cleanup.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/s3
+      tf_workspace: tf_plan_apply_workspace
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-plan-apply-workspace.tfstate
+        workspace_key_prefix=github-workflows
+      tf_var_files: tests/terraform/s3/environment/sandbox.tfvars
+
   test_upload_artifact:
     runs-on: ubuntu-latest
     steps:
