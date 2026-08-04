@@ -22,6 +22,7 @@ This workflow builds a Docker image and the artifact is uploaded to the GitHub a
 | `artifact_name` | <p>Name of the artifact to upload. If not set, it will be derived from the image name</p> | `string` | `false` | `""` |
 | `artifact_retention_days` | <p>Number of days to retain the artifact</p> | `number` | `false` | `""` |
 | `docker_target` | <p>Build target</p> | `string` | `false` | `""` |
+| `docker_build_args` | <p>Additional Docker build arguments (newline-separated KEY=VALUE pairs)</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/docker-build.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/docker-build.yaml" -->
@@ -80,6 +81,13 @@ jobs:
 
       docker_target:
       # Build target
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      docker_build_args:
+      # Additional Docker build arguments (newline-separated KEY=VALUE pairs)
       #
       # Type: string
       # Required: false

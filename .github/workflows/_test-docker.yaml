@@ -82,6 +82,19 @@ jobs:
       dockerfile_path: tests/docker/secrets.Dockerfile
       docker_push: false
 
+  test_docker_build_push_ecr_build_args:
+    uses: ./.github/workflows/docker-build-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-build-push
+      docker_context: tests/docker
+      dockerfile_path: tests/docker/build-args.Dockerfile
+      docker_push: false
+      docker_build_args: |
+        TEST_BUILD_ARG=expected-value
+
   upload_artifact:
     runs-on: ubuntu-latest
     steps:

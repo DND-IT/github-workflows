@@ -28,6 +28,11 @@ on:
       docker_target:
         description: "Build target"
         type: string
+      docker_build_args:
+        description: "Additional Docker build arguments (newline-separated KEY=VALUE pairs)"
+        required: false
+        type: string
+        default: ''
 
 jobs:
   build:
@@ -52,10 +57,12 @@ jobs:
         env:
           DOCKER_CTX: ${{ inputs.docker_context || vars.docker_context || '.'}}
           DOCKER_TARGET: ${{ inputs.docker_target || vars.docker_target }}
+          DOCKER_BUILD_ARGS: ${{ inputs.docker_build_args || vars.docker_build_args }}
         with:
           context: ${{ env.DOCKER_CTX }}
           file: ${{ env.DOCKERFILE_PATH }}
           secrets: ${{ secrets.docker_secrets }}
+          build-args: ${{ env.DOCKER_BUILD_ARGS }}
           # platforms: linux/amd64,linux/arm64 # TODO add support for multi-arch builds
           tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           outputs: type=docker,dest=/tmp/${{ env.IMAGE_NAME }}.tar

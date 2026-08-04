@@ -26,6 +26,7 @@ This workflow builds a Docker image and pushes it to the Elastic Container Regis
 | `dockerfile_path` | <p>Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile</p> | `string` | `false` | `""` |
 | `docker_push` | <p>Push Image to ECR</p> | `boolean` | `false` | `true` |
 | `docker_target` | <p>Build target</p> | `string` | `false` | `""` |
+| `docker_build_args` | <p>Additional Docker build arguments (newline-separated KEY=VALUE pairs)</p> | `string` | `false` | `""` |
 | `artifact_name` | <p>Artifact name to be downloaded before building</p> | `string` | `false` | `""` |
 | `artifact_path` | <p>Artifact target path</p> | `string` | `false` | `""` |
 | `artifact_pattern` | <p>A glob pattern to the artifacts that should be downloaded. Ignored if name is specified.</p> | `string` | `false` | `""` |
@@ -118,6 +119,13 @@ jobs:
 
       docker_target:
       # Build target
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      docker_build_args:
+      # Additional Docker build arguments (newline-separated KEY=VALUE pairs)
       #
       # Type: string
       # Required: false

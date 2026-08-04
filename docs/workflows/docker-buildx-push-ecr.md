@@ -21,6 +21,7 @@ title: Docker Multi-Arch Build and Push to ECR
 | `dockerfile_path` | <p>Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile</p> | `string` | `false` | `""` |
 | `docker_push` | <p>Push Image to ECR</p> | `boolean` | `false` | `true` |
 | `docker_target` | <p>Build target</p> | `string` | `false` | `""` |
+| `docker_build_args` | <p>Additional Docker build arguments (newline-separated KEY=VALUE pairs)</p> | `string` | `false` | `""` |
 | `docker_platforms` | <p>Build Platforms. Allowed values: <code>linux/amd64</code>, <code>linux/arm64</code> and <code>linux/amd64,linux/arm64</code></p> | `string` | `false` | `linux/amd64` |
 | `artifact_name` | <p>Artifact name to be downloaded before building</p> | `string` | `false` | `""` |
 | `artifact_path` | <p>Artifact target path</p> | `string` | `false` | `""` |
@@ -119,6 +120,13 @@ jobs:
 
       docker_target:
       # Build target
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      docker_build_args:
+      # Additional Docker build arguments (newline-separated KEY=VALUE pairs)
       #
       # Type: string
       # Required: false
