@@ -32,6 +32,7 @@ This workflow applies the Terraform configuration.
 | `tf_vars` | <p>Variables to set for the Terraform plan. This should be valid Terraform syntax.</p> | `string` | `false` | `""` |
 | `tf_pre_run` | <p>Command to run before Terraform is executed.</p> | `string` | `false` | `""` |
 | `tf_workspace` | <p>Terraform workspace</p> | `string` | `false` | `""` |
+| `app_id` | <p>GitHub App ID, exposed to the apply as the github<em>app</em>id Terraform variable (via TF<em>VAR</em>github<em>app</em>id). Pair with the app<em>private</em>key secret to authenticate a <code>github</code> Terraform provider.</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/tf-apply.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/tf-apply.yaml" -->
@@ -164,6 +165,13 @@ jobs:
 
       tf_workspace:
       # Terraform workspace
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      app_id:
+      # GitHub App ID, exposed to the apply as the github_app_id Terraform variable (via TF_VAR_github_app_id). Pair with the app_private_key secret to authenticate a `github` Terraform provider.
       #
       # Type: string
       # Required: false
