@@ -144,7 +144,7 @@ jobs:
 
       - name: Summary
         if: steps.tf_apply.outputs != ''
-        uses: DND-IT/action-summary@v2.0.0
+        uses: DND-IT/tamci/actions/summary@v0
         with:
           summary_header: "Terraform Outputs | ${{ env.ENVIRONMENT}}"
           string: ${{ toJson(steps.tf_apply.outputs) }}
