@@ -31,28 +31,34 @@ jobs:
       create_pr: false
       dry_run: true
 
-  # Intentionally red: this job MUST fail (neither image_name nor image_tag_keys
-  # is given). Reusable-workflow jobs can't use continue-on-error, so its failure
-  # marks the run red by design. validate_failure below asserts it failed.
+  # Runs the reusable workflow's own "Validate inputs" script instead of calling
+  # the workflow: a failing reusable-workflow job would mark the whole run red,
+  # and continue-on-error is not allowed on jobs that call reusable workflows.
   test_validation_fails_without_mode:
     name: Test validation (no image_name or keys)
-    uses: ./.github/workflows/gitops-image-tag.yaml
-    with:
-      image_tag: "abc1234"
-      values_files: "tests/gitops-image-tag/values.yaml"
-      create_pr: false
-      dry_run: true
-
-  validate_failure:
-    name: Validate input validation works
-    needs: test_validation_fails_without_mode
-    if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Check that validation job failed
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.0
+
+      - name: Check that validation rejects missing mode inputs
         run: |
-          if [ "${{ needs.test_validation_fails_without_mode.result }}" != "failure" ]; then
-            echo "::error::Expected validation job to fail when neither image_name nor image_tag_keys is provided"
+          script=$(yq '.jobs["update-helm-values"].steps[] | select(.name == "Validate inputs") | .run' .github/workflows/gitops-image-tag.yaml)
+          if [ -z "$script" ]; then
+            echo "::error::No 'Validate inputs' step found in gitops-image-tag.yaml"
+            exit 1
+          fi
+          expr_open='$''{{'
+          script=${script//"$expr_open inputs.image_tag }}"/abc1234}
+          script=${script//"$expr_open inputs.image_name }}"/}
+          script=${script//"$expr_open inputs.image_tag_keys }}"/}
+          if out=$(bash -e -c "$script" 2>&1); then
+            echo "::error::Expected validation to fail when neither image_name nor image_tag_keys is provided"
+            exit 1
+          fi
+          echo "$out"
+          if ! grep -q "Either image_name or image_tag_keys must be provided" <<<"$out"; then
+            echo "::error::Validation failed for an unexpected reason"
             exit 1
           fi
           echo "Input validation correctly rejected missing mode inputs"
