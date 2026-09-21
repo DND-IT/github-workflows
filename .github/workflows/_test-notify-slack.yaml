@@ -37,7 +37,7 @@ jobs:
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
-      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C08RK3HHL48' }}
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
       notification_title: "Test: Basic Notification"
       notification_message: "This is a basic test notification with default info status"
 
@@ -49,7 +49,7 @@ jobs:
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
-      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C08RK3HHL48' }}
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
       notification_title: "Test: Success Notification"
       notification_message: "Testing success status with job results"
       status: "success"
@@ -67,7 +67,7 @@ jobs:
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
-      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C08RK3HHL48' }}
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
       notification_title: "Test: Failure Notification"
       notification_message: "Testing failure status with custom styling"
       status: "failure"
@@ -84,7 +84,7 @@ jobs:
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
-      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C08RK3HHL48' }}
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
       notification_title: "Test: Warning with Fields"
       notification_message: "Testing warning status with additional fields"
       status: "warning"
@@ -103,7 +103,7 @@ jobs:
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
-      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C08RK3HHL48' }}
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
       notification_title: "Test: Comprehensive Notification"
       notification_message: "This notification includes job results, additional fields, and all features"
       status: "partial"
@@ -127,7 +127,7 @@ jobs:
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
-      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C08RK3HHL48' }}
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
       notification_title: "Test: Minimal Notification"
       include_workflow_link: false
       include_triggered_by: false
@@ -138,7 +138,7 @@ jobs:
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
-      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C08RK3HHL48' }}
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
       notification_title: "Test: Info Status"
       notification_message: "Testing info status type"
       status: "info"
@@ -151,7 +151,7 @@ jobs:
     secrets:
       slack_bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
     with:
-      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C08RK3HHL48' }}
+      channel: ${{ vars.SLACK_TEST_CHANNEL || 'C09LCSR8YRZ' }}
       notification_title: "Deployment Status - Staging"
       notification_message: "Deployment workflow completed with mixed results"
       status: "partial"
