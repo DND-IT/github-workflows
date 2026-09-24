@@ -59,7 +59,7 @@ jobs:
       env_values_files: ${{ steps.filter-envs.outputs.env_values_files }}
       env_list: ${{ steps.filter-envs.outputs.env_list }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -109,7 +109,7 @@ jobs:
           echo "Environments to check: ${{ steps.filter-envs.outputs.env_list }}"
 
       - name: Checkout target branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         if: steps.changed-files.outputs.chart_values_any_changed == 'true' || steps.changed-files.outputs.env_values_any_changed == 'true'
         with:
           ref: ${{ inputs.base_branch }}
