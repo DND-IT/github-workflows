@@ -111,18 +111,10 @@ jobs:
       - name: Read Datadog keys
         id: dd_keys
         if: ${{ !cancelled() && steps.aws.outcome == 'success' }}
-        env:
-          DD_KEYS_SECRET_NAME: ${{ inputs.dd_keys_secret_name }}
-        run: |
-          secret=$(aws secretsmanager get-secret-value --secret-id "$DD_KEYS_SECRET_NAME" --query SecretString --output text)
-          api_key=$(jq -er .DD_API_KEY <<< "$secret")
-          app_key=$(jq -er .DD_APP_KEY <<< "$secret")
-          echo "::add-mask::$api_key"
-          echo "::add-mask::$app_key"
-          {
-            echo "DD_API_KEY=$api_key"
-            echo "DD_APP_KEY=$app_key"
-          } >> "$GITHUB_ENV"
+        uses: aws-actions/aws-secretsmanager-get-secrets@2297f9a879480a9e3af9b293ed15c70caf8e1c88 # v3
+        with:
+          secret-ids: ",${{ inputs.dd_keys_secret_name }}"
+          parse-json-secrets: true
 
       - name: Validate monitors with the Datadog API
         if: ${{ !cancelled() && steps.render.outcome == 'success' && steps.dd_keys.outcome == 'success' }}
