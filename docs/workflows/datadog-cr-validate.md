@@ -13,7 +13,7 @@ Render Helm charts containing Datadog Operator custom resources (`DatadogMonitor
 
 All layers after rendering run even when an earlier one fails, so one run reports every problem.
 
-The application key needs the `monitors_read` scope, plus `metrics_read` when `check_tag_values` is enabled.
+The Datadog keys are never stored as GitHub secrets. The workflow assumes `aws_oidc_role_arn` through GitHub OIDC and reads them from the `dd_keys_secret_name` secret in AWS Secrets Manager. The default role, secret, and the read-only Datadog service account behind the keys are managed in [tx-pts-dai/datadog-settings](https://github.com/tx-pts-dai/datadog-settings/blob/main/global/terraform/datadog_cr_validate.tf). A repository has to be added to the role's trust list there before it can call this workflow, and the calling workflow must grant `id-token: write`.
 
 <!-- action-docs-inputs source=".github/workflows/datadog-cr-validate.yaml" -->
 ### Inputs
@@ -23,6 +23,9 @@ The application key needs the `monitors_read` scope, plus `metrics_read` when `c
 | `charts` | <p>Helm charts to render and validate, one per line: a chart path, optionally followed by extra <code>helm template</code> arguments. Example: |   deploy/datadog-monitoring   deploy/datadog-agent --set clusterName=validate</p> | `string` | `true` | `""` |
 | `check_tag_values` | <p>Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window</p> | `boolean` | `false` | `false` |
 | `dd_site` | <p>Datadog site to validate against. Falls back to vars.dd_site, then datadoghq.eu</p> | `string` | `false` | `""` |
+| `aws_oidc_role_arn` | <p>IAM role assumed through GitHub OIDC to read the Datadog keys. The default role is managed in tx-pts-dai/datadog-settings, which lists the repositories allowed to assume it</p> | `string` | `false` | `arn:aws:iam::331393623535:role/dai-datadog-cr-validate` |
+| `aws_region` | <p>AWS region of the Datadog keys secret</p> | `string` | `false` | `eu-west-1` |
+| `dd_keys_secret_name` | <p>Secrets Manager secret holding the Datadog keys as JSON with <code>DD_API_KEY</code> and <code>DD_APP_KEY</code></p> | `string` | `false` | `dai-datadog/datadogADM/DatadogCrValidateKeys` |
 <!-- action-docs-inputs source=".github/workflows/datadog-cr-validate.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/datadog-cr-validate.yaml" -->
@@ -60,6 +63,27 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
+
+      aws_oidc_role_arn:
+      # IAM role assumed through GitHub OIDC to read the Datadog keys. The default role is managed in tx-pts-dai/datadog-settings, which lists the repositories allowed to assume it
+      #
+      # Type: string
+      # Required: false
+      # Default: arn:aws:iam::331393623535:role/dai-datadog-cr-validate
+
+      aws_region:
+      # AWS region of the Datadog keys secret
+      #
+      # Type: string
+      # Required: false
+      # Default: eu-west-1
+
+      dd_keys_secret_name:
+      # Secrets Manager secret holding the Datadog keys as JSON with `DD_API_KEY` and `DD_APP_KEY`
+      #
+      # Type: string
+      # Required: false
+      # Default: dai-datadog/datadogADM/DatadogCrValidateKeys
 ```
 <!-- action-docs-usage source=".github/workflows/datadog-cr-validate.yaml" project="dnd-it/github-workflows/.github/workflows/datadog-cr-validate.yaml" version="v2" -->
 
@@ -78,15 +102,13 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   validate:
     uses: DND-IT/github-workflows/.github/workflows/datadog-cr-validate.yaml@datadog-cr-validate-v0
     with:
       charts: deploy/datadog-monitoring
-    secrets:
-      dd_api_key: ${{ secrets.DD_API_KEY }}
-      dd_app_key: ${{ secrets.DD_APP_KEY }}
 ```
 
 The schedule catches upstream CRD schema changes even when nothing in the repository changed.
@@ -102,9 +124,6 @@ jobs:
         configs/datadog-monitoring
         configs/datadog-agent --set clusterName=validate --set-string awsAccountId=000000000000
       check_tag_values: true
-    secrets:
-      dd_api_key: ${{ secrets.DD_API_KEY }}
-      dd_app_key: ${{ secrets.DD_APP_KEY }}
 ```
 
 ## FAQ
@@ -116,6 +135,10 @@ A: Each line is split on whitespace: the first word is the chart path and the re
 ### Q: Does it build chart dependencies?
 
 A: No. Charts are rendered with `helm template` as they are checked out, so a chart with dependencies needs its `charts/` directory available.
+
+### Q: Why does "Configure AWS credentials" fail?
+
+A: Either the calling workflow does not grant `id-token: write`, or the repository is not in the trust list of the `dai-datadog-cr-validate` role in tx-pts-dai/datadog-settings. The schema and dashboard checks still run and report their results.
 
 ### Q: Which Datadog site is used?
 

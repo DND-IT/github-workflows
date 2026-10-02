@@ -9,6 +9,10 @@ on:
       - ".github/workflows/datadog-cr-validate.yaml"
       - "tests/datadog/**"
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   test_validate:
     name: Test validate
@@ -17,9 +21,6 @@ jobs:
       charts: |
         tests/datadog/chart --set team=validate
       check_tag_values: true
-    secrets:
-      dd_api_key: ${{ secrets.DD_API_KEY }}
-      dd_app_key: ${{ secrets.DD_APP_KEY }}
 
   # Runs the reusable workflow's own "Lint dashboards" script instead of calling
   # the workflow: a failing reusable-workflow job would mark the whole run red,

@@ -18,13 +18,18 @@ on:
       dd_site:
         description: Datadog site to validate against. Falls back to vars.dd_site, then datadoghq.eu
         type: string
-    secrets:
-      dd_api_key:
-        description: Datadog API key
-        required: true
-      dd_app_key:
-        description: Datadog application key with the monitors_read scope, plus metrics_read when check_tag_values is enabled
-        required: true
+      aws_oidc_role_arn:
+        description: IAM role assumed through GitHub OIDC to read the Datadog keys. The default role is managed in tx-pts-dai/datadog-settings, which lists the repositories allowed to assume it
+        type: string
+        default: arn:aws:iam::331393623535:role/dai-datadog-cr-validate
+      aws_region:
+        description: AWS region of the Datadog keys secret
+        type: string
+        default: eu-west-1
+      dd_keys_secret_name:
+        description: Secrets Manager secret holding the Datadog keys as JSON with `DD_API_KEY` and `DD_APP_KEY`
+        type: string
+        default: dai-datadog/datadogADM/DatadogCrValidateKeys
 
 env:
   DD_SITE: ${{ inputs.dd_site || vars.dd_site || 'datadoghq.eu' }}
@@ -35,6 +40,7 @@ jobs:
     name: Validate Datadog CRs
     permissions:
       contents: read
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -94,23 +100,32 @@ jobs:
           done < "$RUNNER_TEMP/dashboards.jsonl"
           exit "$failed"
 
-      - name: Check Datadog keys
-        id: dd_keys
+      - name: Configure AWS credentials
+        id: aws
         if: ${{ !cancelled() }}
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6
+        with:
+          role-to-assume: ${{ inputs.aws_oidc_role_arn }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Read Datadog keys
+        id: dd_keys
+        if: ${{ !cancelled() && steps.aws.outcome == 'success' }}
         env:
-          DD_API_KEY: ${{ secrets.dd_api_key }}
-          DD_APP_KEY: ${{ secrets.dd_app_key }}
+          DD_KEYS_SECRET_NAME: ${{ inputs.dd_keys_secret_name }}
         run: |
-          if [ -z "$DD_API_KEY" ] || [ -z "$DD_APP_KEY" ]; then
-            echo "::error::dd_api_key and dd_app_key must not be empty"
-            exit 1
-          fi
+          secret=$(aws secretsmanager get-secret-value --secret-id "$DD_KEYS_SECRET_NAME" --query SecretString --output text)
+          api_key=$(jq -er .DD_API_KEY <<< "$secret")
+          app_key=$(jq -er .DD_APP_KEY <<< "$secret")
+          echo "::add-mask::$api_key"
+          echo "::add-mask::$app_key"
+          {
+            echo "DD_API_KEY=$api_key"
+            echo "DD_APP_KEY=$app_key"
+          } >> "$GITHUB_ENV"
 
       - name: Validate monitors with the Datadog API
         if: ${{ !cancelled() && steps.render.outcome == 'success' && steps.dd_keys.outcome == 'success' }}
-        env:
-          DD_API_KEY: ${{ secrets.dd_api_key }}
-          DD_APP_KEY: ${{ secrets.dd_app_key }}
         run: |
           yq e -o=json -I=0 'select(.kind == "DatadogMonitor")' "$RUNNER_TEMP"/rendered/*.yaml > "$RUNNER_TEMP/monitors.jsonl"
           failed=0
@@ -135,9 +150,6 @@ jobs:
 
       - name: Check metric tag values
         if: ${{ !cancelled() && steps.render.outcome == 'success' && steps.dd_keys.outcome == 'success' && inputs.check_tag_values }}
-        env:
-          DD_API_KEY: ${{ secrets.dd_api_key }}
-          DD_APP_KEY: ${{ secrets.dd_app_key }}
         run: |
           yq e -o=json -I=0 '(select(.kind == "DatadogMonitor") | .spec.query), (select(.kind == "DatadogDashboard") | .spec.widgets)' \
             "$RUNNER_TEMP"/rendered/*.yaml \
