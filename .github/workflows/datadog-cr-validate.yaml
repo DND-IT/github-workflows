@@ -1,0 +1,176 @@
+name: Datadog CR Validate
+
+on:
+  workflow_call:
+    inputs:
+      charts:
+        description: |
+          Helm charts to render and validate, one per line: a chart path, optionally followed by extra `helm template` arguments.
+          Example: |
+            deploy/datadog-monitoring
+            deploy/datadog-agent --set clusterName=validate
+        type: string
+        required: true
+      check_tag_values:
+        description: Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window
+        type: boolean
+        default: false
+      dd_site:
+        description: Datadog site to validate against. Falls back to vars.dd_site, then datadoghq.eu
+        type: string
+      aws_oidc_role_arn:
+        description: IAM role assumed through GitHub OIDC to read the Datadog keys. The default role is managed in tx-pts-dai/datadog-settings and trusts this workflow when it is called from a DND-IT or tx-pts-dai repository
+        type: string
+        default: arn:aws:iam::730335665754:role/dai-datadog-cr-validate
+      aws_region:
+        description: AWS region of the Datadog keys secret
+        type: string
+        default: eu-central-1
+      dd_keys_secret_name:
+        description: Secrets Manager secret holding the Datadog keys as JSON with `DD_API_KEY` and `DD_APP_KEY`
+        type: string
+        default: dai/datadog/crValidateKeys
+
+env:
+  DD_SITE: ${{ inputs.dd_site || vars.dd_site || 'datadoghq.eu' }}
+  KUBECONFORM_VERSION: v0.8.0
+
+jobs:
+  validate:
+    name: Validate Datadog CRs
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Render charts
+        id: render
+        env:
+          CHARTS: ${{ inputs.charts }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/rendered"
+          i=0
+          while read -r chart args; do
+            [ -n "$chart" ] || continue
+            i=$((i + 1))
+            echo "Rendering $chart $args"
+            # shellcheck disable=SC2086 # args holds extra helm flags and is split on purpose
+            helm template "$(basename "$chart")" "$chart" $args > "$RUNNER_TEMP/rendered/$i-$(basename "$chart").yaml"
+          done <<< "$CHARTS"
+
+      - name: Install kubeconform
+        run: |
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/$KUBECONFORM_VERSION/kubeconform-linux-amd64.tar.gz" \
+            | sudo tar -xz -C /usr/local/bin kubeconform
+
+      - name: Validate CRD schemas
+        run: |
+          kubeconform -strict -summary \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            "$RUNNER_TEMP"/rendered/*.yaml
+
+      - name: Lint dashboards
+        if: ${{ !cancelled() && steps.render.outcome == 'success' }}
+        run: |
+          yq e -o=json -I=0 'select(.kind == "DatadogDashboard")' "$RUNNER_TEMP"/rendered/*.yaml > "$RUNNER_TEMP/dashboards.jsonl"
+          failed=0
+          while read -r cr; do
+            name=$(jq -r .metadata.name <<< "$cr")
+            if ! widgets=$(jq -ce '.spec.widgets | fromjson | arrays' <<< "$cr" 2>/dev/null); then
+              echo "::error title=DatadogDashboard $name::spec.widgets is not a JSON array"
+              failed=1
+              continue
+            fi
+            untyped=$(jq 'def widgets: .[] | ., (.definition.widgets // [] | widgets); [widgets | select(.definition.type | type != "string")] | length' <<< "$widgets")
+            if [ "$untyped" -gt 0 ]; then
+              echo "::error title=DatadogDashboard $name::$untyped widget(s) have no definition.type"
+              failed=1
+            fi
+            undefined=$(jq -r --argjson declared "$(jq -c '[.spec.templateVariables[]?.name]' <<< "$cr")" \
+              '[.. | strings | scan("\\$([A-Za-z_][A-Za-z0-9_]*)") | .[0]] | unique - $declared | join(", ")' <<< "$widgets")
+            if [ -n "$undefined" ]; then
+              echo "::error title=DatadogDashboard $name::Undeclared template variables: $undefined"
+              failed=1
+            fi
+            echo "Linted dashboard $name"
+          done < "$RUNNER_TEMP/dashboards.jsonl"
+          exit "$failed"
+
+      - name: Configure AWS credentials
+        id: aws
+        if: ${{ !cancelled() }}
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6
+        with:
+          role-to-assume: ${{ inputs.aws_oidc_role_arn }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Read Datadog keys
+        id: dd_keys
+        if: ${{ !cancelled() && steps.aws.outcome == 'success' }}
+        uses: aws-actions/aws-secretsmanager-get-secrets@2297f9a879480a9e3af9b293ed15c70caf8e1c88 # v3
+        with:
+          secret-ids: ",${{ inputs.dd_keys_secret_name }}"
+          parse-json-secrets: true
+
+      - name: Validate monitors with the Datadog API
+        if: ${{ !cancelled() && steps.render.outcome == 'success' && steps.dd_keys.outcome == 'success' }}
+        run: |
+          yq e -o=json -I=0 'select(.kind == "DatadogMonitor")' "$RUNNER_TEMP"/rendered/*.yaml > "$RUNNER_TEMP/monitors.jsonl"
+          failed=0
+          while read -r cr; do
+            name=$(jq -r .metadata.name <<< "$cr")
+            jq '.spec
+              | del(.controllerOptions)
+              | walk(if type == "object" then with_entries(.key |= gsub("(?<a>[a-z0-9])(?<b>[A-Z])"; "\(.a)_\(.b | ascii_downcase)")) else . end)
+              | if .options.thresholds then .options.thresholds |= map_values(tonumber) else . end' <<< "$cr" > "$RUNNER_TEMP/monitor.json"
+            status=$(curl -sS -o "$RUNNER_TEMP/response.json" -w '%{http_code}' \
+              -X POST "https://api.$DD_SITE/api/v1/monitor/validate" \
+              -H "DD-API-KEY: $DD_API_KEY" -H "DD-APPLICATION-KEY: $DD_APP_KEY" \
+              -H 'Content-Type: application/json' --data @"$RUNNER_TEMP/monitor.json")
+            if [ "$status" = 200 ]; then
+              echo "Validated monitor $name"
+            else
+              echo "::error title=DatadogMonitor $name::HTTP $status: $(jq -c '.errors // .' "$RUNNER_TEMP/response.json")"
+              failed=1
+            fi
+          done < "$RUNNER_TEMP/monitors.jsonl"
+          exit "$failed"
+
+      - name: Check metric tag values
+        if: ${{ !cancelled() && steps.render.outcome == 'success' && steps.dd_keys.outcome == 'success' && inputs.check_tag_values }}
+        run: |
+          yq e -o=json -I=0 '(select(.kind == "DatadogMonitor") | .spec.query), (select(.kind == "DatadogDashboard") | .spec.widgets)' \
+            "$RUNNER_TEMP"/rendered/*.yaml \
+            | jq -r 'scan("(?:avg|sum|min|max|count|p[0-9]+):([A-Za-z0-9_.]+)\\{([^}]*)\\}")
+                | .[0] as $metric
+                | ($metric + "\t"), (.[1] | splits("[\\s,()]+") | select(test("^[A-Za-z][^:]*:[^*$]+$")) | $metric + "\t" + .)' \
+            | sort -u > "$RUNNER_TEMP/filters.tsv"
+          failed=0
+          for metric in $(cut -f1 "$RUNNER_TEMP/filters.tsv" | uniq); do
+            status=$(curl -sS -G -o "$RUNNER_TEMP/tags.json" -w '%{http_code}' \
+              "https://api.$DD_SITE/api/v2/metrics/$metric/all-tags" \
+              --data-urlencode 'window[seconds]=604800' \
+              -H "DD-API-KEY: $DD_API_KEY" -H "DD-APPLICATION-KEY: $DD_APP_KEY")
+            if [ "$status" = 404 ]; then
+              echo "::error title=Metric not found::$metric has not been reported in the last 7 days"
+              failed=1
+              continue
+            elif [ "$status" != 200 ]; then
+              echo "::error title=Metric $metric::HTTP $status: $(jq -c '.errors // .' "$RUNNER_TEMP/tags.json")"
+              failed=1
+              continue
+            fi
+            # Only indexed tags can be queried, so ingested_tags are deliberately not consulted.
+            # A missing value only warns: tags such as reason:oomkilled legitimately appear only when the event happens.
+            while IFS=$'\t' read -r _ tag; do
+              if ! jq -e --arg tag "$tag" 'any(.data.attributes.tags[]?; . == $tag)' "$RUNNER_TEMP/tags.json" > /dev/null; then
+                echo "::warning title=Tag value not found::$metric{$tag} has not been indexed in the last 7 days"
+              fi
+            done < <(awk -F'\t' -v m="$metric" '$1 == m && $2 != ""' "$RUNNER_TEMP/filters.tsv")
+            echo "Checked metric $metric"
+          done
+          exit "$failed"

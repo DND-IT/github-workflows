@@ -1,0 +1,5 @@
+apiVersion: v2
+name: datadog-cr-validate-test
+description: Fixture for the datadog-cr-validate workflow test
+type: application
+version: 0.1.0
