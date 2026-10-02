@@ -13,7 +13,7 @@ Render Helm charts containing Datadog Operator custom resources (`DatadogMonitor
 
 All layers after rendering run even when an earlier one fails, so one run reports every problem.
 
-The Datadog keys are never stored as GitHub secrets. The workflow assumes `aws_oidc_role_arn` through GitHub OIDC and reads them from the `dd_keys_secret_name` secret in AWS Secrets Manager. The default role, secret, and the read-only Datadog service account behind the keys are managed in the DAI sandbox AWS account by [tx-pts-dai/datadog-settings](https://github.com/tx-pts-dai/datadog-settings/blob/main/account-specific/terraform/datadog_cr_validate.tf). The role trusts jobs running this workflow when it is called from any DND-IT or tx-pts-dai repository, so a caller needs no change there; the calling workflow must grant `id-token: write`.
+The Datadog keys are never stored as GitHub secrets. The workflow assumes `aws_oidc_role_arn` through GitHub OIDC and reads them from the `dd_keys_secret_name` secret in AWS Secrets Manager. The default role, secret, and the read-only Datadog service account behind the keys are managed in the DAI prod AWS account by [tx-pts-dai/datadog-settings](https://github.com/tx-pts-dai/datadog-settings/blob/main/account-specific/terraform/datadog_cr_validate.tf). The role trusts jobs running this workflow when it is called from any DND-IT or tx-pts-dai repository, so a caller needs no change there; the calling workflow must grant `id-token: write`.
 
 <!-- action-docs-inputs source=".github/workflows/datadog-cr-validate.yaml" -->
 ### Inputs
@@ -23,7 +23,7 @@ The Datadog keys are never stored as GitHub secrets. The workflow assumes `aws_o
 | `charts` | <p>Helm charts to render and validate, one per line: a chart path, optionally followed by extra <code>helm template</code> arguments. Example: |   deploy/datadog-monitoring   deploy/datadog-agent --set clusterName=validate</p> | `string` | `true` | `""` |
 | `check_tag_values` | <p>Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window</p> | `boolean` | `false` | `false` |
 | `dd_site` | <p>Datadog site to validate against. Falls back to vars.dd_site, then datadoghq.eu</p> | `string` | `false` | `""` |
-| `aws_oidc_role_arn` | <p>IAM role assumed through GitHub OIDC to read the Datadog keys. The default role is managed in tx-pts-dai/datadog-settings and trusts this workflow when it is called from a DND-IT or tx-pts-dai repository</p> | `string` | `false` | `arn:aws:iam::911453050078:role/dai-datadog-cr-validate` |
+| `aws_oidc_role_arn` | <p>IAM role assumed through GitHub OIDC to read the Datadog keys. The default role is managed in tx-pts-dai/datadog-settings and trusts this workflow when it is called from a DND-IT or tx-pts-dai repository</p> | `string` | `false` | `arn:aws:iam::730335665754:role/dai-datadog-cr-validate` |
 | `aws_region` | <p>AWS region of the Datadog keys secret</p> | `string` | `false` | `eu-central-1` |
 | `dd_keys_secret_name` | <p>Secrets Manager secret holding the Datadog keys as JSON with <code>DD_API_KEY</code> and <code>DD_APP_KEY</code></p> | `string` | `false` | `dai/datadog/crValidateKeys` |
 <!-- action-docs-inputs source=".github/workflows/datadog-cr-validate.yaml" -->
@@ -69,7 +69,7 @@ jobs:
       #
       # Type: string
       # Required: false
-      # Default: arn:aws:iam::911453050078:role/dai-datadog-cr-validate
+      # Default: arn:aws:iam::730335665754:role/dai-datadog-cr-validate
 
       aws_region:
       # AWS region of the Datadog keys secret

@@ -21,7 +21,7 @@ on:
       aws_oidc_role_arn:
         description: IAM role assumed through GitHub OIDC to read the Datadog keys. The default role is managed in tx-pts-dai/datadog-settings and trusts this workflow when it is called from a DND-IT or tx-pts-dai repository
         type: string
-        default: arn:aws:iam::911453050078:role/dai-datadog-cr-validate
+        default: arn:aws:iam::730335665754:role/dai-datadog-cr-validate
       aws_region:
         description: AWS region of the Datadog keys secret
         type: string
