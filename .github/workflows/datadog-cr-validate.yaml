@@ -94,8 +94,9 @@ jobs:
           done < "$RUNNER_TEMP/dashboards.jsonl"
           exit "$failed"
 
-      - name: Validate monitors with the Datadog API
-        if: ${{ !cancelled() && steps.render.outcome == 'success' }}
+      - name: Check Datadog keys
+        id: dd_keys
+        if: ${{ !cancelled() }}
         env:
           DD_API_KEY: ${{ secrets.dd_api_key }}
           DD_APP_KEY: ${{ secrets.dd_app_key }}
@@ -104,6 +105,13 @@ jobs:
             echo "::error::dd_api_key and dd_app_key must not be empty"
             exit 1
           fi
+
+      - name: Validate monitors with the Datadog API
+        if: ${{ !cancelled() && steps.render.outcome == 'success' && steps.dd_keys.outcome == 'success' }}
+        env:
+          DD_API_KEY: ${{ secrets.dd_api_key }}
+          DD_APP_KEY: ${{ secrets.dd_app_key }}
+        run: |
           yq e -o=json -I=0 'select(.kind == "DatadogMonitor")' "$RUNNER_TEMP"/rendered/*.yaml > "$RUNNER_TEMP/monitors.jsonl"
           failed=0
           while read -r cr; do
@@ -126,7 +134,7 @@ jobs:
           exit "$failed"
 
       - name: Check metric tag values
-        if: ${{ !cancelled() && steps.render.outcome == 'success' && inputs.check_tag_values }}
+        if: ${{ !cancelled() && steps.render.outcome == 'success' && steps.dd_keys.outcome == 'success' && inputs.check_tag_values }}
         env:
           DD_API_KEY: ${{ secrets.dd_api_key }}
           DD_APP_KEY: ${{ secrets.dd_app_key }}
