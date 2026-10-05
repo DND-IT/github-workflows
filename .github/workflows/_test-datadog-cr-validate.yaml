@@ -1,0 +1,53 @@
+name: Test Datadog CR Validate Workflow
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_test-datadog-cr-validate.yaml"
+      - ".github/workflows/datadog-cr-validate.yaml"
+      - "tests/datadog/**"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test_validate:
+    name: Test validate
+    uses: ./.github/workflows/datadog-cr-validate.yaml
+    with:
+      charts: |
+        tests/datadog/chart --set team=validate
+      check_tag_values: true
+
+  # Runs the reusable workflow's own "Lint dashboards" script instead of calling
+  # the workflow: a failing reusable-workflow job would mark the whole run red,
+  # and continue-on-error is not allowed on jobs that call reusable workflows.
+  test_dashboard_lint_fails:
+    name: Test dashboard lint (undeclared template variable)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check that the lint rejects an undeclared template variable
+        run: |
+          script=$(yq '.jobs.validate.steps[] | select(.name == "Lint dashboards") | .run' .github/workflows/datadog-cr-validate.yaml)
+          if [ -z "$script" ]; then
+            echo "::error::No 'Lint dashboards' step found in datadog-cr-validate.yaml"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/rendered"
+          cp tests/datadog/invalid-dashboard.yaml "$RUNNER_TEMP/rendered/"
+          if out=$(bash -e -c "$script" 2>&1); then
+            echo "::error::Expected the dashboard lint to fail on an undeclared template variable"
+            exit 1
+          fi
+          echo "$out"
+          if ! grep -q "Undeclared template variables: cluster" <<<"$out"; then
+            echo "::error::Dashboard lint failed for an unexpected reason"
+            exit 1
+          fi
+          echo "Dashboard lint correctly rejected the undeclared template variable"

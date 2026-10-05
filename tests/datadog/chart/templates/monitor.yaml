@@ -1,0 +1,19 @@
+apiVersion: datadoghq.com/v1alpha1
+kind: DatadogMonitor
+metadata:
+  name: datadog-cr-validate-test
+spec:
+  name: "[TEST] datadog-cr-validate agent not running"
+  type: query alert
+  query: >-
+    avg(last_5m):avg:datadog.agent.running{*} < 1
+  message: |
+    Fixture for the github-workflows datadog-cr-validate test, owned by team {{ .Values.team }}.
+  tags:
+    - "team:{{ .Values.team }}"
+  options:
+    thresholds:
+      critical: "1"
+    notifyNoData: false
+    requireFullWindow: false
+    includeTags: true

@@ -1,0 +1,16 @@
+apiVersion: datadoghq.com/v1alpha1
+kind: DatadogDashboard
+metadata:
+  name: datadog-cr-validate-test
+spec:
+  title: "[TEST] datadog-cr-validate"
+  layoutType: ordered
+  templateVariables:
+    - name: env
+      prefix: env
+      defaults: ["*"]
+  widgets: |-
+    [
+      {"definition": {"title": "Agents running", "type": "timeseries",
+        "requests": [{"q": "sum:datadog.agent.running{$env}"}]}}
+    ]
