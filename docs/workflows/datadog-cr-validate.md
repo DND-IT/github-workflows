@@ -13,7 +13,9 @@ Render Helm charts containing Datadog Operator custom resources (`DatadogMonitor
 
 All layers after rendering run even when an earlier one fails, so one run reports every problem.
 
-The Datadog keys are never stored as GitHub secrets. The workflow assumes `aws_oidc_role_arn` (or the `DD_CR_VALIDATE_ROLE_ARN` organization variable) through GitHub OIDC and reads them from the `dd_keys_secret_name` secret in AWS Secrets Manager. The role must trust this workflow for the calling repository, and the calling workflow must grant `id-token: write`.
+The checks are implemented in the [`datadog-cr-validate` composite action](https://github.com/DND-IT/github-workflows/tree/main/actions/datadog-cr-validate), which this workflow wraps. A job can also [use the action directly](#use-the-action-in-your-own-job).
+
+The Datadog keys are never stored as GitHub secrets. The workflow assumes `aws_oidc_role_arn` (or the `DD_CR_VALIDATE_ROLE_ARN` organization variable) through GitHub OIDC and reads them from the `dd_keys_secret_name` secret in AWS Secrets Manager. The role must trust the job that assumes it, and the calling workflow must grant `id-token: write`.
 
 <!-- action-docs-inputs source=".github/workflows/datadog-cr-validate.yaml" -->
 ### Inputs
@@ -126,11 +128,30 @@ jobs:
       check_tag_values: true
 ```
 
+### Use the action in your own job
+
+```yaml
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DND-IT/github-workflows/actions/datadog-cr-validate@datadog-cr-validate-v0
+        with:
+          charts: deploy/datadog-monitoring
+          aws_oidc_role_arn: ${{ vars.DD_CR_VALIDATE_ROLE_ARN }}
+```
+
+The action has no fallback to `DD_CR_VALIDATE_ROLE_ARN`, so the role is passed explicitly, and it must trust this job rather than the reusable workflow.
+
 ## FAQ
 
 ### Q: How are the extra Helm arguments parsed?
 
-A: Each line is split on whitespace: the first word is the chart path and the rest are passed to `helm template` unchanged. Values containing spaces are not supported; put them in a values file and pass `-f path/to/values.yaml` instead.
+A: Each line is split like a shell command line: the first word is the chart path and the rest are passed to `helm template` unchanged. Quote values that contain spaces.
 
 ### Q: Does it build chart dependencies?
 
