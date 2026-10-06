@@ -23,8 +23,8 @@ jobs:
         tests/datadog/chart --set team=validate
       check_tag_values: true
 
-  test_dashboard_lint_fails:
-    name: Test dashboard lint (undeclared template variable)
+  test_python:
+    name: Test validate.py
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -36,17 +36,7 @@ jobs:
           python-version: 3.x
 
       - name: Install dependencies
-        run: python -m pip install -r actions/datadog-cr-validate/requirements.txt
+        run: python -m pip install -r tests/datadog/requirements.txt
 
-      - name: Check that the lint rejects an undeclared template variable
-        run: |
-          if out=$(python actions/datadog-cr-validate/validate.py dashboards tests/datadog 2>&1); then
-            echo "::error::Expected the dashboard lint to fail on an undeclared template variable"
-            exit 1
-          fi
-          echo "$out"
-          if ! grep -q "Undeclared template variables: cluster" <<<"$out"; then
-            echo "::error::Dashboard lint failed for an unexpected reason"
-            exit 1
-          fi
-          echo "Dashboard lint correctly rejected the undeclared template variable"
+      - name: Run tests
+        run: python -m pytest tests/datadog
