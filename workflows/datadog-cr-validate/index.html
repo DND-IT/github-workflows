@@ -12,13 +12,13 @@
         <meta name="author" content="DAI">
       
       
-        <link rel="canonical" href="https://dnd-it.github.io/github-workflows/workflows/techdocs-publish/">
+        <link rel="canonical" href="https://dnd-it.github.io/github-workflows/workflows/datadog-cr-validate/">
       
       
-        <link rel="prev" href="../service-pipeline/">
+        <link rel="prev" href="../aws-secrets-copy/">
       
       
-        <link rel="next" href="../tf-apply/">
+        <link rel="next" href="../docker-build/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>Publish TechDocs to S3 - Github Reusable Workflows</title>
+        <title>Datadog CR Validate - Github Reusable Workflows</title>
       
     
     
@@ -190,7 +190,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Publish TechDocs to S3
+              Datadog CR Validate
             
           </span>
         </div>
@@ -883,10 +883,35 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../datadog-cr-validate/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Datadog CR Validate
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -902,6 +927,196 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Description">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#inputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inputs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Example">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validate-on-pull-requests-and-on-a-schedule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate on pull requests and on a schedule
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#several-charts-with-extra-helm-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Several charts with extra Helm arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-the-action-in-your-own-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use the action in your own job
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#faq" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FAQ
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q-how-are-the-extra-helm-arguments-parsed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: How are the extra Helm arguments parsed?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-does-it-build-chart-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Does it build chart dependencies?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-why-does-configure-aws-credentials-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Why does "Configure AWS credentials" fail?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-which-datadog-site-is-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Which Datadog site is used?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-why-does-a-monitor-pass-the-schema-check-but-fail-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Why does a monitor pass the schema check but fail validation?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-does-validation-create-anything-in-datadog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Does validation create anything in Datadog?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1303,35 +1518,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Publish TechDocs to S3
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../techdocs-publish/" class="md-nav__link">
         
   
   
@@ -1347,85 +1537,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Description
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Description">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#inputs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inputs
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#faq" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        FAQ
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1899,6 +2010,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Example">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#validate-on-pull-requests-and-on-a-schedule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Validate on pull requests and on a schedule
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#several-charts-with-extra-helm-arguments" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Several charts with extra Helm arguments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-the-action-in-your-own-job" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Use the action in your own job
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1909,6 +2059,78 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="FAQ">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#q-how-are-the-extra-helm-arguments-parsed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: How are the extra Helm arguments parsed?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-does-it-build-chart-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Does it build chart dependencies?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-why-does-configure-aws-credentials-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Why does "Configure AWS credentials" fail?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-which-datadog-site-is-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Which Datadog site is used?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-why-does-a-monitor-pass-the-schema-check-but-fail-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Why does a monitor pass the schema check but fail validation?
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#q-does-validation-create-anything-in-datadog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Q: Does validation create anything in Datadog?
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1932,10 +2154,20 @@
   
 
 
-  <h1>Publish TechDocs to S3</h1>
+  <h1>Datadog CR Validate</h1>
 
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<!-- action-docs-inputs source=".github/workflows/techdocs-publish.yaml" -->
+<p>Render Helm charts containing Datadog Operator custom resources (<code>DatadogMonitor</code>, <code>DatadogDashboard</code>, <code>DatadogAgent</code>) and validate them before they reach a cluster. A resource can satisfy the CRD schema and still be rejected by the Datadog API, which leaves the operator in a reconcile error loop, so the workflow checks several layers:</p>
+<ol>
+<li><strong>CRD schemas</strong>: every rendered resource is validated with <code>kubeconform -strict</code> against the Kubernetes schemas and the <a href="https://github.com/DND-IT/CRDs-catalog">DND-IT/CRDs-catalog</a> fork, falling back to the upstream <a href="https://github.com/datreeio/CRDs-catalog">datreeio/CRDs-catalog</a>.</li>
+<li><strong>Dashboard lint</strong>: <code>spec.widgets</code> must be a JSON array, every widget needs a <code>definition.type</code>, and every <code>$variable</code> used in a widget must be declared in <code>spec.templateVariables</code>. Datadog has no public validation endpoint for dashboards.</li>
+<li><strong>Monitor validation</strong>: every <code>DatadogMonitor</code> is converted to the API payload the operator sends and posted to Datadog's <code>POST /api/v1/monitor/validate</code> endpoint, which catches invalid queries and option combinations the schema allows.</li>
+<li><strong>Metric and tag check</strong> (<code>check_tag_values: true</code>): every metric used in a monitor or dashboard query must have reported data in the last 7 days, otherwise the job fails. Tag filters such as <code>{condition:ready}</code> that have not been indexed for that metric in the same window produce a warning (an <code>OR</code> group such as <code>{(namespace:a OR namespace:b)}</code> warns only when none of its values have been indexed), since tags for rare events (for example <code>reason:oomkilled</code>) can legitimately be absent.</li>
+</ol>
+<p>All layers after rendering run even when an earlier one fails, so one run reports every problem.</p>
+<p>The checks are implemented in the <a href="https://github.com/DND-IT/github-workflows/tree/main/actions/datadog-cr-validate"><code>datadog-cr-validate</code> composite action</a>, which this workflow wraps. A job can also <a href="#use-the-action-in-your-own-job">use the action directly</a>.</p>
+<p>The Datadog keys are never stored as GitHub secrets. The workflow assumes <code>aws_oidc_role_arn</code> (or the <code>DD_CR_VALIDATE_ROLE_ARN</code> organization variable) through GitHub OIDC and reads them from the <code>dd_keys_secret_name</code> secret in AWS Secrets Manager. The role must trust the job that assumes it, and the calling workflow must grant <code>id-token: write</code>.</p>
+<!-- action-docs-inputs source=".github/workflows/datadog-cr-validate.yaml" -->
 <h3 id="inputs">Inputs<a class="headerlink" href="#inputs" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1949,149 +2181,167 @@
 </thead>
 <tbody>
 <tr>
-<td><code>entity_name</code></td>
-<td><p>Backstage entity name (e.g. dai-handbook)</p></td>
+<td><code>charts</code></td>
+<td><p>Helm charts to render and validate, one per line: a chart path, optionally followed by extra <code>helm template</code> arguments. Example:</td>
+<td>deploy/datadog-monitoring   deploy/datadog-agent --set clusterName=validate</p></td>
 <td><code>string</code></td>
 <td><code>true</code></td>
+</tr>
+<tr>
+<td><code>check_tag_values</code></td>
+<td><p>Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window</p></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>dd_site</code></td>
+<td><p>Datadog site to validate against. Falls back to vars.dd_site, then datadoghq.eu</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><code>entity_namespace</code></td>
-<td><p>Backstage entity namespace</p></td>
+<td><code>aws_oidc_role_arn</code></td>
+<td><p>IAM role assumed through GitHub OIDC to read the Datadog keys. Falls back to <code>vars.DD_CR_VALIDATE_ROLE_ARN</code></p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
-<td><code>default</code></td>
-</tr>
-<tr>
-<td><code>entity_kind</code></td>
-<td><p>Backstage entity kind</p></td>
-<td><code>string</code></td>
-<td><code>false</code></td>
-<td><code>Component</code></td>
-</tr>
-<tr>
-<td><code>requirements_file</code></td>
-<td><p>Path to the requirements.txt file</p></td>
-<td><code>string</code></td>
-<td><code>false</code></td>
-<td><code>requirements.txt</code></td>
-</tr>
-<tr>
-<td><code>python_version</code></td>
-<td><p>Python version</p></td>
-<td><code>string</code></td>
-<td><code>false</code></td>
-<td><code>3.x</code></td>
-</tr>
-<tr>
-<td><code>node_version</code></td>
-<td><p>Node version for techdocs-cli</p></td>
-<td><code>string</code></td>
-<td><code>false</code></td>
-<td><code>20</code></td>
-</tr>
-<tr>
-<td><code>s3_bucket_name</code></td>
-<td><p>S3 bucket name for TechDocs storage</p></td>
-<td><code>string</code></td>
-<td><code>true</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
 <td><code>aws_region</code></td>
-<td><p>AWS region</p></td>
+<td><p>AWS region of the Datadog keys secret</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
-<td><code>eu-west-1</code></td>
+<td><code>eu-central-1</code></td>
 </tr>
 <tr>
-<td><code>aws_role_arn</code></td>
-<td><p>AWS OIDC role ARN for assuming credentials</p></td>
+<td><code>dd_keys_secret_name</code></td>
+<td><p>Secrets Manager secret holding the Datadog keys as JSON with <code>DD_API_KEY</code> and <code>DD_APP_KEY</code></p></td>
 <td><code>string</code></td>
-<td><code>true</code></td>
-<td><code>""</code></td>
+<td><code>false</code></td>
+<td><code>dai/datadog/crValidateKeys</code></td>
 </tr>
 </tbody>
 </table>
-<!-- action-docs-inputs source=".github/workflows/techdocs-publish.yaml" -->
+<!-- action-docs-inputs source=".github/workflows/datadog-cr-validate.yaml" -->
 
-<!-- action-docs-outputs source=".github/workflows/techdocs-publish.yaml" -->
+<!-- action-docs-outputs source=".github/workflows/datadog-cr-validate.yaml" -->
 
-<!-- action-docs-outputs source=".github/workflows/techdocs-publish.yaml" -->
+<!-- action-docs-outputs source=".github/workflows/datadog-cr-validate.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/techdocs-publish.yaml" project="dnd-it/github-workflows/.github/workflows/techdocs-publish.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/datadog-cr-validate.yaml" project="dnd-it/github-workflows/.github/workflows/datadog-cr-validate.yaml" version="v2" -->
 <h3 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h3>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">jobs</span><span class="p">:</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">job1</span><span class="p">:</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/techdocs-publish.yaml@v2</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/datadog-cr-validate.yaml@v2</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">entity_name</span><span class="p">:</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="c1"># Backstage entity name (e.g. dai-handbook)</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="c1"># Required: true</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">entity_namespace</span><span class="p">:</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="c1"># Backstage entity namespace</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="c1"># Default: default</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="nt">entity_kind</span><span class="p">:</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">      </span><span class="c1"># Backstage entity kind</span>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span><span class="c1"># Default: Component</span>
-</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">      </span><span class="nt">requirements_file</span><span class="p">:</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">      </span><span class="c1"># Path to the requirements.txt file</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="c1"># Default: requirements.txt</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">python_version</span><span class="p">:</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">      </span><span class="c1"># Python version</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">      </span><span class="c1"># Default: 3.x</span>
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">      </span><span class="nt">node_version</span><span class="p">:</span>
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">      </span><span class="c1"># Node version for techdocs-cli</span>
-</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">      </span><span class="c1"># Default: 20</span>
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="w">      </span><span class="nt">s3_bucket_name</span><span class="p">:</span>
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">      </span><span class="c1"># S3 bucket name for TechDocs storage</span>
-</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="w">      </span><span class="c1"># Required: true</span>
-</span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
-</span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>
-</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a><span class="w">      </span><span class="nt">aws_region</span><span class="p">:</span>
-</span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a><span class="w">      </span><span class="c1"># AWS region</span>
-</span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-58"><a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-59"><a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a><span class="w">      </span><span class="c1"># Default: eu-west-1</span>
-</span><span id="__span-0-60"><a id="__codelineno-0-60" name="__codelineno-0-60" href="#__codelineno-0-60"></a>
-</span><span id="__span-0-61"><a id="__codelineno-0-61" name="__codelineno-0-61" href="#__codelineno-0-61"></a><span class="w">      </span><span class="nt">aws_role_arn</span><span class="p">:</span>
-</span><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62" href="#__codelineno-0-62"></a><span class="w">      </span><span class="c1"># AWS OIDC role ARN for assuming credentials</span>
-</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63" href="#__codelineno-0-63"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64" href="#__codelineno-0-64"></a><span class="w">      </span><span class="c1"># Type: string</span>
-</span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65" href="#__codelineno-0-65"></a><span class="w">      </span><span class="c1"># Required: true</span>
-</span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66" href="#__codelineno-0-66"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">charts</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="c1"># Helm charts to render and validate, one per line: a chart path, optionally followed by extra `helm template` arguments.</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="c1"># Example: |</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="c1">#   deploy/datadog-monitoring</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="c1">#   deploy/datadog-agent --set clusterName=validate</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="c1"># Required: true</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">      </span><span class="nt">check_tag_values</span><span class="p">:</span>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span><span class="c1"># Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">      </span><span class="c1"># Type: boolean</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">      </span><span class="c1"># Default: false</span>
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="nt">dd_site</span><span class="p">:</span>
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">      </span><span class="c1"># Datadog site to validate against. Falls back to vars.dd_site, then datadoghq.eu</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">      </span><span class="nt">aws_oidc_role_arn</span><span class="p">:</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">      </span><span class="c1"># IAM role assumed through GitHub OIDC to read the Datadog keys. Falls back to `vars.DD_CR_VALIDATE_ROLE_ARN`</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">      </span><span class="nt">aws_region</span><span class="p">:</span>
+</span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">      </span><span class="c1"># AWS region of the Datadog keys secret</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">      </span><span class="c1"># Default: eu-central-1</span>
+</span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">      </span><span class="nt">dd_keys_secret_name</span><span class="p">:</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">      </span><span class="c1"># Secrets Manager secret holding the Datadog keys as JSON with `DD_API_KEY` and `DD_APP_KEY`</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">      </span><span class="c1"># Default: dai/datadog/crValidateKeys</span>
 </span></code></pre></div>
-<!-- action-docs-usage source=".github/workflows/techdocs-publish.yaml" project="dnd-it/github-workflows/.github/workflows/techdocs-publish.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/datadog-cr-validate.yaml" project="dnd-it/github-workflows/.github/workflows/datadog-cr-validate.yaml" version="v2" -->
 
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
+<h3 id="validate-on-pull-requests-and-on-a-schedule">Validate on pull requests and on a schedule<a class="headerlink" href="#validate-on-pull-requests-and-on-a-schedule" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">on</span><span class="p">:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">pull_request</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">paths</span><span class="p">:</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deploy/datadog-monitoring/**</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.github/workflows/datadog-validate.yaml</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="nt">schedule</span><span class="p">:</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cron</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;0</span><span class="nv"> </span><span class="s">6</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">1&quot;</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="nt">permissions</span><span class="p">:</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span><span class="nt">contents</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span><span class="nt">id-token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">  </span><span class="nt">validate</span><span class="p">:</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DND-IT/github-workflows/.github/workflows/datadog-cr-validate.yaml@datadog-cr-validate-v0</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">      </span><span class="nt">charts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deploy/datadog-monitoring</span>
+</span></code></pre></div>
+<p>The schedule catches upstream CRD schema changes even when nothing in the repository changed.</p>
+<h3 id="several-charts-with-extra-helm-arguments">Several charts with extra Helm arguments<a class="headerlink" href="#several-charts-with-extra-helm-arguments" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">validate</span><span class="p">:</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DND-IT/github-workflows/.github/workflows/datadog-cr-validate.yaml@datadog-cr-validate-v0</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">      </span><span class="nt">charts</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">        </span><span class="no">configs/datadog-monitoring</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">        </span><span class="no">configs/datadog-agent --set clusterName=validate --set-string awsAccountId=000000000000</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">      </span><span class="nt">check_tag_values</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span></code></pre></div>
+<h3 id="use-the-action-in-your-own-job">Use the action in your own job<a class="headerlink" href="#use-the-action-in-your-own-job" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">jobs</span><span class="p">:</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">validate</span><span class="p">:</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">permissions</span><span class="p">:</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="nt">contents</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">read</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="nt">id-token</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">write</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v6</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DND-IT/github-workflows/actions/datadog-cr-validate@datadog-cr-validate-v0</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">          </span><span class="nt">charts</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">deploy/datadog-monitoring</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">          </span><span class="nt">aws_oidc_role_arn</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${{ vars.DD_CR_VALIDATE_ROLE_ARN }}</span>
+</span></code></pre></div>
+<p>The action has no fallback to <code>DD_CR_VALIDATE_ROLE_ARN</code>, so the role is passed explicitly, and it must trust this job rather than the reusable workflow.</p>
 <h2 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h2>
+<h3 id="q-how-are-the-extra-helm-arguments-parsed">Q: How are the extra Helm arguments parsed?<a class="headerlink" href="#q-how-are-the-extra-helm-arguments-parsed" title="Permanent link">&para;</a></h3>
+<p>A: Each line is split like a shell command line: the first word is the chart path and the rest are passed to <code>helm template</code> unchanged. Quote values that contain spaces.</p>
+<h3 id="q-does-it-build-chart-dependencies">Q: Does it build chart dependencies?<a class="headerlink" href="#q-does-it-build-chart-dependencies" title="Permanent link">&para;</a></h3>
+<p>A: No. Charts are rendered with <code>helm template</code> as they are checked out, so a chart with dependencies needs its <code>charts/</code> directory available.</p>
+<h3 id="q-why-does-configure-aws-credentials-fail">Q: Why does "Configure AWS credentials" fail?<a class="headerlink" href="#q-why-does-configure-aws-credentials-fail" title="Permanent link">&para;</a></h3>
+<p>A: Either the calling workflow does not grant <code>id-token: write</code>, neither <code>aws_oidc_role_arn</code> nor the <code>DD_CR_VALIDATE_ROLE_ARN</code> variable is set, or the role does not trust the calling repository. The schema and dashboard checks still run and report their results.</p>
+<h3 id="q-which-datadog-site-is-used">Q: Which Datadog site is used?<a class="headerlink" href="#q-which-datadog-site-is-used" title="Permanent link">&para;</a></h3>
+<p>A: <code>dd_site</code> if set, then the <code>dd_site</code> repository or environment variable, then <code>datadoghq.eu</code>.</p>
+<h3 id="q-why-does-a-monitor-pass-the-schema-check-but-fail-validation">Q: Why does a monitor pass the schema check but fail validation?<a class="headerlink" href="#q-why-does-a-monitor-pass-the-schema-check-but-fail-validation" title="Permanent link">&para;</a></h3>
+<p>A: The CRD only checks the shape of the resource. The Datadog API also parses the query and checks the options against the monitor type, which is the same validation the operator hits when it reconciles the resource. The error returned by the API is shown as an annotation on the run.</p>
+<h3 id="q-does-validation-create-anything-in-datadog">Q: Does validation create anything in Datadog?<a class="headerlink" href="#q-does-validation-create-anything-in-datadog" title="Permanent link">&para;</a></h3>
+<p>A: No. The monitor validation endpoint and the metric tags endpoint are read-only.</p>
 
 
 
