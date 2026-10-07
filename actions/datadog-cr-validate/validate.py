@@ -22,6 +22,7 @@ CRDS_CATALOGS = [
 METRIC_QUERY = re.compile(r"(?:avg|sum|min|max|count|p[0-9]+):([A-Za-z0-9_.]+)\{([^}]*)\}")
 TAG_FILTER = re.compile(r"[A-Za-z][^:]*:[^*$]+")
 TAG_SEPARATOR = re.compile(r"[\s,()]+")
+CLAUSE_TOKEN = re.compile(r"(,|\(|\)|\sAND\s)")
 TEMPLATE_VARIABLE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)")
 CAMEL_CASE_HUMP = re.compile(r"([a-z0-9])([A-Z])")
 TAG_WINDOW_SECONDS = 7 * 24 * 3600
@@ -160,13 +161,29 @@ def monitors(rendered):
     return failed
 
 
+def clauses(tags):
+    clause, depth = "", 0
+    for token in CLAUSE_TOKEN.split(tags):
+        depth += (token == "(") - (token == ")")
+        if depth == 0 and token.strip() in (",", "AND"):
+            yield clause
+            clause = ""
+        else:
+            clause += token
+    yield clause
+
+
 def metric_filters(rendered):
     queries = [cr["spec"].get("query") or "" for cr in resources(rendered, "DatadogMonitor")]
     queries += [cr["spec"].get("widgets") or "" for cr in resources(rendered, "DatadogDashboard")]
     filters = {}
     for query in queries:
         for metric, tags in METRIC_QUERY.findall(query):
-            filters.setdefault(metric, set()).update(t for t in TAG_SEPARATOR.split(tags) if TAG_FILTER.fullmatch(t))
+            groups = filters.setdefault(metric, set())
+            for clause in clauses(tags):
+                alternatives = frozenset(t for t in TAG_SEPARATOR.split(clause) if TAG_FILTER.fullmatch(t))
+                if alternatives:
+                    groups.add(alternatives)
     return filters
 
 
@@ -190,8 +207,10 @@ def tags(rendered):
         # Only indexed tags can be queried, so ingested_tags are deliberately not consulted. A missing value only
         # warns: tags such as reason:oomkilled legitimately appear only when the event happens.
         indexed = set(body["data"]["attributes"].get("tags") or [])
-        for tag in sorted(filters - indexed):
-            annotate("warning", "Tag value not found", f"{metric}{{{tag}}} has not been indexed in the last 7 days")
+        for alternatives in sorted(filters, key=sorted):
+            if not alternatives & indexed:
+                tag = " OR ".join(sorted(alternatives))
+                annotate("warning", "Tag value not found", f"{metric}{{{tag}}} has not been indexed in the last 7 days")
         print(f"Checked metric {metric}")
     return failed
 

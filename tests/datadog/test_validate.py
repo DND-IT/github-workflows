@@ -288,9 +288,22 @@ def test_metric_filters_collects_metrics_and_concrete_tag_filters(tmp_path):
     )
 
     assert validate.metric_filters(tmp_path) == {
-        "k8s.restarts": {"team:x", "reason:oomkilled"},
+        "k8s.restarts": {frozenset({"team:x"}), frozenset({"reason:oomkilled"})},
         "datadog.agent.running": set(),
-        "trace.http.request": {"service:web", "env:prod"},
+        "trace.http.request": {frozenset({"service:web", "env:prod"})},
+    }
+
+
+def test_metric_filters_groups_or_alternatives_within_and_clauses(tmp_path):
+    query = "avg:cert.expiry{(namespace:a OR namespace:b) AND team:x, env:prod OR env:dev}"
+    write_manifests(tmp_path, monitor(query=query))
+
+    assert validate.metric_filters(tmp_path) == {
+        "cert.expiry": {
+            frozenset({"namespace:a", "namespace:b"}),
+            frozenset({"team:x"}),
+            frozenset({"env:prod", "env:dev"}),
+        }
     }
 
 
@@ -353,3 +366,13 @@ def test_tags_warns_and_continues_when_the_tag_list_is_truncated(tmp_path, monke
     out = capsys.readouterr().out
     assert "::warning title=Tag check skipped::big.metric tag list was cut off by the Datadog API" in out
     assert "Checked metric small.metric" in out
+
+
+def test_tags_warns_on_an_or_group_only_when_no_alternative_is_indexed(tmp_path, monkeypatch, capsys):
+    write_manifests(tmp_path, monitor(query="avg:present.metric{(namespace:a OR namespace:b),(env:x OR env:y)}"))
+    all_tags_responses(monkeypatch, {"present.metric": (200, {"data": {"attributes": {"tags": ["namespace:a"]}}})})
+
+    assert not validate.tags(tmp_path)
+    out = capsys.readouterr().out
+    assert "present.metric{env:x OR env:y} has not been indexed in the last 7 days" in out
+    assert "namespace:b" not in out
