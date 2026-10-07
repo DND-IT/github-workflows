@@ -1,3 +1,4 @@
+import http.client
 import io
 import json
 import shlex
@@ -222,6 +223,34 @@ def test_datadog_returns_the_error_body(monkeypatch, datadog_env):
     assert validate.datadog("POST", "/api/v1/monitor/validate", body={}) == (400, '{"errors":["bad query"]}')
 
 
+def test_datadog_retries_a_truncated_response(monkeypatch, datadog_env):
+    responses = iter([http.client.IncompleteRead(b"{"), FakeResponse(b"{}")])
+
+    def urlopen(request):
+        response = next(responses)
+        if isinstance(response, Exception):
+            raise response
+        return response
+
+    monkeypatch.setattr(validate.urllib.request, "urlopen", urlopen)
+
+    assert validate.datadog("GET", "/api/v2/metrics/big.metric/all-tags") == (200, {})
+
+
+def test_datadog_gives_up_after_repeated_truncated_responses(monkeypatch, datadog_env):
+    calls = []
+
+    def urlopen(request):
+        calls.append(request)
+        raise http.client.IncompleteRead(b"{")
+
+    monkeypatch.setattr(validate.urllib.request, "urlopen", urlopen)
+
+    with pytest.raises(http.client.IncompleteRead):
+        validate.datadog("GET", "/api/v2/metrics/big.metric/all-tags")
+    assert len(calls) == validate.DATADOG_ATTEMPTS
+
+
 def test_monitors_validates_each_monitor_and_reports_rejections(tmp_path, monkeypatch, capsys):
     write_manifests(tmp_path, monitor("good", query="good query"), monitor("bad", query="bad query"))
     posted = []
@@ -308,3 +337,19 @@ def test_main_exit_code_reflects_the_check_result(monkeypatch, directory, code):
     with pytest.raises(SystemExit) as exit_info:
         validate.main()
     assert exit_info.value.code == code
+
+
+def test_tags_warns_and_continues_when_the_tag_list_is_truncated(tmp_path, monkeypatch, capsys):
+    write_manifests(tmp_path, monitor("a", query="avg:big.metric{team:x}"), monitor("b", query="avg:small.metric{*}"))
+
+    def datadog(method, path, params=None, body=None):
+        if "big.metric" in path:
+            raise http.client.IncompleteRead(b"{")
+        return 200, {"data": {"attributes": {"tags": []}}}
+
+    monkeypatch.setattr(validate, "datadog", datadog)
+
+    assert not validate.tags(tmp_path)
+    out = capsys.readouterr().out
+    assert "::warning title=Tag check skipped::big.metric tag list was cut off by the Datadog API" in out
+    assert "Checked metric small.metric" in out

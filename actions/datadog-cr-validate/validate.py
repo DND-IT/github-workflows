@@ -1,6 +1,7 @@
 """Validate Datadog Operator resources rendered from Helm charts."""
 
 import argparse
+import http.client
 import json
 import os
 import re
@@ -24,6 +25,7 @@ TAG_SEPARATOR = re.compile(r"[\s,()]+")
 TEMPLATE_VARIABLE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)")
 CAMEL_CASE_HUMP = re.compile(r"([a-z0-9])([A-Z])")
 TAG_WINDOW_SECONDS = 7 * 24 * 3600
+DATADOG_ATTEMPTS = 3
 
 
 def annotate(level, title, message):
@@ -66,11 +68,15 @@ def datadog(method, path, params=None, body=None):
             "Content-Type": "application/json",
         },
     )
-    try:
-        with urllib.request.urlopen(request) as response:
-            return response.status, json.load(response)
-    except urllib.error.HTTPError as error:
-        return error.code, error.read().decode()
+    for attempt in range(1, DATADOG_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(request) as response:
+                return response.status, json.load(response)
+        except urllib.error.HTTPError as error:
+            return error.code, error.read().decode()
+        except http.client.IncompleteRead:
+            if attempt == DATADOG_ATTEMPTS:
+                raise
 
 
 def render(charts, rendered):
@@ -168,7 +174,11 @@ def tags(rendered):
     failed = False
     for metric, filters in sorted(metric_filters(rendered).items()):
         window = {"window[seconds]": TAG_WINDOW_SECONDS}
-        status, body = datadog("GET", f"/api/v2/metrics/{metric}/all-tags", params=window)
+        try:
+            status, body = datadog("GET", f"/api/v2/metrics/{metric}/all-tags", params=window)
+        except http.client.IncompleteRead:
+            annotate("warning", "Tag check skipped", f"{metric} tag list was cut off by the Datadog API")
+            continue
         if status == 404:
             annotate("error", "Metric not found", f"{metric} has not been reported in the last 7 days")
             failed = True
