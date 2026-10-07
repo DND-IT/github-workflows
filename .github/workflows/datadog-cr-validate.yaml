@@ -1,0 +1,61 @@
+name: Datadog CR Validate
+
+on:
+  workflow_call:
+    inputs:
+      charts:
+        description: |
+          Helm charts to render and validate, one per line: a chart path, optionally followed by extra `helm template` arguments.
+          Example: |
+            deploy/datadog-monitoring
+            deploy/datadog-agent --set clusterName=validate
+        type: string
+        required: true
+      check_tag_values:
+        description: Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window
+        type: boolean
+        default: false
+      dd_site:
+        description: Datadog site to validate against. Falls back to vars.dd_site, then datadoghq.eu
+        type: string
+      aws_oidc_role_arn:
+        description: IAM role assumed through GitHub OIDC to read the Datadog keys. Falls back to `vars.DD_CR_VALIDATE_ROLE_ARN`
+        type: string
+      aws_region:
+        description: AWS region of the Datadog keys secret
+        type: string
+        default: eu-central-1
+      dd_keys_secret_name:
+        description: Secrets Manager secret holding the Datadog keys as JSON with `DD_API_KEY` and `DD_APP_KEY`
+        type: string
+        default: dai/datadog/crValidateKeys
+
+jobs:
+  validate:
+    name: Validate Datadog CRs
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      # A reusable workflow can't reach its own repository with ./, so the action is checked out at this workflow's commit.
+      - name: Checkout the validate action
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
+          path: .github-workflows
+          persist-credentials: false
+
+      - name: Validate Datadog CRs
+        uses: ./.github-workflows/actions/datadog-cr-validate
+        with:
+          charts: ${{ inputs.charts }}
+          check_tag_values: ${{ inputs.check_tag_values }}
+          dd_site: ${{ inputs.dd_site || vars.dd_site || 'datadoghq.eu' }}
+          aws_oidc_role_arn: ${{ inputs.aws_oidc_role_arn || vars.DD_CR_VALIDATE_ROLE_ARN }}
+          aws_region: ${{ inputs.aws_region }}
+          dd_keys_secret_name: ${{ inputs.dd_keys_secret_name }}
