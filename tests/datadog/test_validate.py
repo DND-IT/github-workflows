@@ -119,6 +119,14 @@ def test_dashboards_counts_untyped_widgets_inside_groups(tmp_path, capsys):
     assert "::error title=DatadogDashboard dash::3 widget(s) have no definition.type" in capsys.readouterr().out
 
 
+@pytest.mark.parametrize("widgets", [["a"], [None], [{"definition": "x"}], [{"definition": {"widgets": "x"}}]])
+def test_dashboards_counts_malformed_widgets_as_untyped(tmp_path, capsys, widgets):
+    write_manifests(tmp_path, dashboard(widgets=json.dumps(widgets)))
+
+    assert validate.dashboards(tmp_path)
+    assert "::error title=DatadogDashboard dash::1 widget(s) have no definition.type" in capsys.readouterr().out
+
+
 def test_dashboards_reports_undeclared_template_variables(tmp_path, capsys):
     widgets = [
         {
@@ -447,3 +455,26 @@ def test_tags_fails_when_a_request_fails(tmp_path, monkeypatch, capsys):
 
     assert validate.tags(tmp_path)
     assert "::error title=Metric unreachable.metric::Datadog API request failed:" in capsys.readouterr().out
+
+
+def test_monitors_reports_a_non_json_response(tmp_path, monkeypatch, capsys):
+    write_manifests(tmp_path, monitor("proxied", query="q"))
+
+    def datadog(method, path, params=None, body=None):
+        raise json.JSONDecodeError("Expecting value", "<html>", 0)
+
+    monkeypatch.setattr(validate, "datadog", datadog)
+
+    assert validate.monitors(tmp_path)
+    assert "::error title=DatadogMonitor proxied::Datadog API request failed:" in capsys.readouterr().out
+
+
+def test_tags_reports_an_unexpected_response_and_checks_the_next_metric(tmp_path, monkeypatch, capsys):
+    write_manifests(tmp_path, monitor("a", query="avg:odd.metric{team:x}"), monitor("b", query="avg:ok.metric{*}"))
+    responses = {"odd.metric": (200, {"errors": []}), "ok.metric": (200, {"data": {"attributes": {}}})}
+    all_tags_responses(monkeypatch, responses)
+
+    assert validate.tags(tmp_path)
+    out = capsys.readouterr().out
+    assert "::error title=Metric odd.metric::Unexpected response from the Datadog API: {'errors': []}" in out
+    assert "Checked metric ok.metric" in out

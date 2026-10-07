@@ -30,6 +30,7 @@ TAG_WINDOW_SECONDS = 7 * 24 * 3600
 DATADOG_ATTEMPTS = 3
 DATADOG_TIMEOUT_SECONDS = 30
 DATADOG_TRANSIENT_ERRORS = (http.client.HTTPException, OSError)
+DATADOG_REQUEST_ERRORS = (*DATADOG_TRANSIENT_ERRORS, ValueError)
 
 
 def annotate(level, title, message):
@@ -107,10 +108,16 @@ def schemas(rendered):
     return subprocess.run([*command, *map(str, manifests(rendered))]).returncode != 0
 
 
+def definition(widget):
+    value = widget.get("definition") if isinstance(widget, dict) else None
+    return value if isinstance(value, dict) else {}
+
+
 def nested_widgets(widgets):
     for widget in widgets:
         yield widget
-        yield from nested_widgets(widget.get("definition", {}).get("widgets", []))
+        if isinstance(children := definition(widget).get("widgets"), list):
+            yield from nested_widgets(children)
 
 
 def dashboards(rendered):
@@ -126,7 +133,7 @@ def dashboards(rendered):
             annotate("error", title, "spec.widgets is not a JSON array")
             failed = True
             continue
-        untyped = sum(not isinstance(w.get("definition", {}).get("type"), str) for w in nested_widgets(widgets))
+        untyped = sum(not isinstance(definition(w).get("type"), str) for w in nested_widgets(widgets))
         if untyped:
             annotate("error", title, f"{untyped} widget(s) have no definition.type")
             failed = True
@@ -160,7 +167,7 @@ def monitors(rendered):
         name = cr["metadata"]["name"]
         try:
             status, body = datadog("POST", "/api/v1/monitor/validate", body=monitor_payload(cr["spec"]))
-        except DATADOG_TRANSIENT_ERRORS as error:
+        except DATADOG_REQUEST_ERRORS as error:
             annotate("error", f"DatadogMonitor {name}", f"Datadog API request failed: {error!r}")
             failed = True
             continue
@@ -209,7 +216,7 @@ def tags(rendered):
         except http.client.IncompleteRead:
             annotate("warning", "Tag check skipped", f"{metric} tag list was cut off by the Datadog API")
             continue
-        except DATADOG_TRANSIENT_ERRORS as error:
+        except DATADOG_REQUEST_ERRORS as error:
             annotate("error", f"Metric {metric}", f"Datadog API request failed: {error!r}")
             failed = True
             continue
@@ -223,7 +230,12 @@ def tags(rendered):
             continue
         # Only indexed tags can be queried, so ingested_tags are deliberately not consulted. A missing value only
         # warns: tags such as reason:oomkilled legitimately appear only when the event happens.
-        indexed = set(body["data"]["attributes"].get("tags") or [])
+        try:
+            indexed = set(body["data"]["attributes"].get("tags") or [])
+        except (KeyError, TypeError, AttributeError):
+            annotate("error", f"Metric {metric}", f"Unexpected response from the Datadog API: {body}")
+            failed = True
+            continue
         for alternatives in sorted(filters, key=sorted):
             if not alternatives & indexed:
                 tag = " OR ".join(sorted(alternatives))
