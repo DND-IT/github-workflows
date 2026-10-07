@@ -14,7 +14,10 @@ from pathlib import Path
 
 import yaml
 
-CRDS_CATALOG = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+CRDS_CATALOGS = [
+    "https://raw.githubusercontent.com/DND-IT/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json",
+    "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json",
+]
 METRIC_QUERY = re.compile(r"(?:avg|sum|min|max|count|p[0-9]+):([A-Za-z0-9_.]+)\{([^}]*)\}")
 TAG_FILTER = re.compile(r"[A-Za-z][^:]*:[^*$]+")
 TAG_SEPARATOR = re.compile(r"[\s,()]+")
@@ -86,7 +89,8 @@ def render(charts, rendered):
 
 
 def schemas(rendered):
-    command = ["kubeconform", "-strict", "-summary", "-schema-location", "default", "-schema-location", CRDS_CATALOG]
+    locations = [arg for location in ["default", *CRDS_CATALOGS] for arg in ("-schema-location", location)]
+    command = ["kubeconform", "-strict", "-summary", *locations]
     return subprocess.run([*command, *map(str, manifests(rendered))]).returncode != 0
 
 

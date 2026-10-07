@@ -6,7 +6,7 @@ title: Datadog CR Validate
 
 Render Helm charts containing Datadog Operator custom resources (`DatadogMonitor`, `DatadogDashboard`, `DatadogAgent`) and validate them before they reach a cluster. A resource can satisfy the CRD schema and still be rejected by the Datadog API, which leaves the operator in a reconcile error loop, so the workflow checks several layers:
 
-1. **CRD schemas**: every rendered resource is validated with `kubeconform -strict` against the Kubernetes schemas and the [datreeio/CRDs-catalog](https://github.com/datreeio/CRDs-catalog).
+1. **CRD schemas**: every rendered resource is validated with `kubeconform -strict` against the Kubernetes schemas and the [DND-IT/CRDs-catalog](https://github.com/DND-IT/CRDs-catalog) fork, falling back to the upstream [datreeio/CRDs-catalog](https://github.com/datreeio/CRDs-catalog).
 2. **Dashboard lint**: `spec.widgets` must be a JSON array, every widget needs a `definition.type`, and every `$variable` used in a widget must be declared in `spec.templateVariables`. Datadog has no public validation endpoint for dashboards.
 3. **Monitor validation**: every `DatadogMonitor` is converted to the API payload the operator sends and posted to Datadog's `POST /api/v1/monitor/validate` endpoint, which catches invalid queries and option combinations the schema allows.
 4. **Metric and tag check** (`check_tag_values: true`): every metric used in a monitor or dashboard query must have reported data in the last 7 days, otherwise the job fails. Tag filters such as `{condition:ready}` that have not been indexed for that metric in the same window produce a warning, since tags for rare events (for example `reason:oomkilled`) can legitimately be absent.
