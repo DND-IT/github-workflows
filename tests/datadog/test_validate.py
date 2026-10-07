@@ -323,9 +323,10 @@ def test_tags_fails_on_missing_or_unreadable_metrics(tmp_path, monkeypatch, caps
     requested = all_tags_responses(monkeypatch, {"missing.metric": (404, "{}"), "broken.metric": (500, "oops")})
 
     assert validate.tags(tmp_path)
+    keys_only = {"window[seconds]": 604800, "filter[include_tag_values]": "false"}
     assert requested == [
-        ("GET", "/api/v2/metrics/broken.metric/all-tags", {"window[seconds]": 604800}),
-        ("GET", "/api/v2/metrics/missing.metric/all-tags", {"window[seconds]": 604800}),
+        ("GET", "/api/v2/metrics/broken.metric/all-tags", keys_only),
+        ("GET", "/api/v2/metrics/missing.metric/all-tags", keys_only),
     ]
     out = capsys.readouterr().out
     assert "::error title=Metric not found::missing.metric has not been reported in the last 7 days" in out
@@ -334,13 +335,15 @@ def test_tags_fails_on_missing_or_unreadable_metrics(tmp_path, monkeypatch, caps
 
 def test_tags_only_warns_on_unindexed_tag_values(tmp_path, monkeypatch, capsys):
     write_manifests(tmp_path, monitor(query="avg:present.metric{team:x,team:y}"))
-    all_tags_responses(monkeypatch, {"present.metric": (200, {"data": {"attributes": {"tags": ["team:x"]}}})})
+    response = (200, {"data": {"attributes": {"tags": ["team:x"]}}})
+    requested = all_tags_responses(monkeypatch, {"present.metric": response})
 
     assert not validate.tags(tmp_path)
     out = capsys.readouterr().out
     assert "::warning title=Tag value not found::present.metric{team:y} has not been indexed in the last 7 days" in out
     assert "present.metric{team:x}" not in out
     assert "Checked metric present.metric" in out
+    assert requested == [("GET", "/api/v2/metrics/present.metric/all-tags", {"window[seconds]": 604800})]
 
 
 @pytest.mark.parametrize(("directory", "code"), [(FIXTURES, 1), (FIXTURES / "chart", 0)])

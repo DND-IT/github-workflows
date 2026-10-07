@@ -190,9 +190,11 @@ def metric_filters(rendered):
 def tags(rendered):
     failed = False
     for metric, filters in sorted(metric_filters(rendered).items()):
-        window = {"window[seconds]": TAG_WINDOW_SECONDS}
+        params = {"window[seconds]": TAG_WINDOW_SECONDS}
+        if not filters:
+            params["filter[include_tag_values]"] = "false"
         try:
-            status, body = datadog("GET", f"/api/v2/metrics/{metric}/all-tags", params=window)
+            status, body = datadog("GET", f"/api/v2/metrics/{metric}/all-tags", params=params)
         except http.client.IncompleteRead:
             annotate("warning", "Tag check skipped", f"{metric} tag list was cut off by the Datadog API")
             continue
