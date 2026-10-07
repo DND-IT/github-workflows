@@ -181,8 +181,9 @@ def test_snake_case_converts_keys_in_nested_lists_and_leaves_values_alone():
 def test_datadog_sends_the_keys_and_json_body(monkeypatch, datadog_env):
     requests = []
 
-    def urlopen(request):
+    def urlopen(request, timeout):
         requests.append(request)
+        assert timeout == validate.DATADOG_TIMEOUT_SECONDS
         return FakeResponse(b'{"ok": true}')
 
     monkeypatch.setattr(validate.urllib.request, "urlopen", urlopen)
@@ -199,7 +200,7 @@ def test_datadog_sends_the_keys_and_json_body(monkeypatch, datadog_env):
 def test_datadog_encodes_query_parameters(monkeypatch, datadog_env):
     requests = []
 
-    def urlopen(request):
+    def urlopen(request, timeout):
         requests.append(request)
         return FakeResponse(b"{}")
 
@@ -215,7 +216,7 @@ def test_datadog_encodes_query_parameters(monkeypatch, datadog_env):
 
 
 def test_datadog_returns_the_error_body(monkeypatch, datadog_env):
-    def urlopen(request):
+    def urlopen(request, timeout):
         raise urllib.error.HTTPError(request.full_url, 400, "Bad Request", {}, io.BytesIO(b'{"errors":["bad query"]}'))
 
     monkeypatch.setattr(validate.urllib.request, "urlopen", urlopen)
@@ -226,7 +227,7 @@ def test_datadog_returns_the_error_body(monkeypatch, datadog_env):
 def test_datadog_retries_a_truncated_response(monkeypatch, datadog_env):
     responses = iter([http.client.IncompleteRead(b"{"), FakeResponse(b"{}")])
 
-    def urlopen(request):
+    def urlopen(request, timeout):
         response = next(responses)
         if isinstance(response, Exception):
             raise response
@@ -240,7 +241,7 @@ def test_datadog_retries_a_truncated_response(monkeypatch, datadog_env):
 def test_datadog_gives_up_after_repeated_truncated_responses(monkeypatch, datadog_env):
     calls = []
 
-    def urlopen(request):
+    def urlopen(request, timeout):
         calls.append(request)
         raise http.client.IncompleteRead(b"{")
 
@@ -249,6 +250,49 @@ def test_datadog_gives_up_after_repeated_truncated_responses(monkeypatch, datado
     with pytest.raises(http.client.IncompleteRead):
         validate.datadog("GET", "/api/v2/metrics/big.metric/all-tags")
     assert len(calls) == validate.DATADOG_ATTEMPTS
+
+
+def test_datadog_retries_a_connection_error(monkeypatch, datadog_env):
+    responses = iter([urllib.error.URLError(ConnectionResetError()), TimeoutError(), FakeResponse(b"{}")])
+
+    def urlopen(request, timeout):
+        response = next(responses)
+        if isinstance(response, Exception):
+            raise response
+        return response
+
+    monkeypatch.setattr(validate.urllib.request, "urlopen", urlopen)
+
+    assert validate.datadog("GET", "/api/v2/metrics/system.cpu.user/all-tags") == (200, {})
+
+
+def test_datadog_waits_for_the_rate_limit_reset(monkeypatch, datadog_env):
+    def rate_limited(url):
+        return urllib.error.HTTPError(url, 429, "Too Many Requests", {"X-RateLimit-Reset": "3"}, io.BytesIO(b"{}"))
+
+    calls, slept = [], []
+
+    def urlopen(request, timeout):
+        calls.append(request)
+        if len(calls) < validate.DATADOG_ATTEMPTS:
+            raise rate_limited(request.full_url)
+        return FakeResponse(b"{}")
+
+    monkeypatch.setattr(validate.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(validate.time, "sleep", slept.append)
+
+    assert validate.datadog("POST", "/api/v1/monitor/validate", body={}) == (200, {})
+    assert slept == [3.0] * (validate.DATADOG_ATTEMPTS - 1)
+
+
+def test_datadog_returns_the_rate_limit_after_the_last_attempt(monkeypatch, datadog_env):
+    def urlopen(request, timeout):
+        raise urllib.error.HTTPError(request.full_url, 429, "Too Many Requests", {}, io.BytesIO(b"slow down"))
+
+    monkeypatch.setattr(validate.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr(validate.time, "sleep", lambda seconds: None)
+
+    assert validate.datadog("POST", "/api/v1/monitor/validate", body={}) == (429, "slow down")
 
 
 def test_monitors_validates_each_monitor_and_reports_rejections(tmp_path, monkeypatch, capsys):
@@ -269,6 +313,18 @@ def test_monitors_validates_each_monitor_and_reports_rejections(tmp_path, monkey
     out = capsys.readouterr().out
     assert "Validated monitor good" in out
     assert '::error title=DatadogMonitor bad::HTTP 400: {"errors":["bad query"]}' in out
+
+
+def test_monitors_reports_a_failed_request(tmp_path, monkeypatch, capsys):
+    write_manifests(tmp_path, monitor("unreachable", query="q"))
+
+    def datadog(method, path, params=None, body=None):
+        raise urllib.error.URLError("timed out")
+
+    monkeypatch.setattr(validate, "datadog", datadog)
+
+    assert validate.monitors(tmp_path)
+    assert "::error title=DatadogMonitor unreachable::Datadog API request failed:" in capsys.readouterr().out
 
 
 def test_metric_filters_collects_metrics_and_concrete_tag_filters(tmp_path):
@@ -379,3 +435,15 @@ def test_tags_warns_on_an_or_group_only_when_no_alternative_is_indexed(tmp_path,
     out = capsys.readouterr().out
     assert "present.metric{env:x OR env:y} has not been indexed in the last 7 days" in out
     assert "namespace:b" not in out
+
+
+def test_tags_fails_when_a_request_fails(tmp_path, monkeypatch, capsys):
+    write_manifests(tmp_path, monitor(query="avg:unreachable.metric{*}"))
+
+    def datadog(method, path, params=None, body=None):
+        raise ConnectionResetError()
+
+    monkeypatch.setattr(validate, "datadog", datadog)
+
+    assert validate.tags(tmp_path)
+    assert "::error title=Metric unreachable.metric::Datadog API request failed:" in capsys.readouterr().out

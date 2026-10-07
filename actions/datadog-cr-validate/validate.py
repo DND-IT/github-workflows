@@ -8,6 +8,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -27,6 +28,8 @@ TEMPLATE_VARIABLE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)")
 CAMEL_CASE_HUMP = re.compile(r"([a-z0-9])([A-Z])")
 TAG_WINDOW_SECONDS = 7 * 24 * 3600
 DATADOG_ATTEMPTS = 3
+DATADOG_TIMEOUT_SECONDS = 30
+DATADOG_TRANSIENT_ERRORS = (http.client.HTTPException, OSError)
 
 
 def annotate(level, title, message):
@@ -71,11 +74,14 @@ def datadog(method, path, params=None, body=None):
     )
     for attempt in range(1, DATADOG_ATTEMPTS + 1):
         try:
-            with urllib.request.urlopen(request) as response:
+            with urllib.request.urlopen(request, timeout=DATADOG_TIMEOUT_SECONDS) as response:
                 return response.status, json.load(response)
         except urllib.error.HTTPError as error:
+            if error.code == 429 and attempt < DATADOG_ATTEMPTS:
+                time.sleep(float(error.headers.get("X-RateLimit-Reset") or 2))
+                continue
             return error.code, error.read().decode()
-        except http.client.IncompleteRead:
+        except DATADOG_TRANSIENT_ERRORS:
             if attempt == DATADOG_ATTEMPTS:
                 raise
 
@@ -152,7 +158,12 @@ def monitors(rendered):
     failed = False
     for cr in resources(rendered, "DatadogMonitor"):
         name = cr["metadata"]["name"]
-        status, body = datadog("POST", "/api/v1/monitor/validate", body=monitor_payload(cr["spec"]))
+        try:
+            status, body = datadog("POST", "/api/v1/monitor/validate", body=monitor_payload(cr["spec"]))
+        except DATADOG_TRANSIENT_ERRORS as error:
+            annotate("error", f"DatadogMonitor {name}", f"Datadog API request failed: {error!r}")
+            failed = True
+            continue
         if status == 200:
             print(f"Validated monitor {name}")
         else:
@@ -197,6 +208,10 @@ def tags(rendered):
             status, body = datadog("GET", f"/api/v2/metrics/{metric}/all-tags", params=params)
         except http.client.IncompleteRead:
             annotate("warning", "Tag check skipped", f"{metric} tag list was cut off by the Datadog API")
+            continue
+        except DATADOG_TRANSIENT_ERRORS as error:
+            annotate("error", f"Metric {metric}", f"Datadog API request failed: {error!r}")
+            failed = True
             continue
         if status == 404:
             annotate("error", "Metric not found", f"{metric} has not been reported in the last 7 days")
