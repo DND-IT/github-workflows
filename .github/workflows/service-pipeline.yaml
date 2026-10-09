@@ -109,7 +109,7 @@ jobs:
 
       - name: Load configuration
         id: config
-        uses: DND-IT/action-config@v3
+        uses: DND-IT/tamci/actions/config@v0
         with:
           config_path: ${{ inputs.config_path }}
 

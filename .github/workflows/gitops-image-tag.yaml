@@ -84,7 +84,7 @@ jobs:
 
       - name: Update YAML files (image mode)
         if: inputs.image_name != ''
-        uses: dnd-it/action-yaml-update@v0
+        uses: DND-IT/tamci/actions/set@v0
         with:
           mode: image
           files: ${{ inputs.values_files }}
@@ -101,7 +101,7 @@ jobs:
 
       - name: Update YAML files (key mode)
         if: inputs.image_name == '' && inputs.image_tag_keys != ''
-        uses: dnd-it/action-yaml-update@v0
+        uses: DND-IT/tamci/actions/set@v0
         with:
           mode: key
           files: ${{ inputs.values_files }}
