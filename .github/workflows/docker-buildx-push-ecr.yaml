@@ -10,6 +10,10 @@ on:
       environment:
         description: "Environment to run the build in"
         type: string
+      gh_deployment:
+        description: "Whether to create a GitHub deployment object when an environment is used."
+        type: boolean
+        default: true
       aws_account_id:
         description: "AWS Account ID"
         type: string
@@ -98,7 +102,9 @@ jobs:
   build:
     needs: set-matrix
     runs-on: ${{ matrix.os }}
-    environment: ${{ inputs.environment }}
+    environment:
+      name: ${{ inputs.environment }}
+      deployment: ${{ inputs.gh_deployment }}
     permissions:
       id-token: write
       contents: read
@@ -181,7 +187,9 @@ jobs:
     needs: build
     runs-on: ubuntu-24.04-arm
     if: ${{ inputs.docker_push }}
-    environment: ${{ inputs.environment }}
+    environment:
+      name: ${{ inputs.environment }}
+      deployment: ${{ inputs.gh_deployment }}
     permissions:
       id-token: write
       contents: read

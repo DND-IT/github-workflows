@@ -103,6 +103,12 @@ jobs:
     with:
       environment: sandbox
 
+  test_tf_plan_no_deployment:
+    uses: ./.github/workflows/tf-plan.yaml
+    with:
+      environment: sandbox
+      gh_deployment: false
+
   test_tf_apply:
     uses: ./.github/workflows/tf-apply.yaml
     with:

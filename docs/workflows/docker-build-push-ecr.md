@@ -16,6 +16,7 @@ This workflow builds a Docker image and pushes it to the Elastic Container Regis
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `environment` | <p>Environment to run the build in</p> | `string` | `false` | `""` |
+| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used.</p> | `boolean` | `false` | `true` |
 | `aws_account_id` | <p>AWS Account ID</p> | `string` | `false` | `""` |
 | `aws_region` | <p>AWS Region</p> | `string` | `false` | `""` |
 | `aws_role_name` | <p>AWS Role Name</p> | `string` | `false` | `""` |
@@ -53,6 +54,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
+
+      gh_deployment:
+      # Whether to create a GitHub deployment object when an environment is used.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: true
 
       aws_account_id:
       # AWS Account ID

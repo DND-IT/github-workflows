@@ -16,6 +16,7 @@ This workflow deploys a Terraform configuration to a preview environment.
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `environment` | <p>Environment to deploy</p> | `string` | `false` | `""` |
+| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used.</p> | `boolean` | `false` | `true` |
 | `aws_region` | <p>AWS region</p> | `string` | `false` | `""` |
 | `aws_oidc_role_arn` | <p>AWS OIDC IAM role to assume</p> | `string` | `false` | `""` |
 | `aws_account_id` | <p>The AWS account ID.</p> | `string` | `false` | `""` |
@@ -55,6 +56,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
+
+      gh_deployment:
+      # Whether to create a GitHub deployment object when an environment is used.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: true
 
       aws_region:
       # AWS region

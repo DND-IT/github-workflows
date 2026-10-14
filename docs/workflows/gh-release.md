@@ -3,7 +3,7 @@ title: Github Release
 ---
 
 <!-- action-docs-header source=".github/workflows/gh-release.yaml" -->
-## Github Semantic Release [Alpha]
+## GitHub Release (git-cliff)
 <!-- action-docs-header source=".github/workflows/gh-release.yaml" -->
 
 ## Description
@@ -15,13 +15,13 @@ This workflow creates a release based on the tag.
 
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
-| `tag` | <p>The tag to release (for manual releases). If not provided, uses semantic-release for automatic versioning.</p> | `string` | `false` | `""` |
-| `tag_format` | <p>The format of the tag to release. If not provided, uses the tagFormat from .releaserc.json or semantic-release default (v${version}).</p> | `string` | `false` | `""` |
-| `use_semantic_release` | <p>Use semantic-release for automatic versioning and changelog generation</p> | `boolean` | `false` | `true` |
-| `working_directory` | <p>The working directory where the project is located (relative to the repository root).</p> | `string` | `false` | `""` |
+| `service_name` | <p>Name of the service (used for scoped tag prefix, e.g., 'titan-api'). Leave empty for whole-repo releases.</p> | `string` | `false` | `""` |
+| `service_path` | <p>Path to the service directory for monorepo filtering (e.g., 'services/titan-api'). Only commits touching this path trigger releases.</p> | `string` | `false` | `""` |
+| `cliff_config` | <p>Path to git-cliff configuration file. If not found, uses an embedded default.</p> | `string` | `false` | `cliff.toml` |
 | `update_version_aliases` | <p>Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release.</p> | `boolean` | `false` | `false` |
 | `dry_run` | <p>Run in dry-run mode to preview the release without creating it.</p> | `boolean` | `false` | `false` |
-| `app_id` | <p>GitHub App ID (for generating a token if using GitHub App authentication)</p> | `string` | `false` | `""` |
+| `metadata_file` | <p>File path containing extra metadata to append to the release version (e.g., build info). Empty to skip.</p> | `string` | `false` | `""` |
+| `app_id` | <p>GitHub App ID for authentication</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/gh-release.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/gh-release.yaml" -->
@@ -29,12 +29,12 @@ This workflow creates a release based on the tag.
 
 | name | description |
 | --- | --- |
-| `new_release_published` | <p>Whether a new release was published (true or false)</p> |
+| `new_release_published` | <p>Whether a new release was published ('true' or 'false')</p> |
 | `new_release_version` | <p>Version of the new release (e.g. 1.3.0)</p> |
 | `new_release_major_version` | <p>Major version of the new release (e.g. 1)</p> |
 | `new_release_minor_version` | <p>Minor version of the new release (e.g. 3)</p> |
 | `new_release_patch_version` | <p>Patch version of the new release (e.g. 0)</p> |
-| `new_release_git_tag` | <p>The Git tag associated with the new release (e.g. v1.3.0)</p> |
+| `new_release_git_tag` | <p>The Git tag associated with the new release</p> |
 | `new_release_git_head` | <p>The sha of the last commit being part of the new release</p> |
 | `dry_run` | <p>Whether this was a dry-run (true) or actual release (false)</p> |
 <!-- action-docs-outputs source=".github/workflows/gh-release.yaml" -->
@@ -47,33 +47,26 @@ jobs:
   job1:
     uses: dnd-it/github-workflows/.github/workflows/gh-release.yaml@v2
     with:
-      tag:
-      # The tag to release (for manual releases). If not provided, uses semantic-release for automatic versioning.
+      service_name:
+      # Name of the service (used for scoped tag prefix, e.g., 'titan-api'). Leave empty for whole-repo releases.
       #
       # Type: string
       # Required: false
       # Default: ""
 
-      tag_format:
-      # The format of the tag to release. If not provided, uses the tagFormat from .releaserc.json or semantic-release default (v${version}).
+      service_path:
+      # Path to the service directory for monorepo filtering (e.g., 'services/titan-api'). Only commits touching this path trigger releases.
       #
       # Type: string
       # Required: false
       # Default: ""
 
-      use_semantic_release:
-      # Use semantic-release for automatic versioning and changelog generation
-      #
-      # Type: boolean
-      # Required: false
-      # Default: true
-
-      working_directory:
-      # The working directory where the project is located (relative to the repository root).
+      cliff_config:
+      # Path to git-cliff configuration file. If not found, uses an embedded default.
       #
       # Type: string
       # Required: false
-      # Default: ""
+      # Default: cliff.toml
 
       update_version_aliases:
       # Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release.
@@ -89,8 +82,15 @@ jobs:
       # Required: false
       # Default: false
 
+      metadata_file:
+      # File path containing extra metadata to append to the release version (e.g., build info). Empty to skip.
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
       app_id:
-      # GitHub App ID (for generating a token if using GitHub App authentication)
+      # GitHub App ID for authentication
       #
       # Type: string
       # Required: false
