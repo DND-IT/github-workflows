@@ -16,16 +16,18 @@ Both modes use `yq` to locate the exact line number, then `sed` to replace only 
 
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
-| `image_tag` | <p>The tag of the Docker image</p> | `string` | `true` | `""` |
-| `image_tag_keys` | <p>Newline-separated list of keys to update (e.g., webapp.image.tag). Ignored when image_name is set.</p> | `string` | `false` | `""` |
-| `image_name` | <p>Image name to search for (e.g., social-media). Finds all image blocks where the repository ends with this name and updates their tag. Takes precedence over image<em>tag</em>keys.</p> | `string` | `false` | `""` |
-| `values_files` | <p>Newline-separated list of file paths to update</p> | `string` | `true` | `""` |
-| `create_pr` | <p>Create a pull request. If false, the changes will be committed directly to the target branch. Github Actions must have write permissions to the repository. If branch protection is enabled a Github App is required and is able to bypass branch protection rules.</p> | `boolean` | `false` | `true` |
-| `pr_message` | <p>Custom message for the pull request. Defaults to a standard message.</p> | `string` | `false` | `This PR updates the Helm values files to use the latest image tag.` |
-| `auto_merge` | <p>Enable auto-merge for the pull request. Only works if create_pr is true.</p> | `boolean` | `false` | `false` |
-| `branch_name_prefix` | <p>Prefix for the branch name.</p> | `string` | `false` | `helm-values` |
-| `target_branch` | <p>The target branch for the pull request. Defaults the default branch of the repository.</p> | `string` | `false` | `${{ github.event.repository.default_branch }}` |
-| `app_id` | <p>GitHub App ID for generating a token. Required if using GitHub App authentication.</p> | `string` | `false` | `""` |
+| `image_tag` | <p>The Docker image tag to set</p> | `string` | `true` | `""` |
+| `image_name` | <p>Image name to search for (mode=image). Finds all image blocks where repository ends with this name and updates their tag.</p> | `string` | `false` | `""` |
+| `image_tag_keys` | <p>Newline-separated dot-notation key paths to update (mode=key). Ignored when image_name is set.</p> | `string` | `false` | `""` |
+| `values_files` | <p>Newline-separated list of YAML file paths to update</p> | `string` | `true` | `""` |
+| `create_pr` | <p>Create a pull request. If false, commits directly to the target branch.</p> | `boolean` | `false` | `true` |
+| `pr_title` | <p>Custom title for the pull request.</p> | `string` | `false` | `""` |
+| `pr_body` | <p>Custom body for the pull request.</p> | `string` | `false` | `""` |
+| `auto_merge` | <p>Enable auto-merge for the pull request.</p> | `boolean` | `false` | `false` |
+| `pr_branch` | <p>Branch name for the pull request. Auto-generated if empty.</p> | `string` | `false` | `""` |
+| `target_branch` | <p>Target branch for the PR or direct commit. Defaults to the default branch.</p> | `string` | `false` | `""` |
+| `dry_run` | <p>Preview changes without modifying anything.</p> | `boolean` | `false` | `false` |
+| `app_id` | <p>GitHub App ID for generating a token.</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/gitops-image-tag.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/gitops-image-tag.yaml" -->
