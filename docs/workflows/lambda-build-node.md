@@ -16,7 +16,7 @@ This workflow builds a Lambda Layer and the artifact is uploaded to the GitHub a
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `environment` | <p>Environment to deploy.</p> | `string` | `false` | `""` |
-| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules.</p> | `boolean` | `false` | `true` |
+| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used.</p> | `boolean` | `false` | `true` |
 | `node_version` | <p>The Node.js version to use</p> | `string` | `false` | `20` |
 | `source_dir` | <p>The directory where the Lambda source code is located</p> | `string` | `false` | `""` |
 | `build_dir` | <p>The directory where the Lambda build artifacts are located</p> | `string` | `false` | `""` |
@@ -43,7 +43,7 @@ jobs:
       # Default: ""
 
       gh_deployment:
-      # Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules.
+      # Whether to create a GitHub deployment object when an environment is used.
       #
       # Type: boolean
       # Required: false

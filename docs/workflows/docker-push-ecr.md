@@ -16,7 +16,7 @@ This workflow pushes a Docker artifact to an ECR repository.
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `environment` | <p>Environment to deploy</p> | `string` | `false` | `""` |
-| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules.</p> | `boolean` | `false` | `true` |
+| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used.</p> | `boolean` | `false` | `true` |
 | `aws_account_id` | <p>AWS Account ID</p> | `string` | `false` | `""` |
 | `aws_region` | <p>AWS Region</p> | `string` | `false` | `""` |
 | `aws_role_name` | <p>AWS Role Name</p> | `string` | `false` | `""` |
@@ -46,7 +46,7 @@ jobs:
       # Default: ""
 
       gh_deployment:
-      # Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules.
+      # Whether to create a GitHub deployment object when an environment is used.
       #
       # Type: boolean
       # Required: false
