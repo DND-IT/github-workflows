@@ -155,7 +155,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#github-semantic-release-alpha" class="md-skip">
+        <a href="#github-release-git-cliff" class="md-skip">
           Skip to content
         </a>
       
@@ -712,6 +712,8 @@
       
         
       
+        
+      
     
     
     
@@ -1082,10 +1084,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#github-semantic-release-alpha" class="md-nav__link">
+  <a href="#github-release-git-cliff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Github Semantic Release [Alpha]
+        GitHub Release (git-cliff)
       
     </span>
   </a>
@@ -1512,6 +1514,34 @@
     
   
     Slack Notification
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Github Reusable Workflows
   
 
     
@@ -2002,10 +2032,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#github-semantic-release-alpha" class="md-nav__link">
+  <a href="#github-release-git-cliff" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Github Semantic Release [Alpha]
+        GitHub Release (git-cliff)
       
     </span>
   </a>
@@ -2233,7 +2263,7 @@
 
 
 <!-- action-docs-header source=".github/workflows/gh-release.yaml" -->
-<h2 id="github-semantic-release-alpha">Github Semantic Release [Alpha]<a class="headerlink" href="#github-semantic-release-alpha" title="Permanent link">&para;</a></h2>
+<h2 id="github-release-git-cliff">GitHub Release (git-cliff)<a class="headerlink" href="#github-release-git-cliff" title="Permanent link">&para;</a></h2>
 <!-- action-docs-header source=".github/workflows/gh-release.yaml" -->
 
 <h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
@@ -2252,32 +2282,25 @@
 </thead>
 <tbody>
 <tr>
-<td><code>tag</code></td>
-<td><p>The tag to release (for manual releases). If not provided, uses semantic-release for automatic versioning.</p></td>
+<td><code>service_name</code></td>
+<td><p>Name of the service (used for scoped tag prefix, e.g., 'titan-api'). Leave empty for whole-repo releases.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><code>tag_format</code></td>
-<td><p>The format of the tag to release. If not provided, uses the tagFormat from .releaserc.json or semantic-release default (v${version}).</p></td>
+<td><code>service_path</code></td>
+<td><p>Path to the service directory for monorepo filtering (e.g., 'services/titan-api'). Only commits touching this path trigger releases.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><code>use_semantic_release</code></td>
-<td><p>Use semantic-release for automatic versioning and changelog generation</p></td>
-<td><code>boolean</code></td>
-<td><code>false</code></td>
-<td><code>true</code></td>
-</tr>
-<tr>
-<td><code>working_directory</code></td>
-<td><p>The working directory where the project is located (relative to the repository root).</p></td>
+<td><code>cliff_config</code></td>
+<td><p>Path to git-cliff configuration file. If not found, uses an embedded default.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
-<td><code>""</code></td>
+<td><code>cliff.toml</code></td>
 </tr>
 <tr>
 <td><code>update_version_aliases</code></td>
@@ -2294,8 +2317,15 @@
 <td><code>false</code></td>
 </tr>
 <tr>
+<td><code>metadata_file</code></td>
+<td><p>File path containing extra metadata to append to the release version (e.g., build info). Empty to skip.</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>""</code></td>
+</tr>
+<tr>
 <td><code>app_id</code></td>
-<td><p>GitHub App ID (for generating a token if using GitHub App authentication)</p></td>
+<td><p>GitHub App ID for authentication</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
@@ -2316,7 +2346,7 @@
 <tbody>
 <tr>
 <td><code>new_release_published</code></td>
-<td><p>Whether a new release was published (true or false)</p></td>
+<td><p>Whether a new release was published ('true' or 'false')</p></td>
 </tr>
 <tr>
 <td><code>new_release_version</code></td>
@@ -2336,7 +2366,7 @@
 </tr>
 <tr>
 <td><code>new_release_git_tag</code></td>
-<td><p>The Git tag associated with the new release (e.g. v1.3.0)</p></td>
+<td><p>The Git tag associated with the new release</p></td>
 </tr>
 <tr>
 <td><code>new_release_git_head</code></td>
@@ -2356,50 +2386,50 @@
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">job1</span><span class="p">:</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">dnd-it/github-workflows/.github/workflows/gh-release.yaml@v2</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">tag</span><span class="p">:</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="c1"># The tag to release (for manual releases). If not provided, uses semantic-release for automatic versioning.</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">service_name</span><span class="p">:</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">      </span><span class="c1"># Name of the service (used for scoped tag prefix, e.g., &#39;titan-api&#39;). Leave empty for whole-repo releases.</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">      </span><span class="c1"># Required: false</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">tag_format</span><span class="p">:</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="c1"># The format of the tag to release. If not provided, uses the tagFormat from .releaserc.json or semantic-release default (v${version}).</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">      </span><span class="nt">service_path</span><span class="p">:</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">      </span><span class="c1"># Path to the service directory for monorepo filtering (e.g., &#39;services/titan-api&#39;). Only commits touching this path trigger releases.</span>
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">      </span><span class="c1"># Required: false</span>
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
 </span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="nt">use_semantic_release</span><span class="p">:</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">      </span><span class="c1"># Use semantic-release for automatic versioning and changelog generation</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="w">      </span><span class="nt">cliff_config</span><span class="p">:</span>
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="w">      </span><span class="c1"># Path to git-cliff configuration file. If not found, uses an embedded default.</span>
 </span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="c1"># Type: boolean</span>
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span><span class="c1"># Default: true</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">      </span><span class="c1"># Default: cliff.toml</span>
 </span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">      </span><span class="nt">working_directory</span><span class="p">:</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">      </span><span class="c1"># The working directory where the project is located (relative to the repository root).</span>
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="w">      </span><span class="nt">update_version_aliases</span><span class="p">:</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="w">      </span><span class="c1"># Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release.</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">      </span><span class="c1"># Type: boolean</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a><span class="w">      </span><span class="c1"># Default: false</span>
 </span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">update_version_aliases</span><span class="p">:</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">      </span><span class="c1"># Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release.</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a><span class="w">      </span><span class="nt">dry_run</span><span class="p">:</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">      </span><span class="c1"># Run in dry-run mode to preview the release without creating it.</span>
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a><span class="w">      </span><span class="c1"># Type: boolean</span>
 </span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a><span class="w">      </span><span class="c1"># Required: false</span>
 </span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a><span class="w">      </span><span class="c1"># Default: false</span>
 </span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">      </span><span class="nt">dry_run</span><span class="p">:</span>
-</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">      </span><span class="c1"># Run in dry-run mode to preview the release without creating it.</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a><span class="w">      </span><span class="nt">metadata_file</span><span class="p">:</span>
+</span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a><span class="w">      </span><span class="c1"># File path containing extra metadata to append to the release version (e.g., build info). Empty to skip.</span>
 </span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">      </span><span class="c1"># Type: boolean</span>
+</span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">      </span><span class="c1"># Default: false</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a><span class="w">      </span><span class="c1"># Default: &quot;&quot;</span>
 </span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>
 </span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a><span class="w">      </span><span class="nt">app_id</span><span class="p">:</span>
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">      </span><span class="c1"># GitHub App ID (for generating a token if using GitHub App authentication)</span>
+</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a><span class="w">      </span><span class="c1"># GitHub App ID for authentication</span>
 </span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a><span class="w">      </span><span class="c1"># Required: false</span>

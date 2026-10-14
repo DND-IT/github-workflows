@@ -712,6 +712,8 @@
       
         
       
+        
+      
     
     
     
@@ -1493,6 +1495,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../release/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Github Reusable Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../service-pipeline/" class="md-nav__link">
         
   
@@ -2178,70 +2208,84 @@
 <tbody>
 <tr>
 <td><code>image_tag</code></td>
-<td><p>The tag of the Docker image</p></td>
+<td><p>The Docker image tag to set</p></td>
 <td><code>string</code></td>
 <td><code>true</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><code>image_tag_keys</code></td>
-<td><p>Newline-separated list of keys to update (e.g., webapp.image.tag). Ignored when image_name is set.</p></td>
+<td><code>image_name</code></td>
+<td><p>Image name to search for (mode=image). Finds all image blocks where repository ends with this name and updates their tag.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
-<td><code>image_name</code></td>
-<td><p>Image name to search for (e.g., social-media). Finds all image blocks where the repository ends with this name and updates their tag. Takes precedence over image<em>tag</em>keys.</p></td>
+<td><code>image_tag_keys</code></td>
+<td><p>Newline-separated dot-notation key paths to update (mode=key). Ignored when image_name is set.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
 <td><code>values_files</code></td>
-<td><p>Newline-separated list of file paths to update</p></td>
+<td><p>Newline-separated list of YAML file paths to update</p></td>
 <td><code>string</code></td>
 <td><code>true</code></td>
 <td><code>""</code></td>
 </tr>
 <tr>
 <td><code>create_pr</code></td>
-<td><p>Create a pull request. If false, the changes will be committed directly to the target branch. Github Actions must have write permissions to the repository. If branch protection is enabled a Github App is required and is able to bypass branch protection rules.</p></td>
+<td><p>Create a pull request. If false, commits directly to the target branch.</p></td>
 <td><code>boolean</code></td>
 <td><code>false</code></td>
 <td><code>true</code></td>
 </tr>
 <tr>
-<td><code>pr_message</code></td>
-<td><p>Custom message for the pull request. Defaults to a standard message.</p></td>
+<td><code>pr_title</code></td>
+<td><p>Custom title for the pull request.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
-<td><code>This PR updates the Helm values files to use the latest image tag.</code></td>
+<td><code>""</code></td>
+</tr>
+<tr>
+<td><code>pr_body</code></td>
+<td><p>Custom body for the pull request.</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>""</code></td>
 </tr>
 <tr>
 <td><code>auto_merge</code></td>
-<td><p>Enable auto-merge for the pull request. Only works if create_pr is true.</p></td>
+<td><p>Enable auto-merge for the pull request.</p></td>
 <td><code>boolean</code></td>
 <td><code>false</code></td>
 <td><code>false</code></td>
 </tr>
 <tr>
-<td><code>branch_name_prefix</code></td>
-<td><p>Prefix for the branch name.</p></td>
+<td><code>pr_branch</code></td>
+<td><p>Branch name for the pull request. Auto-generated if empty.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
-<td><code>helm-values</code></td>
+<td><code>""</code></td>
 </tr>
 <tr>
 <td><code>target_branch</code></td>
-<td><p>The target branch for the pull request. Defaults the default branch of the repository.</p></td>
+<td><p>Target branch for the PR or direct commit. Defaults to the default branch.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
-<td><code>${{ github.event.repository.default_branch }}</code></td>
+<td><code>""</code></td>
+</tr>
+<tr>
+<td><code>dry_run</code></td>
+<td><p>Preview changes without modifying anything.</p></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td><code>false</code></td>
 </tr>
 <tr>
 <td><code>app_id</code></td>
-<td><p>GitHub App ID for generating a token. Required if using GitHub App authentication.</p></td>
+<td><p>GitHub App ID for generating a token.</p></td>
 <td><code>string</code></td>
 <td><code>false</code></td>
 <td><code>""</code></td>
