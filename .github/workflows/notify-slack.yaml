@@ -51,18 +51,12 @@ on:
       environment:
         description: "Environment name (optional, added as a field if provided)"
         type: string
-      gh_deployment:
-        description: "Whether to create a GitHub deployment object when an environment is used."
-        type: boolean
-        default: true
 
 jobs:
   notify:
     name: Send Slack Notification
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ inputs.environment }}
-      deployment: ${{ inputs.gh_deployment }}
+    environment: ${{ inputs.environment }}
     steps:
       - name: Determine Notification Settings
         id: settings

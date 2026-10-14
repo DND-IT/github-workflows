@@ -22,7 +22,6 @@ title: Slack Notification
 | `custom_blocks` | <p>JSON array of custom Slack blocks to append to the message</p> | `string` | `false` | `""` |
 | `thread_ts` | <p>Thread timestamp to reply in a thread</p> | `string` | `false` | `""` |
 | `environment` | <p>Environment name (optional, added as a field if provided)</p> | `string` | `false` | `""` |
-| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used.</p> | `boolean` | `false` | `true` |
 <!-- action-docs-inputs source=".github/workflows/notify-slack.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/notify-slack.yaml" -->
@@ -127,13 +126,6 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
-
-      gh_deployment:
-      # Whether to create a GitHub deployment object when an environment is used.
-      #
-      # Type: boolean
-      # Required: false
-      # Default: true
 ```
 <!-- action-docs-usage source=".github/workflows/notify-slack.yaml" project="dnd-it/github-workflows/.github/workflows/notify-slack.yaml" version="v3" -->
 
