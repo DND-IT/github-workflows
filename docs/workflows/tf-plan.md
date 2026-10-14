@@ -16,6 +16,7 @@ This workflow runs `terraform plan` and uploads the plan to Github Action summar
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `environment` | <p>Environment to deploy.</p> | `string` | `false` | `""` |
+| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules.</p> | `boolean` | `false` | `true` |
 | `aws_account_id` | <p>The AWS account ID.</p> | `string` | `false` | `""` |
 | `aws_region` | <p>The AWS region.</p> | `string` | `false` | `""` |
 | `aws_role_name` | <p>The name of the role to assume with OIDC.</p> | `string` | `false` | `""` |
@@ -53,6 +54,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
+
+      gh_deployment:
+      # Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: true
 
       aws_account_id:
       # The AWS account ID.

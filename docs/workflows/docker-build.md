@@ -16,6 +16,7 @@ This workflow builds a Docker image and the artifact is uploaded to the GitHub a
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `environment` | <p>Environment to deploy</p> | `string` | `false` | `""` |
+| `gh_deployment` | <p>Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules.</p> | `boolean` | `false` | `true` |
 | `image_name` | <p>Name of the Docker image to build</p> | `string` | `false` | `""` |
 | `docker_context` | <p>Path to the build context</p> | `string` | `false` | `""` |
 | `dockerfile_path` | <p>Path to the Dockerfile. If not defined, will default to {docker_context}/Dockerfile</p> | `string` | `false` | `""` |
@@ -43,6 +44,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
+
+      gh_deployment:
+      # Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: true
 
       image_name:
       # Name of the Docker image to build

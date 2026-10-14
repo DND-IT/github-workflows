@@ -8,6 +8,10 @@ on:
       environment:
         description: "Environment to deploy."
         type: string
+      gh_deployment:
+        description: "Whether to create a GitHub deployment object when an environment is used. Set to false to use the environment secrets and variables without recording a deployment (e.g. for plan or build jobs on pull requests). Not compatible with custom deployment protection rules."
+        type: boolean
+        default: true
       aws_account_id:
         description: "The AWS account ID."
         type: string
@@ -69,7 +73,9 @@ jobs:
       id-token: write
       pull-requests: write
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
+    environment:
+      name: ${{ inputs.environment }}
+      deployment: ${{ inputs.gh_deployment }}
     env:
       ENVIRONMENT: ${{ inputs.environment }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
