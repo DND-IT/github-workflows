@@ -21,6 +21,7 @@ jobs:
     with:
       charts: |
         tests/datadog/chart --set team=validate
+      build_dependencies: true
       check_tag_values: true
 
   test_python:

@@ -69,6 +69,37 @@ def test_render_reports_a_failing_chart(tmp_path, monkeypatch, capsys):
     assert "::error title=Chart deploy/broken::helm template failed" in capsys.readouterr().out
 
 
+def test_render_builds_dependencies_first_and_keeps_helm_output_out_of_the_manifests(tmp_path, monkeypatch):
+    calls = []
+
+    def run(command, stdout):
+        calls.append((command, stdout))
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(validate.subprocess, "run", run)
+
+    assert not validate.render("deploy/app --set a=b", tmp_path, build_dependencies=True)
+    assert [command for command, _ in calls] == [
+        ["helm", "dependency", "build", "deploy/app"],
+        ["helm", "template", "app", "deploy/app", "--set", "a=b"],
+    ]
+    assert calls[0][1] is sys.stderr
+
+
+def test_render_skips_a_chart_whose_dependencies_fail_to_build(tmp_path, monkeypatch, capsys):
+    calls = []
+
+    def run(command, stdout):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 1)
+
+    monkeypatch.setattr(validate.subprocess, "run", run)
+
+    assert validate.render("deploy/app", tmp_path, build_dependencies=True)
+    assert calls == [["helm", "dependency", "build", "deploy/app"]]
+    assert "::error title=Chart deploy/app::helm dependency build failed" in capsys.readouterr().out
+
+
 @pytest.mark.skipif(shutil.which("helm") is None, reason="helm is not installed")
 def test_render_renders_the_fixture_chart(tmp_path):
     assert not validate.render(f"{shlex.quote(str(FIXTURES / 'chart'))} --set team=validate", tmp_path)

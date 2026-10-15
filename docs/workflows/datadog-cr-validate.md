@@ -23,6 +23,7 @@ The Datadog keys are never stored as GitHub secrets. The workflow assumes `aws_o
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `charts` | <p>Helm charts to render and validate, one per line: a chart path, optionally followed by extra <code>helm template</code> arguments. Example: |   deploy/datadog-monitoring   deploy/datadog-agent --set clusterName=validate</p> | `string` | `true` | `""` |
+| `build_dependencies` | <p>Run <code>helm dependency build</code> on each chart before rendering it, for charts whose <code>charts/</code> directory is not committed</p> | `boolean` | `false` | `false` |
 | `check_tag_values` | <p>Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window</p> | `boolean` | `false` | `false` |
 | `dd_site` | <p>Datadog site to validate against. Falls back to vars.dd_site, then datadoghq.eu</p> | `string` | `false` | `""` |
 | `aws_oidc_role_arn` | <p>IAM role assumed through GitHub OIDC to read the Datadog keys. Falls back to <code>vars.DD_CR_VALIDATE_ROLE_ARN</code></p> | `string` | `false` | `""` |
@@ -51,6 +52,13 @@ jobs:
       # Type: string
       # Required: true
       # Default: ""
+
+      build_dependencies:
+      # Run `helm dependency build` on each chart before rendering it, for charts whose `charts/` directory is not committed
+      #
+      # Type: boolean
+      # Required: false
+      # Default: false
 
       check_tag_values:
       # Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window
@@ -155,7 +163,7 @@ A: Each line is split like a shell command line: the first word is the chart pat
 
 ### Q: Does it build chart dependencies?
 
-A: No. Charts are rendered with `helm template` as they are checked out, so a chart with dependencies needs its `charts/` directory available.
+A: Only with `build_dependencies: true`, which runs `helm dependency build` on each chart before rendering it. Otherwise charts are rendered as they are checked out, so a chart with dependencies needs its `charts/` directory committed.
 
 ### Q: Why does "Configure AWS credentials" fail?
 
