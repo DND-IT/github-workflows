@@ -11,10 +11,6 @@ on:
             deploy/datadog-agent --set clusterName=validate
         type: string
         required: true
-      build_dependencies:
-        description: Run `helm dependency build` on each chart before rendering it, for charts whose `charts/` directory is not committed
-        type: boolean
-        default: false
       check_tag_values:
         description: Fail when a metric query uses a metric that has not been reported in the last 7 days, and warn when it filters on a tag value not indexed in that window
         type: boolean
@@ -58,7 +54,6 @@ jobs:
         uses: ./.github-workflows/actions/datadog-cr-validate
         with:
           charts: ${{ inputs.charts }}
-          build_dependencies: ${{ inputs.build_dependencies }}
           check_tag_values: ${{ inputs.check_tag_values }}
           dd_site: ${{ inputs.dd_site || vars.dd_site || 'datadoghq.eu' }}
           aws_oidc_role_arn: ${{ inputs.aws_oidc_role_arn || vars.DD_CR_VALIDATE_ROLE_ARN }}

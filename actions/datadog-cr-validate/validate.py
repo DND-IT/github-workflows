@@ -87,7 +87,18 @@ def datadog(method, path, params=None, body=None):
                 raise
 
 
-def render(charts, rendered, build_dependencies=False):
+def missing_dependencies(chart):
+    chart_file = Path(chart) / "Chart.yaml"
+    if not chart_file.is_file():
+        return False
+    vendored = Path(chart) / "charts"
+    return any(
+        not (vendored / dependency["name"]).is_dir() and not any(vendored.glob(f"{dependency['name']}-*.tgz"))
+        for dependency in yaml.safe_load(chart_file.read_text()).get("dependencies") or []
+    )
+
+
+def render(charts, rendered):
     Path(rendered).mkdir(parents=True, exist_ok=True)
     failed = False
     lines = [line for line in charts.splitlines() if line.strip()]
@@ -95,7 +106,7 @@ def render(charts, rendered, build_dependencies=False):
         chart, *args = shlex.split(line)
         name = Path(chart).name
         # helm prints progress on stdout, which must stay out of the rendered manifests.
-        if build_dependencies and subprocess.run(["helm", "dependency", "build", chart], stdout=sys.stderr).returncode:
+        if missing_dependencies(chart) and subprocess.run(["helm", "dependency", "build", chart], stdout=sys.stderr).returncode:
             annotate("error", f"Chart {chart}", "helm dependency build failed")
             failed = True
             continue
@@ -256,16 +267,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     render_command = commands.add_parser("render", help="render Helm charts, one per line with helm template arguments")
-    render_command.add_argument("--build-dependencies", action="store_true", help="run helm dependency build first")
     render_command.add_argument("charts")
     render_command.add_argument("rendered")
     for name in CHECKS:
         commands.add_parser(name).add_argument("rendered")
     args = parser.parse_args()
-    if args.command == "render":
-        failed = render(args.charts, args.rendered, args.build_dependencies)
-    else:
-        failed = CHECKS[args.command](args.rendered)
+    failed = render(args.charts, args.rendered) if args.command == "render" else CHECKS[args.command](args.rendered)
     sys.exit(1 if failed else 0)
 
 

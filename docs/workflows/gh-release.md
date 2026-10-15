@@ -16,7 +16,7 @@ This workflow creates a release based on the tag.
 | name | description | type | required | default |
 | --- | --- | --- | --- | --- |
 | `service_name` | <p>Name of the service (used for scoped tag prefix, e.g., 'titan-api'). Leave empty for whole-repo releases.</p> | `string` | `false` | `""` |
-| `service_path` | <p>Path to the service directory for monorepo filtering (e.g., 'services/titan-api'). Only commits touching this path trigger releases.</p> | `string` | `false` | `""` |
+| `service_path` | <p>Path to the service directory for monorepo filtering (e.g., 'services/titan-api'), or several space-separated paths. Only commits touching these paths trigger releases.</p> | `string` | `false` | `""` |
 | `cliff_config` | <p>Path to git-cliff configuration file. If not found, uses an embedded default.</p> | `string` | `false` | `cliff.toml` |
 | `update_version_aliases` | <p>Automatically update version alias tags (e.g., v1 and v1.2) to point to the latest release.</p> | `boolean` | `false` | `false` |
 | `dry_run` | <p>Run in dry-run mode to preview the release without creating it.</p> | `boolean` | `false` | `false` |
@@ -55,7 +55,7 @@ jobs:
       # Default: ""
 
       service_path:
-      # Path to the service directory for monorepo filtering (e.g., 'services/titan-api'). Only commits touching this path trigger releases.
+      # Path to the service directory for monorepo filtering (e.g., 'services/titan-api'), or several space-separated paths. Only commits touching these paths trigger releases.
       #
       # Type: string
       # Required: false

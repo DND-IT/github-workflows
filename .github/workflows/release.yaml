@@ -47,7 +47,10 @@ jobs:
                 _test-*|release.yaml) continue ;;
               esac
               grep -q 'workflow_call:' "$f" || continue
-              printf '{"name":"%s","path":"%s"}\n' "${b%.yaml}" "$f"
+              path="$f"
+              # A workflow that runs its own action releases on changes to either.
+              [ -d "actions/${b%.yaml}" ] && path="$path actions/${b%.yaml}"
+              printf '{"name":"%s","path":"%s"}\n' "${b%.yaml}" "$path"
             done | jq -sc '{include: .}'
           )
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"

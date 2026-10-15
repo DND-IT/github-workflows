@@ -1,0 +1,9 @@
+apiVersion: v2
+name: datadog-cr-validate-umbrella
+description: Fixture with an unbuilt dependency for the datadog-cr-validate workflow test
+type: application
+version: 0.1.0
+dependencies:
+  - name: datadog-cr-validate-test
+    version: 0.1.0
+    repository: file://../chart
