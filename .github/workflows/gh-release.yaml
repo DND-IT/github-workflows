@@ -9,7 +9,7 @@ on:
         required: false
         default: ''
       service_path:
-        description: "Path to the service directory for monorepo filtering (e.g., 'services/titan-api'). Only commits touching this path trigger releases."
+        description: "Path to the service directory for monorepo filtering (e.g., 'services/titan-api'), or several space-separated paths. Only commits touching these paths trigger releases."
         type: string
         required: false
         default: ''
@@ -181,14 +181,16 @@ jobs:
       - name: Compute commit path filter
         id: filter
         run: |
-          SERVICE_PATH="${{ inputs.service_path }}"
-          if [ -z "$SERVICE_PATH" ]; then
-            echo "include_path=" >> $GITHUB_OUTPUT
-          elif [ -f "$SERVICE_PATH" ]; then
-            echo "include_path=$SERVICE_PATH" >> $GITHUB_OUTPUT
-          else
-            echo "include_path=${SERVICE_PATH%/}/**" >> $GITHUB_OUTPUT
-          fi
+          read -ra SERVICE_PATHS <<< "${{ inputs.service_path }}"
+          INCLUDE_ARGS=""
+          for SERVICE_PATH in "${SERVICE_PATHS[@]}"; do
+            if [ -f "$SERVICE_PATH" ]; then
+              INCLUDE_ARGS+=" --include-path \"$SERVICE_PATH\""
+            else
+              INCLUDE_ARGS+=" --include-path \"${SERVICE_PATH%/}/**\""
+            fi
+          done
+          echo "include_args=$INCLUDE_ARGS" >> $GITHUB_OUTPUT
 
       - name: Generate changelog
         id: cliff
@@ -201,7 +203,7 @@ jobs:
             --unreleased
             --strip header
             ${{ inputs.service_name != '' && format('--tag-pattern "^{0}-v[0-9]"', inputs.service_name) || '' }}
-            ${{ steps.filter.outputs.include_path != '' && format('--include-path "{0}"', steps.filter.outputs.include_path) || '' }}
+            ${{ steps.filter.outputs.include_args }}
         env:
           OUTPUT: /tmp/RELEASE_NOTES.md
 
@@ -214,7 +216,7 @@ jobs:
           args: >-
             --unreleased
             --strip header
-            ${{ steps.filter.outputs.include_path != '' && format('--include-path "{0}"', steps.filter.outputs.include_path) || '' }}
+            ${{ steps.filter.outputs.include_args }}
         env:
           OUTPUT: /tmp/RELEASE_NOTES.md
 
@@ -224,7 +226,7 @@ jobs:
           GH_TOKEN: ${{ inputs.app_id != '' && steps.generate-token.outputs.token || github.token }}
         run: |
           SERVICE_NAME="${{ inputs.service_name }}"
-          SERVICE_PATH="${{ inputs.service_path }}"
+          read -ra SERVICE_PATHS <<< "${{ inputs.service_path }}"
           HAS_TAGS="${{ steps.check-tags.outputs.has_tags }}"
           IS_DRY_RUN="${{ inputs.dry_run == true || github.event_name == 'pull_request' }}"
 
@@ -246,7 +248,7 @@ jobs:
             fi
           else
             # First release — check for conventional commits touching this scope
-            COMMIT_COUNT=$(git log --format="%s" -- "${SERVICE_PATH:-.}" | grep -cE "^(feat|fix|refactor|perf|docs?|test|chore|ci|style|build)" || true)
+            COMMIT_COUNT=$(git log --format="%s" -- "${SERVICE_PATHS[@]:-.}" | grep -cE "^(feat|fix|refactor|perf|docs?|test|chore|ci|style|build)" || true)
             if [ "$COMMIT_COUNT" -gt 0 ]; then
               VERSION="0.1.0"
               echo "First release detected, defaulting to $VERSION"

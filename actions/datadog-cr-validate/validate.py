@@ -87,6 +87,17 @@ def datadog(method, path, params=None, body=None):
                 raise
 
 
+def missing_dependencies(chart):
+    chart_file = Path(chart) / "Chart.yaml"
+    if not chart_file.is_file():
+        return False
+    vendored = Path(chart) / "charts"
+    return any(
+        not (vendored / dependency["name"]).is_dir() and not any(vendored.glob(f"{dependency['name']}-*.tgz"))
+        for dependency in yaml.safe_load(chart_file.read_text()).get("dependencies") or []
+    )
+
+
 def render(charts, rendered):
     Path(rendered).mkdir(parents=True, exist_ok=True)
     failed = False
@@ -94,6 +105,11 @@ def render(charts, rendered):
     for i, line in enumerate(lines, 1):
         chart, *args = shlex.split(line)
         name = Path(chart).name
+        # helm prints progress on stdout, which must stay out of the rendered manifests.
+        if missing_dependencies(chart) and subprocess.run(["helm", "dependency", "build", chart], stdout=sys.stderr).returncode:
+            annotate("error", f"Chart {chart}", "helm dependency build failed")
+            failed = True
+            continue
         print(f"Rendering {line}", flush=True)
         with open(Path(rendered) / f"{i}-{name}.yaml", "w") as out:
             if subprocess.run(["helm", "template", name, chart, *args], stdout=out).returncode:

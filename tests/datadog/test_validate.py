@@ -69,6 +69,75 @@ def test_render_reports_a_failing_chart(tmp_path, monkeypatch, capsys):
     assert "::error title=Chart deploy/broken::helm template failed" in capsys.readouterr().out
 
 
+def write_chart(directory, dependencies=None, vendored=()):
+    directory.mkdir()
+    chart = {"apiVersion": "v2", "name": directory.name, "version": "0.1.0"}
+    if dependencies:
+        chart["dependencies"] = [{"name": name, "version": "1.0.0", "repository": "oci://example"} for name in dependencies]
+    (directory / "Chart.yaml").write_text(yaml.safe_dump(chart))
+    for name in vendored:
+        (directory / "charts").mkdir(exist_ok=True)
+        (directory / "charts" / name).touch()
+    return directory
+
+
+@pytest.mark.parametrize(
+    ("dependencies", "vendored", "missing"),
+    [
+        (None, (), False),
+        (["common"], (), True),
+        (["common"], ("common-1.0.0.tgz",), False),
+        (["common", "redis"], ("common-1.0.0.tgz",), True),
+    ],
+)
+def test_missing_dependencies(tmp_path, dependencies, vendored, missing):
+    assert validate.missing_dependencies(write_chart(tmp_path / "app", dependencies, vendored)) is missing
+
+
+def test_missing_dependencies_accepts_an_unpacked_dependency(tmp_path):
+    chart = write_chart(tmp_path / "app", ["common"])
+    (chart / "charts" / "common").mkdir(parents=True)
+
+    assert not validate.missing_dependencies(chart)
+
+
+def test_missing_dependencies_leaves_a_path_without_chart_yaml_to_helm(tmp_path):
+    assert not validate.missing_dependencies(tmp_path / "nowhere")
+
+
+def test_render_builds_missing_dependencies_and_keeps_helm_output_out_of_the_manifests(tmp_path, monkeypatch):
+    chart = write_chart(tmp_path / "app", ["common"])
+    calls = []
+
+    def run(command, stdout):
+        calls.append((command, stdout))
+        return subprocess.CompletedProcess(command, 0)
+
+    monkeypatch.setattr(validate.subprocess, "run", run)
+
+    assert not validate.render(f"{chart} --set a=b", tmp_path / "out")
+    assert [command for command, _ in calls] == [
+        ["helm", "dependency", "build", str(chart)],
+        ["helm", "template", "app", str(chart), "--set", "a=b"],
+    ]
+    assert calls[0][1] is sys.stderr
+
+
+def test_render_skips_a_chart_whose_dependencies_fail_to_build(tmp_path, monkeypatch, capsys):
+    chart = write_chart(tmp_path / "app", ["common"])
+    calls = []
+
+    def run(command, stdout):
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 1)
+
+    monkeypatch.setattr(validate.subprocess, "run", run)
+
+    assert validate.render(str(chart), tmp_path / "out")
+    assert calls == [["helm", "dependency", "build", str(chart)]]
+    assert f"::error title=Chart {chart}::helm dependency build failed" in capsys.readouterr().out
+
+
 @pytest.mark.skipif(shutil.which("helm") is None, reason="helm is not installed")
 def test_render_renders_the_fixture_chart(tmp_path):
     assert not validate.render(f"{shlex.quote(str(FIXTURES / 'chart'))} --set team=validate", tmp_path)
@@ -76,6 +145,18 @@ def test_render_renders_the_fixture_chart(tmp_path):
         "datadog-cr-validate-test"
     ]
     assert not validate.dashboards(tmp_path)
+
+
+@pytest.mark.skipif(shutil.which("helm") is None, reason="helm is not installed")
+def test_render_builds_the_umbrella_fixture_dependency(tmp_path):
+    for fixture in ("chart", "umbrella"):
+        shutil.copytree(FIXTURES / fixture, tmp_path / fixture)
+    umbrella = tmp_path / "umbrella"
+
+    assert not validate.render(f"{shlex.quote(str(umbrella))} --set datadog-cr-validate-test.team=validate", tmp_path / "out")
+    assert [m["metadata"]["name"] for m in validate.resources(tmp_path / "out", "DatadogMonitor")] == [
+        "datadog-cr-validate-test"
+    ]
 
 
 def test_resources_skips_empty_documents_other_kinds_and_other_files(tmp_path):

@@ -155,7 +155,7 @@ A: Each line is split like a shell command line: the first word is the chart pat
 
 ### Q: Does it build chart dependencies?
 
-A: No. Charts are rendered with `helm template` as they are checked out, so a chart with dependencies needs its `charts/` directory available.
+A: Yes, when they are missing. A chart that declares dependencies not found in its `charts/` directory gets `helm dependency build` before it is rendered, the same as Argo CD does. Committed dependencies are used as they are. A dependency from a private registry needs a `helm registry login` before this runs.
 
 ### Q: Why does "Configure AWS credentials" fail?
 

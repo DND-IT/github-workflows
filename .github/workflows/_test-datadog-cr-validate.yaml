@@ -21,6 +21,7 @@ jobs:
     with:
       charts: |
         tests/datadog/chart --set team=validate
+        tests/datadog/umbrella --set datadog-cr-validate-test.team=validate
       check_tag_values: true
 
   test_python:
