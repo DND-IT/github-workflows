@@ -35,7 +35,7 @@ jobs:
       matrix: ${{ steps.build.outputs.matrix }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Build workflow matrix
         id: build
