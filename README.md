@@ -1,9 +1,7 @@
 # GitHub Workflows
 <!--intro-start-->
 
-<!-- TODO: change to release badge -->
-
-![GitHub Workflow Status](https://github.com/dnd-it/github-workflows/actions/workflows/gh-release-on-main.yaml/badge.svg)
+![GitHub Release](https://img.shields.io/github/v/release/dnd-it/github-workflows)
 
 Github Actions is a powerful tool for automating workflows in your repository. This repository contains a collection of GitHub workflows that are reusable across projects.
 
