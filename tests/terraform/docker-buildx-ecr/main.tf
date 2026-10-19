@@ -31,6 +31,9 @@ module "workflow_test_docker_buildx_ecr" {
   })
 
   tags = {
-    Usage = "Automated tests from github-workflows/_test-docker.yaml"
+    Usage      = "Automated tests from github-workflows/_test-docker-multi-arch.yaml"
+    GitHubRepo = "github-workflows"
+    GitHubOrg  = "dnd-it"
+    Workflow   = "_test-docker-multi-arch.yaml"
   }
 }
