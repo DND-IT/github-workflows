@@ -1,4 +1,4 @@
-FROM python:3.14-slim
+FROM python:3.15-slim
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app/
@@ -12,4 +12,4 @@ RUN pip install -Ur requirements.txt
 
 EXPOSE 8000
 
-CMD ["mkdocs", "serve"]
+CMD ["mkdocs", "serve", "-a", "0.0.0.0:8000"]
