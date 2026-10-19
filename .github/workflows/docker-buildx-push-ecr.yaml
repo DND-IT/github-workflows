@@ -185,7 +185,7 @@ jobs:
 
   manifest:
     needs: build
-    runs-on: ubuntu-26.04-arm
+    runs-on: ubuntu-26.04-arm # Pin version because we need "arm" and there is no "ubuntu-latest-arm".
     if: ${{ inputs.docker_push }}
     environment:
       name: ${{ inputs.environment }}
