@@ -120,21 +120,21 @@ jobs:
           merge-multiple: ${{ env.GH_ARTIFACT_MERGE_MULTIPLE }}
 
       - name: Terraform Format
-        uses: dflook/terraform-fmt-check@59168426e242f665bf7b70644d706224e665056a # v2
+        uses: dflook/terraform-fmt-check@e3f43c85d3e0a6bb3adb7be8c423c22c42d572bd # v3
         with:
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
           backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
 
       - name: Terraform Validate
-        uses: dflook/terraform-validate@4cef5d8a4b92bcd88486e41e22a42942a382c9d6 # v2
+        uses: dflook/terraform-validate@29a791ea3e8c3a7c0157bb21aba5a6ca59a69d6d # v3
         with:
           path: ${{ env.TF_DIR}}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
           backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
 
       - name: Use Workspace
-        uses: dflook/terraform-new-workspace@ac5eff4d33ad43d8b9c45bcaf4c58cae69313b13 # v2
+        uses: dflook/terraform-new-workspace@7309d1b2aea3e5438d204d5fa5065673c7525967 # v3
         with:
           workspace: ${{ env.TF_WORKSPACE }}
           path: ${{ env.TF_DIR }}
@@ -143,7 +143,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        uses: dflook/terraform-plan@7878bff63e2099cdc9be9a6f33cbbbf687f8f0fe # v2
+        uses: dflook/terraform-plan@48e90468aecdd1d8ea21617d4cecf0cd7746ff1d # v3
         env:
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
