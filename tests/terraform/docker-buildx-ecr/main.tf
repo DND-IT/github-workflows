@@ -10,8 +10,9 @@ module "workflow_test_docker_buildx_ecr" {
   source  = "terraform-aws-modules/ecr/aws"
   version = "2.4.0"
 
-  repository_name               = "test-docker-buildx-push"
-  repository_image_scan_on_push = false
+  repository_name                 = "test-docker-buildx-push"
+  repository_image_scan_on_push   = false
+  repository_image_tag_mutability = "MUTABLE"
   repository_lifecycle_policy = jsonencode({
     rules = [
       {
@@ -31,6 +32,9 @@ module "workflow_test_docker_buildx_ecr" {
   })
 
   tags = {
-    Usage = "Automated tests from github-workflows/_test-docker.yaml"
+    Usage      = "Automated tests from github-workflows/_test-docker-multi-arch.yaml"
+    GitHubRepo = "github-workflows"
+    GitHubOrg  = "dnd-it"
+    Workflow   = "_test-docker-multi-arch.yaml"
   }
 }

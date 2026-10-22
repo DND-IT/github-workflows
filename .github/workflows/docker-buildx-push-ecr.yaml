@@ -73,7 +73,7 @@ on:
 
 jobs:
   set-matrix:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
     steps:
@@ -89,10 +89,10 @@ jobs:
           _MATRIX='[]'
 
           if [[ "${{ inputs.docker_platforms }}" == *"linux/amd64"* ]]; then
-            _MATRIX=$(echo "$_MATRIX" | jq -c '. += [{"os": "ubuntu-24.04", "arch": "amd64", "platform": "linux/amd64"}]')
+            _MATRIX=$(echo "$_MATRIX" | jq -c '. += [{"os": "ubuntu-26.04", "arch": "amd64", "platform": "linux/amd64"}]')
           fi
           if [[ "${{ inputs.docker_platforms }}" == *"linux/arm64"* ]]; then
-            _MATRIX=$(echo "$_MATRIX" | jq -c '. += [{"os": "ubuntu-24.04-arm", "arch": "arm64", "platform": "linux/arm64"}]')
+            _MATRIX=$(echo "$_MATRIX" | jq -c '. += [{"os": "ubuntu-26.04-arm", "arch": "arm64", "platform": "linux/arm64"}]')
           fi
 
           echo "matrix=$_MATRIX"
@@ -112,7 +112,7 @@ jobs:
       matrix:
         include: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
           # Result e.g.:
-          # - os: ubuntu-24.04
+          # - os: ubuntu-26.04
           #   arch: amd64
           #   platform: linux/amd64
 
@@ -185,7 +185,7 @@ jobs:
 
   manifest:
     needs: build
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-26.04-arm # Pin version because we need "arm" and there is no "ubuntu-latest-arm".
     if: ${{ inputs.docker_push }}
     environment:
       name: ${{ inputs.environment }}
