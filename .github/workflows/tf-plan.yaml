@@ -119,21 +119,27 @@ jobs:
           pattern: ${{ env.GH_ARTIFACT_PATTERN }}
           merge-multiple: ${{ env.GH_ARTIFACT_MERGE_MULTIPLE }}
 
-      - name: Terraform Format
-        uses: dflook/terraform-fmt-check@e3f43c85d3e0a6bb3adb7be8c423c22c42d572bd # v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
         with:
-          path: ${{ env.TF_DIR}}
-          backend_config: ${{ env.TF_BACKEND_CONFIGS }}
-          backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
+          terraform_wrapper: false
 
+      - name: Terraform Format
+        working-directory: ${{ env.TF_DIR }}
+        run: terraform fmt -check -recursive -diff
+
+      # The plugin cache is the dflook container's $HOME cache, so the plan step reuses the providers downloaded here.
       - name: Terraform Validate
-        uses: dflook/terraform-validate@29a791ea3e8c3a7c0157bb21aba5a6ca59a69d6d # v3
-        with:
-          path: ${{ env.TF_DIR}}
-          backend_config: ${{ env.TF_BACKEND_CONFIGS }}
-          backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
+        working-directory: ${{ env.TF_DIR }}
+        env:
+          TF_PLUGIN_CACHE_DIR: ${{ runner.temp }}/_github_home/.terraform.d/plugin-cache
+        run: |
+          mkdir -p "$TF_PLUGIN_CACHE_DIR"
+          terraform init -backend=false -input=false
+          terraform validate
 
       - name: Use Workspace
+        if: env.TF_WORKSPACE != 'default'
         uses: dflook/terraform-new-workspace@7309d1b2aea3e5438d204d5fa5065673c7525967 # v3
         with:
           workspace: ${{ env.TF_WORKSPACE }}

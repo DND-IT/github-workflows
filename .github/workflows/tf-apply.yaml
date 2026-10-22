@@ -120,6 +120,7 @@ jobs:
           merge-multiple: ${{ env.GH_ARTIFACT_MERGE_MULTIPLE }}
 
       - name: Use Workspace
+        if: env.TF_WORKSPACE != 'default'
         uses: dflook/terraform-new-workspace@7309d1b2aea3e5438d204d5fa5065673c7525967 # v3
         with:
           workspace: ${{ env.TF_WORKSPACE }}
