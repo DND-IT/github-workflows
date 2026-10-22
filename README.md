@@ -3,6 +3,9 @@
 
 ![GitHub Release](https://img.shields.io/github/v/release/dnd-it/github-workflows)
 
+Fork to test tag releases, do not use this fork, it will be deleted after the tests
+
+
 Github Actions is a powerful tool for automating workflows in your repository. This repository contains a collection of GitHub workflows that are reusable across projects.
 
 Reusable workflows will not suit all projects, but they can be a good starting point for projects that have similar requirements.
