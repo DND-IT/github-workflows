@@ -140,7 +140,7 @@ jobs:
 
       - name: Use Workspace
         if: env.TF_WORKSPACE != 'default'
-        uses: dflook/terraform-new-workspace@7309d1b2aea3e5438d204d5fa5065673c7525967 # v3
+        uses: dflook/terraform-new-workspace@3b734345e280c48b1d62ecdd3099ce9f52895248 # v3
         with:
           workspace: ${{ env.TF_WORKSPACE }}
           path: ${{ env.TF_DIR }}
@@ -149,7 +149,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        uses: dflook/terraform-plan@48e90468aecdd1d8ea21617d4cecf0cd7746ff1d # v3
+        uses: dflook/terraform-plan@738d3a75f0d801d280dca5eb7357b89c8383267f # v3
         env:
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
