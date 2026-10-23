@@ -131,7 +131,7 @@ jobs:
         shell: bash
 
       - name: Terraform Destroy
-        uses: dflook/terraform-destroy-workspace@39da426c331b20348eea45b2deac91b77e5e4255 # v3
+        uses: dflook/terraform-destroy-workspace@38065bec09dd2848b6ad209709c8caddd6937e0d # v3
         if: ${{ steps.check_workspace.outputs.exists == 'true' }}
         id: first_try
         env:
@@ -151,7 +151,7 @@ jobs:
           variables: ${{ env.TF_VARS }}
 
       - name: Retry Terraform Destroy
-        uses: dflook/terraform-destroy-workspace@39da426c331b20348eea45b2deac91b77e5e4255 # v3
+        uses: dflook/terraform-destroy-workspace@38065bec09dd2848b6ad209709c8caddd6937e0d # v3
         if: ${{ steps.check_workspace.outputs.exists == 'true' && failure() && steps.first_try.outputs.failure-reason == 'destroy-failed' }}
         env:
           TERRAFORM_PRE_RUN: |
