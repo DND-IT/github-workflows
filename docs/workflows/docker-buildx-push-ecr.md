@@ -236,3 +236,12 @@ A: Yes you can call separately the workflows docker-build.yaml and docker-push-e
 **Q: Can I pass files and folders from other jobs?**
 
 A: Yes, you can upload them as artifacts and have the docker-build-push-ecr.yaml to download them via `artifact_path` and `artifact_name`. Example [`DND-IT/disco` PR](https://github.com/DND-IT/disco/pull/2836)
+
+**Q: My build fails with `429 Too Many Requests` or `toomanyrequests: Data limit exceeded` when pulling a base image from `public.ecr.aws`. How do I fix it?**
+
+A: Set `ecr_public_login: true`. ECR Public limits how much data anonymous clients can pull from one IP address. Runners share their IP addresses, so other jobs can use up that limit. With this input, the workflow logs in to ECR Public before the build, and pulls use your own, higher limit. The AWS role needs `ecr-public:GetAuthorizationToken` and `sts:GetServiceBearerToken`. The token always comes from `us-east-1`, so you don't need to change `aws_region`.
+
+```yaml
+    with:
+      ecr_public_login: true
+```
