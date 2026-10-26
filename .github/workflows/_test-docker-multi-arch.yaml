@@ -76,6 +76,19 @@ jobs:
       docker_build_args: |
         TEST_BUILD_ARG=expected-value
 
+  test_docker_buildx_ecr_public_login:
+    uses: ./.github/workflows/docker-buildx-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-buildx-push
+      docker_context: tests/docker
+      dockerfile_path: tests/docker/ecr-public.Dockerfile
+      docker_push: false
+      docker_platforms: "linux/arm64"
+      ecr_public_login: true
+
   ## Cleanups
   # TODO: enable after tests finished
   # cleanup_docker_ecr:
