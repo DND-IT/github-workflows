@@ -95,6 +95,18 @@ jobs:
       docker_build_args: |
         TEST_BUILD_ARG=expected-value
 
+  test_docker_build_push_ecr_public_login:
+    uses: ./.github/workflows/docker-build-push-ecr.yaml
+    with:
+      aws_account_id: ${{ vars.aws_account_id }}
+      aws_region: ${{ vars.aws_region }}
+      aws_role_name: ${{ vars.aws_role_name }}
+      image_name: test-docker-build-push
+      docker_context: tests/docker
+      dockerfile_path: tests/docker/ecr-public.Dockerfile
+      docker_push: false
+      ecr_public_login: true
+
   upload_artifact:
     runs-on: ubuntu-latest
     steps:

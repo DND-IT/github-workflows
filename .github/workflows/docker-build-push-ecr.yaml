@@ -50,6 +50,10 @@ on:
         required: false
         type: string
         default: ''
+      ecr_public_login:
+        description: "Log in to ECR Public before the build so base image pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken."
+        type: boolean
+        default: false
       artifact_name:
         description: "Artifact name to be downloaded before building"
         type: string
@@ -113,6 +117,12 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
+
+      - name: Login to Amazon ECR Public
+        if: inputs.ecr_public_login
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2
+        with:
+          registry-type: public
 
       - name: Sanitize Image Tag
         run: |
