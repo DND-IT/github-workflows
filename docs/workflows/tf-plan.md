@@ -34,6 +34,7 @@ This workflow runs `terraform plan` and uploads the plan to Github Action summar
 | `tf_vars` | <p>Variables to set for the Terraform plan. This should be valid Terraform syntax.</p> | `string` | `false` | `""` |
 | `tf_pre_run` | <p>Command to run before Terraform is executed.</p> | `string` | `false` | `""` |
 | `tf_workspace` | <p>Terraform workspace</p> | `string` | `false` | `""` |
+| `tf_version` | <p>Terraform version to install for the format and validate steps. Defaults to the version the configuration asks for in required_version.</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/tf-plan.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/tf-plan.yaml" -->
@@ -176,6 +177,13 @@ jobs:
 
       tf_workspace:
       # Terraform workspace
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      tf_version:
+      # Terraform version to install for the format and validate steps. Defaults to the version the configuration asks for in required_version.
       #
       # Type: string
       # Required: false

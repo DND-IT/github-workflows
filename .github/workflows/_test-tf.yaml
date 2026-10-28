@@ -210,3 +210,66 @@ jobs:
         key=sandbox-checkout-ref.tfstate
         workspace_key_prefix=github-workflows
       tf_var_files: tests/terraform/s3/environment/sandbox.tfvars
+
+  test_tf_plan_pinned_version:
+    uses: ./.github/workflows/tf-plan.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/pinned
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-pinned-version.tfstate
+        workspace_key_prefix=github-workflows
+
+  test_tf_feature_pinned_version:
+    uses: ./.github/workflows/tf-feature.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/pinned
+      tf_workspace: pinned-version
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-pinned-version.tfstate
+        workspace_key_prefix=github-workflows
+
+  # "pinned" is a prefix of the existing "pinned-version" workspace. It must not count as existing.
+  test_tf_cleanup_workspace_prefix:
+    needs: test_tf_feature_pinned_version
+    uses: ./.github/workflows/tf-cleanup.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/pinned
+      tf_workspace: pinned
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-pinned-version.tfstate
+        workspace_key_prefix=github-workflows
+
+  test_tf_cleanup_pinned_version:
+    needs: test_tf_cleanup_workspace_prefix
+    uses: ./.github/workflows/tf-cleanup.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/pinned
+      tf_workspace: pinned-version
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-pinned-version.tfstate
+        workspace_key_prefix=github-workflows
+
+  test_tf_cleanup_tf_version_input:
+    uses: ./.github/workflows/tf-cleanup.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/pinned
+      tf_workspace: this-workspace-does-not-exist
+      tf_version: 1.10.5
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-pinned-version.tfstate
+        workspace_key_prefix=github-workflows
