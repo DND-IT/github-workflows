@@ -66,6 +66,9 @@ on:
       tf_workspace:
         description: "Terraform workspace"
         type: string
+      tf_version:
+        description: "Terraform version to install for the format and validate steps. Defaults to the version the configuration asks for in required_version."
+        type: string
 jobs:
   plan:
     permissions:
@@ -84,6 +87,7 @@ jobs:
       TF_BACKEND_CONFIG_FILES: ${{ inputs.tf_backend_config_files || vars.tf_backend_config_files }}
       TF_VAR_FILES: ${{ inputs.tf_var_files || vars.tf_var_files }}
       TF_VARS: ${{ inputs.tf_vars || vars.tf_vars }}
+      TF_VERSION: ${{ inputs.tf_version || vars.tf_version }}
     steps:
       - name: Sanitise Environment Variables
         run: |
@@ -119,9 +123,20 @@ jobs:
           pattern: ${{ env.GH_ARTIFACT_PATTERN }}
           merge-multiple: ${{ env.GH_ARTIFACT_MERGE_MULTIPLE }}
 
+      - name: Resolve Terraform Version
+        id: tf_version
+        if: env.TF_VERSION == ''
+        uses: dflook/terraform-version@8303a2d3c80d7815bde6b2f19cf7cb1054c6ede9 # v3
+        with:
+          path: ${{ env.TF_DIR }}
+          workspace: ${{ env.TF_WORKSPACE }}
+          backend_config: ${{ env.TF_BACKEND_CONFIGS }}
+          backend_config_file: ${{ env.TF_BACKEND_CONFIG_FILES }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
         with:
+          terraform_version: ${{ env.TF_VERSION || steps.tf_version.outputs.terraform }}
           terraform_wrapper: false
 
       - name: Terraform Format

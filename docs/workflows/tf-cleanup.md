@@ -29,6 +29,7 @@ This workflow cleans up the Terraform preview deployments.
 | `tf_vars` | <p>New line separated list of terraform variables</p> | `string` | `false` | `""` |
 | `tf_pre_run` | <p>Command to run before Terraform is executed.</p> | `string` | `false` | `""` |
 | `tf_workspace` | <p>Terraform workspace</p> | `string` | `false` | `""` |
+| `tf_version` | <p>Terraform version to install for the workspace check. Defaults to the version the configuration asks for in required_version.</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/tf-cleanup.yaml" -->
 
 <!-- action-docs-outputs source=".github/workflows/tf-cleanup.yaml" -->
@@ -136,6 +137,13 @@ jobs:
 
       tf_workspace:
       # Terraform workspace
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      tf_version:
+      # Terraform version to install for the workspace check. Defaults to the version the configuration asks for in required_version.
       #
       # Type: string
       # Required: false
