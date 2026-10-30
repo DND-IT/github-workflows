@@ -54,7 +54,9 @@ jobs:
       deployment: ${{ inputs.gh_deployment }}
     env:
       ENVIRONMENT: ${{ inputs.environment }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # On tag pushes dflook would page through every PR in the repo looking for one that matches the commit.
+      # Tags never match, so hand it an empty token: its first API call gets a 401 and it skips the PR comment.
+      GITHUB_TOKEN: ${{ github.ref_type != 'tag' && secrets.GITHUB_TOKEN || '' }}
       TF_DIR: ${{ inputs.tf_dir || vars.tf_dir || '.' }}
       TF_BACKEND_CONFIGS: ${{ inputs.tf_backend_configs || vars.tf_backend_configs }}
       TF_BACKEND_CONFIG_FILES: ${{ inputs.tf_backend_config_files || vars.tf_backend_config_files }}
