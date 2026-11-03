@@ -2101,6 +2101,13 @@
 <td><code>false</code></td>
 <td><code>""</code></td>
 </tr>
+<tr>
+<td><code>tf_version</code></td>
+<td><p>Terraform version to install for the workspace check. Defaults to the version the configuration asks for in required_version.</p></td>
+<td><code>string</code></td>
+<td><code>false</code></td>
+<td><code>""</code></td>
+</tr>
 </tbody>
 </table>
 <!-- action-docs-inputs source=".github/workflows/tf-cleanup.yaml" -->
@@ -2212,6 +2219,13 @@
 </span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99" href="#__codelineno-0-99"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100" href="#__codelineno-0-100"></a><span class="w">      </span><span class="c1"># Required: false</span>
 </span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101" href="#__codelineno-0-101"></a><span class="w">      </span><span class="c1"># Default: ""</span>
+</span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102" href="#__codelineno-0-102"></a>
+</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103" href="#__codelineno-0-103"></a><span class="w">      </span><span class="nt">tf_version</span><span class="p">:</span>
+</span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104" href="#__codelineno-0-104"></a><span class="w">      </span><span class="c1"># Terraform version to install for the workspace check. Defaults to the version the configuration asks for in required_version.</span>
+</span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105" href="#__codelineno-0-105"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106" href="#__codelineno-0-106"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107" href="#__codelineno-0-107"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108" href="#__codelineno-0-108"></a><span class="w">      </span><span class="c1"># Default: ""</span>
 </span></code></pre></div>
 <!-- action-docs-usage source=".github/workflows/tf-cleanup.yaml" project="dnd-it/github-workflows/.github/workflows/tf-cleanup.yaml" version="v2" -->
 
