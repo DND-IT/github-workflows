@@ -7,6 +7,8 @@ on:
     paths:
       - 'docs/**'
       - 'mkdocs.yaml'
+      - 'requirements.txt'
+      - '.github/workflows/techdocs.yaml'
   workflow_dispatch:
 
 
