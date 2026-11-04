@@ -57,6 +57,10 @@ on:
       tf_pre_run:
         description: "Command to run before Terraform is executed."
         type: string
+      ecr_public_login:
+        description: "Log in to ECR Public before Terraform runs so Helm chart pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken."
+        type: boolean
+        default: false
       tf_workspace:
         description: "Terraform workspace"
         type: string
@@ -106,6 +110,15 @@ jobs:
         with:
           role-to-assume: ${{ env.ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
+
+      # The dflook actions run Helm with HOME=/github/home, which is ${{ runner.temp }}/_github_home on the runner.
+      - name: Login to Amazon ECR Public
+        if: inputs.ecr_public_login
+        env:
+          HELM_REGISTRY_CONFIG: ${{ runner.temp }}/_github_home/.config/helm/registry/config.json
+        run: |
+          mkdir -p "$(dirname "$HELM_REGISTRY_CONFIG")"
+          aws ecr-public get-login-password --region us-east-1 | helm registry login public.ecr.aws --username AWS --password-stdin
 
       - name: Download Artifacts
         env:
