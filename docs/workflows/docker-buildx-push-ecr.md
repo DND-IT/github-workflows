@@ -35,13 +35,13 @@ title: Docker Multi-Arch Build and Push to ECR
 
 <!-- action-docs-outputs source=".github/workflows/docker-buildx-push-ecr.yaml" -->
 
-<!-- action-docs-usage source=".github/workflows/docker-buildx-push-ecr.yaml" project="tx-pts-dai/github-workflows/.github/workflows/docker-buildx-push-ecr.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/docker-buildx-push-ecr.yaml" -->
 ### Usage
 
 ```yaml
 jobs:
   job1:
-    uses: tx-pts-dai/github-workflows/.github/workflows/docker-buildx-push-ecr.yaml@v2
+    uses: dnd-it/github-workflows/.github/workflows/docker-buildx-push-ecr.yaml@v2
     with:
       environment:
       # Environment to run the build in
@@ -183,14 +183,14 @@ jobs:
       # Required: false
       # Default: ""
 ```
-<!-- action-docs-usage source=".github/workflows/docker-buildx-push-ecr.yaml" project="tx-pts-dai/github-workflows/.github/workflows/docker-buildx-push-ecr.yaml" version="v2" -->
+<!-- action-docs-usage source=".github/workflows/docker-buildx-push-ecr.yaml" -->
 
 ## Example
 
 ```yaml
 on: [push, pull_request]
 jobs:
-  docker_build_push_ecr:
+  docker_buildx_push_ecr:
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
     with:
       environment: 'production'
