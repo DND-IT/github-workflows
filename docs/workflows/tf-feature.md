@@ -31,6 +31,7 @@ This workflow deploys a Terraform configuration to a preview environment.
 | `tf_var_files` | <p>New line separated list of terraform variable files</p> | `string` | `false` | `""` |
 | `tf_vars` | <p>New line separated list of terraform variables</p> | `string` | `false` | `""` |
 | `tf_pre_run` | <p>Command to run before Terraform is executed.</p> | `string` | `false` | `""` |
+| `ecr_public_login` | <p>Log in to ECR Public before Terraform runs so Helm chart pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken.</p> | `boolean` | `false` | `false` |
 | `tf_workspace` | <p>Terraform workspace</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/tf-feature.yaml" -->
 
@@ -162,6 +163,13 @@ jobs:
       # Required: false
       # Default: ""
 
+      ecr_public_login:
+      # Log in to ECR Public before Terraform runs so Helm chart pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: false
+
       tf_workspace:
       # Terraform workspace
       #
@@ -174,3 +182,12 @@ jobs:
 # Example
 
 # FAQ
+
+**Q: Terraform fails with `429 Too Many Requests` or `toomanyrequests: Data limit exceeded` when the Helm provider pulls a chart from `oci://public.ecr.aws`. How do I fix it?**
+
+A: Set `ecr_public_login: true`. ECR Public limits how much data anonymous clients can pull from one IP address. Runners share their IP addresses, so other jobs can use up that limit. With this input, the workflow logs in to ECR Public before Terraform runs, and chart pulls use your own, higher limit. The AWS role needs `ecr-public:GetAuthorizationToken` and `sts:GetServiceBearerToken`. The token always comes from `us-east-1`, so you don't need to change `aws_region`. The login works with or without `tf_pre_run`.
+
+```yaml
+    with:
+      ecr_public_login: true
+```

@@ -273,3 +273,67 @@ jobs:
         bucket=tf-state-911453050078
         key=test-tf-pinned-version.tfstate
         workspace_key_prefix=github-workflows
+
+  test_tf_plan_ecr_public_login:
+    uses: ./.github/workflows/tf-plan.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/ecr-public
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-ecr-public-login.tfstate
+        workspace_key_prefix=github-workflows
+      ecr_public_login: true
+
+  test_tf_feature_ecr_public_login:
+    uses: ./.github/workflows/tf-feature.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/ecr-public
+      tf_workspace: ecr-public-login
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-ecr-public-login.tfstate
+        workspace_key_prefix=github-workflows
+      ecr_public_login: true
+
+  test_tf_cleanup_ecr_public_login:
+    needs: test_tf_feature_ecr_public_login
+    uses: ./.github/workflows/tf-cleanup.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/ecr-public
+      tf_workspace: ecr-public-login
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-ecr-public-login.tfstate
+        workspace_key_prefix=github-workflows
+      ecr_public_login: true
+
+  test_tf_apply_ecr_public_login:
+    uses: ./.github/workflows/tf-apply.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/ecr-public
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-ecr-public-login-apply.tfstate
+        workspace_key_prefix=github-workflows
+      ecr_public_login: true
+
+  test_tf_destroy_ecr_public_login:
+    needs: test_tf_apply_ecr_public_login
+    uses: ./.github/workflows/tf-destroy.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/ecr-public
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-ecr-public-login-apply.tfstate
+        workspace_key_prefix=github-workflows
+      ecr_public_login: true

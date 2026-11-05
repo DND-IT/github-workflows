@@ -19,6 +19,12 @@ make gen_docs_run
 # Tests are automatically triggered on PRs when workflows or test files change
 ```
 
+## Before Opening a PR
+
+1. `pre-commit run --all-files` — must pass with no file changes.
+2. `make gen_docs_run` — after changing any workflow's inputs, outputs or description. Commit the regenerated `docs/workflows/*.md`.
+3. Tick both boxes in `.github/pull_request_template.md` only after running them. No CI job checks either.
+
 ## Architecture and Key Patterns
 
 ### Workflow Organization
