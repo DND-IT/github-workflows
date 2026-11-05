@@ -2130,6 +2130,13 @@
 <td><code>""</code></td>
 </tr>
 <tr>
+<td><code>ecr_public_login</code></td>
+<td><p>Log in to ECR Public before Terraform runs so Helm chart pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken.</p></td>
+<td><code>boolean</code></td>
+<td><code>false</code></td>
+<td><code>false</code></td>
+</tr>
+<tr>
 <td><code>tf_workspace</code></td>
 <td><p>Terraform workspace</p></td>
 <td><code>string</code></td>
@@ -2283,24 +2290,36 @@
 </span><span id="__span-0-128"><a id="__codelineno-0-128" name="__codelineno-0-128" href="#__codelineno-0-128"></a><span class="w">      </span><span class="c1"># Required: false</span>
 </span><span id="__span-0-129"><a id="__codelineno-0-129" name="__codelineno-0-129" href="#__codelineno-0-129"></a><span class="w">      </span><span class="c1"># Default: ""</span>
 </span><span id="__span-0-130"><a id="__codelineno-0-130" name="__codelineno-0-130" href="#__codelineno-0-130"></a>
-</span><span id="__span-0-131"><a id="__codelineno-0-131" name="__codelineno-0-131" href="#__codelineno-0-131"></a><span class="w">      </span><span class="nt">tf_workspace</span><span class="p">:</span>
-</span><span id="__span-0-132"><a id="__codelineno-0-132" name="__codelineno-0-132" href="#__codelineno-0-132"></a><span class="w">      </span><span class="c1"># Terraform workspace</span>
+</span><span id="__span-0-131"><a id="__codelineno-0-131" name="__codelineno-0-131" href="#__codelineno-0-131"></a><span class="w">      </span><span class="nt">ecr_public_login</span><span class="p">:</span>
+</span><span id="__span-0-132"><a id="__codelineno-0-132" name="__codelineno-0-132" href="#__codelineno-0-132"></a><span class="w">      </span><span class="c1"># Log in to ECR Public before Terraform runs so Helm chart pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken.</span>
 </span><span id="__span-0-133"><a id="__codelineno-0-133" name="__codelineno-0-133" href="#__codelineno-0-133"></a><span class="w">      </span><span class="c1">#</span>
-</span><span id="__span-0-134"><a id="__codelineno-0-134" name="__codelineno-0-134" href="#__codelineno-0-134"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-134"><a id="__codelineno-0-134" name="__codelineno-0-134" href="#__codelineno-0-134"></a><span class="w">      </span><span class="c1"># Type: boolean</span>
 </span><span id="__span-0-135"><a id="__codelineno-0-135" name="__codelineno-0-135" href="#__codelineno-0-135"></a><span class="w">      </span><span class="c1"># Required: false</span>
-</span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136" href="#__codelineno-0-136"></a><span class="w">      </span><span class="c1"># Default: ""</span>
+</span><span id="__span-0-136"><a id="__codelineno-0-136" name="__codelineno-0-136" href="#__codelineno-0-136"></a><span class="w">      </span><span class="c1"># Default: false</span>
 </span><span id="__span-0-137"><a id="__codelineno-0-137" name="__codelineno-0-137" href="#__codelineno-0-137"></a>
-</span><span id="__span-0-138"><a id="__codelineno-0-138" name="__codelineno-0-138" href="#__codelineno-0-138"></a><span class="w">      </span><span class="nt">tf_version</span><span class="p">:</span>
-</span><span id="__span-0-139"><a id="__codelineno-0-139" name="__codelineno-0-139" href="#__codelineno-0-139"></a><span class="w">      </span><span class="c1"># Terraform version to install for the format and validate steps. Defaults to the version the configuration asks for in required_version.</span>
+</span><span id="__span-0-138"><a id="__codelineno-0-138" name="__codelineno-0-138" href="#__codelineno-0-138"></a><span class="w">      </span><span class="nt">tf_workspace</span><span class="p">:</span>
+</span><span id="__span-0-139"><a id="__codelineno-0-139" name="__codelineno-0-139" href="#__codelineno-0-139"></a><span class="w">      </span><span class="c1"># Terraform workspace</span>
 </span><span id="__span-0-140"><a id="__codelineno-0-140" name="__codelineno-0-140" href="#__codelineno-0-140"></a><span class="w">      </span><span class="c1">#</span>
 </span><span id="__span-0-141"><a id="__codelineno-0-141" name="__codelineno-0-141" href="#__codelineno-0-141"></a><span class="w">      </span><span class="c1"># Type: string</span>
 </span><span id="__span-0-142"><a id="__codelineno-0-142" name="__codelineno-0-142" href="#__codelineno-0-142"></a><span class="w">      </span><span class="c1"># Required: false</span>
 </span><span id="__span-0-143"><a id="__codelineno-0-143" name="__codelineno-0-143" href="#__codelineno-0-143"></a><span class="w">      </span><span class="c1"># Default: ""</span>
+</span><span id="__span-0-144"><a id="__codelineno-0-144" name="__codelineno-0-144" href="#__codelineno-0-144"></a>
+</span><span id="__span-0-145"><a id="__codelineno-0-145" name="__codelineno-0-145" href="#__codelineno-0-145"></a><span class="w">      </span><span class="nt">tf_version</span><span class="p">:</span>
+</span><span id="__span-0-146"><a id="__codelineno-0-146" name="__codelineno-0-146" href="#__codelineno-0-146"></a><span class="w">      </span><span class="c1"># Terraform version to install for the format and validate steps. Defaults to the version the configuration asks for in required_version.</span>
+</span><span id="__span-0-147"><a id="__codelineno-0-147" name="__codelineno-0-147" href="#__codelineno-0-147"></a><span class="w">      </span><span class="c1">#</span>
+</span><span id="__span-0-148"><a id="__codelineno-0-148" name="__codelineno-0-148" href="#__codelineno-0-148"></a><span class="w">      </span><span class="c1"># Type: string</span>
+</span><span id="__span-0-149"><a id="__codelineno-0-149" name="__codelineno-0-149" href="#__codelineno-0-149"></a><span class="w">      </span><span class="c1"># Required: false</span>
+</span><span id="__span-0-150"><a id="__codelineno-0-150" name="__codelineno-0-150" href="#__codelineno-0-150"></a><span class="w">      </span><span class="c1"># Default: ""</span>
 </span></code></pre></div>
 <!-- action-docs-usage source=".github/workflows/tf-plan.yaml" project="dnd-it/github-workflows/.github/workflows/tf-plan.yaml" version="v2" -->
 
 <h1 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h1>
 <h1 id="faq">FAQ<a class="headerlink" href="#faq" title="Permanent link">&para;</a></h1>
+<p><strong>Q: Terraform fails with <code>429 Too Many Requests</code> or <code>toomanyrequests: Data limit exceeded</code> when the Helm provider pulls a chart from <code>oci://public.ecr.aws</code>. How do I fix it?</strong></p>
+<p>A: Set <code>ecr_public_login: true</code>. ECR Public limits how much data anonymous clients can pull from one IP address. Runners share their IP addresses, so other jobs can use up that limit. With this input, the workflow logs in to ECR Public before Terraform runs, and chart pulls use your own, higher limit. The AWS role needs <code>ecr-public:GetAuthorizationToken</code> and <code>sts:GetServiceBearerToken</code>. The token always comes from <code>us-east-1</code>, so you don't need to change <code>aws_region</code>. The login works with or without <code>tf_pre_run</code>.</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="w">    </span><span class="nt">with</span><span class="p">:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">      </span><span class="nt">ecr_public_login</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span></code></pre></div>
 
 
 
