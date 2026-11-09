@@ -55,9 +55,9 @@ on:
         type: string
         default: ''
       docker_provenance:
-        description: "Attach a provenance attestation to the image. Default is 'false'. ECR allows at most 100 attestations per image, so rebuilds of an unchanged image can hit that limit."
+        description: "Attach a provenance attestation to the image. ECR allows at most 100 attestations per image. Set to 'false' if rebuilds of an unchanged image hit that limit."
         type: boolean
-        default: false
+        default: true
       ecr_public_login:
         description: "Log in to ECR Public before the build so base image pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken."
         type: boolean
