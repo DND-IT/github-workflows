@@ -54,6 +54,10 @@ on:
         required: false
         type: string
         default: ''
+      docker_provenance:
+        description: "Attach a provenance attestation to the image. ECR allows at most 100 attestations per image. Set to 'false' if rebuilds of an unchanged image hit that limit."
+        type: boolean
+        default: true
       ecr_public_login:
         description: "Log in to ECR Public before the build so base image pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken."
         type: boolean
@@ -188,6 +192,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: ${{ inputs.docker_push }}
+          provenance: ${{ inputs.docker_provenance }}
           target: ${{ env.DOCKER_TARGET }}
           tags: |
             ${{ (env.PUSH_SHA_TAG == 'true' && format('{0}/{1}:{2}-{3}', env.REGISTRY, env.REPOSITORY, github.sha, env.ARCH)) || '' }}
