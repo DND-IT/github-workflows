@@ -28,6 +28,7 @@ This workflow builds a Docker image and pushes it to the Elastic Container Regis
 | `docker_push` | <p>Push Image to ECR</p> | `boolean` | `false` | `true` |
 | `docker_target` | <p>Build target</p> | `string` | `false` | `""` |
 | `docker_build_args` | <p>Additional Docker build arguments (newline-separated KEY=VALUE pairs)</p> | `string` | `false` | `""` |
+| `docker_provenance` | <p>Attach a provenance attestation to the image. Default is 'false'. ECR allows at most 100 attestations per image, so rebuilds of an unchanged image can hit that limit.</p> | `boolean` | `false` | `false` |
 | `ecr_public_login` | <p>Log in to ECR Public before the build so base image pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken.</p> | `boolean` | `false` | `false` |
 | `artifact_name` | <p>Artifact name to be downloaded before building</p> | `string` | `false` | `""` |
 | `artifact_path` | <p>Artifact target path</p> | `string` | `false` | `""` |
@@ -139,6 +140,13 @@ jobs:
       # Type: string
       # Required: false
       # Default: ""
+
+      docker_provenance:
+      # Attach a provenance attestation to the image. Default is 'false'. ECR allows at most 100 attestations per image, so rebuilds of an unchanged image can hit that limit.
+      #
+      # Type: boolean
+      # Required: false
+      # Default: false
 
       ecr_public_login:
       # Log in to ECR Public before the build so base image pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken.
