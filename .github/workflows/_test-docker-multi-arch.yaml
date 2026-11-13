@@ -1,13 +1,13 @@
+name: Test Docker Multi-Arch and Push to ECR
 on:
-  # TODO: fix tests as they are not working correctly
-  # pull_request:
-  #   branches:
-  #     - main
-  #   paths:
-  #     - ".github/workflows/_test-docker-multi-arch.yaml"
-  #     - ".github/workflows/docker-buildx-push-ecr.yaml"
-  #     - "tests/docker-multi-arch/**"
-  #     - "tests/terraform/docker-buildc-ecr/**"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/_test-docker-multi-arch.yaml"
+      - ".github/workflows/docker-buildx-push-ecr.yaml"
+      - "tests/docker-multi-arch/**"
+      - "tests/terraform/docker-buildx-ecr/**"
   workflow_dispatch:
 jobs:
   ## Setups
@@ -23,6 +23,7 @@ jobs:
 
   ## Tests
   test_docker_buildx_amd64_push_ecr:
+    name: amd64
     needs: setup_docker_ecr
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
     with:
@@ -36,6 +37,7 @@ jobs:
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/amd64"
   test_docker_buildx_arm64_push_ecr:
+    name: arm64
     needs: setup_docker_ecr
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
     with:
@@ -49,6 +51,7 @@ jobs:
       docker_push: true # required to validate the ECR manifest
       docker_platforms: "linux/arm64"
   test_docker_buildx_both_push_ecr:
+    name: both
     needs:
       - setup_docker_ecr
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
@@ -63,6 +66,7 @@ jobs:
       docker_platforms: "linux/amd64,linux/arm64"
 
   test_docker_buildx_build_args:
+    name: args
     uses: ./.github/workflows/docker-buildx-push-ecr.yaml
     with:
       aws_account_id: ${{ vars.aws_account_id }}
