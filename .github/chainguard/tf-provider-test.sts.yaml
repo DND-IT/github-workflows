@@ -1,0 +1,7 @@
+issuer: https://token.actions.githubusercontent.com
+subject_pattern: repo:DND-IT(@19909911)?/github-workflows(@938644613)?:pull_request
+claim_pattern:
+  workflow_ref: DND-IT/github-workflows/\.github/workflows/_test-tf\.yaml@refs/pull/[0-9]+/merge
+app: "2120109"
+permissions:
+  metadata: read
