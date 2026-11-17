@@ -182,7 +182,7 @@ jobs:
         workspace_key_prefix=github-workflows
       gh_token_broker_url: ${{ vars.TOKEN_BROKER_URL }}
       gh_token_broker_identity: tf-provider-test
-      tf_pre_run: test -n "$GITHUB_TOKEN" && test "$GITHUB_TOKEN" != "$TERRAFORM_ACTIONS_GITHUB_TOKEN"
+      tf_pre_run: test -n '$GITHUB_TOKEN' && test '$GITHUB_TOKEN' != '$TERRAFORM_ACTIONS_GITHUB_TOKEN'
 
   test_tf_apply_token_broker:
     needs: test_tf_plan_token_broker
@@ -197,7 +197,7 @@ jobs:
         workspace_key_prefix=github-workflows
       gh_token_broker_url: ${{ vars.TOKEN_BROKER_URL }}
       gh_token_broker_identity: tf-provider-test
-      tf_pre_run: test -n "$GITHUB_TOKEN" && test "$GITHUB_TOKEN" != "$TERRAFORM_ACTIONS_GITHUB_TOKEN"
+      tf_pre_run: test -n '$GITHUB_TOKEN' && test '$GITHUB_TOKEN' != '$TERRAFORM_ACTIONS_GITHUB_TOKEN'
 
   test_tf_destroy_token_broker:
     needs: test_tf_apply_token_broker
@@ -212,7 +212,7 @@ jobs:
         workspace_key_prefix=github-workflows
       gh_token_broker_url: ${{ vars.TOKEN_BROKER_URL }}
       gh_token_broker_identity: tf-provider-test
-      tf_pre_run: test -n "$GITHUB_TOKEN" && test "$GITHUB_TOKEN" != "$TERRAFORM_ACTIONS_GITHUB_TOKEN"
+      tf_pre_run: test -n '$GITHUB_TOKEN' && test '$GITHUB_TOKEN' != '$TERRAFORM_ACTIONS_GITHUB_TOKEN'
 
   test_tf_feature_token_broker:
     uses: ./.github/workflows/tf-feature.yaml
@@ -227,7 +227,7 @@ jobs:
       tf_workspace: token-broker
       gh_token_broker_url: ${{ vars.TOKEN_BROKER_URL }}
       gh_token_broker_identity: tf-provider-test
-      tf_pre_run: test -n "$GITHUB_TOKEN" && test "$GITHUB_TOKEN" != "$TERRAFORM_ACTIONS_GITHUB_TOKEN"
+      tf_pre_run: test -n '$GITHUB_TOKEN' && test '$GITHUB_TOKEN' != '$TERRAFORM_ACTIONS_GITHUB_TOKEN'
 
   test_tf_cleanup_token_broker:
     needs: test_tf_feature_token_broker
@@ -243,7 +243,7 @@ jobs:
       tf_workspace: token-broker
       gh_token_broker_url: ${{ vars.TOKEN_BROKER_URL }}
       gh_token_broker_identity: tf-provider-test
-      tf_pre_run: test -n "$GITHUB_TOKEN" && test "$GITHUB_TOKEN" != "$TERRAFORM_ACTIONS_GITHUB_TOKEN"
+      tf_pre_run: test -n '$GITHUB_TOKEN' && test '$GITHUB_TOKEN' != '$TERRAFORM_ACTIONS_GITHUB_TOKEN'
 
   test_upload_artifact:
     runs-on: ubuntu-latest
