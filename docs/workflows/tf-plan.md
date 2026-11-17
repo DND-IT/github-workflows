@@ -35,6 +35,9 @@ This workflow runs `terraform plan` and uploads the plan to Github Action summar
 | `tf_pre_run` | <p>Command to run before Terraform is executed.</p> | `string` | `false` | `""` |
 | `ecr_public_login` | <p>Log in to ECR Public before Terraform runs so Helm chart pulls from public.ecr.aws are authenticated. The AWS role needs ecr-public:GetAuthorizationToken and sts:GetServiceBearerToken.</p> | `boolean` | `false` | `false` |
 | `tf_workspace` | <p>Terraform workspace</p> | `string` | `false` | `""` |
+| `gh_token_broker_url` | <p>Token broker exchange URL, such as https://github-sts.example.com/sts/exchange.</p> | `string` | `false` | `""` |
+| `gh_token_broker_identity` | <p>Trust policy name at the token broker (the scope repository holds it as .github/chainguard/IDENTITY.sts.yaml). When set, Terraform gets the broker's GitHub App token as GITHUB_TOKEN, for the integrations/github provider; PR comments keep using the workflow token.</p> | `string` | `false` | `""` |
+| `gh_token_broker_scope` | <p>Repository (owner/repo) the broker token is issued for. Defaults to the current repository.</p> | `string` | `false` | `""` |
 | `tf_version` | <p>Terraform version to install for the format and validate steps. Defaults to the version the configuration asks for in required_version.</p> | `string` | `false` | `""` |
 <!-- action-docs-inputs source=".github/workflows/tf-plan.yaml" -->
 
@@ -185,6 +188,27 @@ jobs:
 
       tf_workspace:
       # Terraform workspace
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      gh_token_broker_url:
+      # Token broker exchange URL, such as https://github-sts.example.com/sts/exchange.
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      gh_token_broker_identity:
+      # Trust policy name at the token broker (the scope repository holds it as .github/chainguard/IDENTITY.sts.yaml). When set, Terraform gets the broker's GitHub App token as GITHUB_TOKEN, for the integrations/github provider; PR comments keep using the workflow token.
+      #
+      # Type: string
+      # Required: false
+      # Default: ""
+
+      gh_token_broker_scope:
+      # Repository (owner/repo) the broker token is issued for. Defaults to the current repository.
       #
       # Type: string
       # Required: false
