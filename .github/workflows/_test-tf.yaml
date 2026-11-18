@@ -337,3 +337,76 @@ jobs:
         key=test-tf-ecr-public-login-apply.tfstate
         workspace_key_prefix=github-workflows
       ecr_public_login: true
+
+  test_tf_cleanup_stale_feature:
+    uses: ./.github/workflows/tf-feature.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: tests/terraform/s3
+      tf_workspace: tf-cleanup-stale-${{ github.run_id }}
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=test-tf-cleanup-stale.tfstate
+        workspace_key_prefix=github-workflows
+      tf_var_files: tests/terraform/s3/environment/sandbox.tfvars
+
+  test_tf_cleanup_stale_find:
+    needs: test_tf_cleanup_stale_feature
+    uses: ./.github/workflows/tf-cleanup-stale.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_state_bucket: tf-state-911453050078
+      tf_workspace_key_prefix: github-workflows
+      workspace_pattern: ^tf-cleanup-stale-${{ github.run_id }}$
+      targets: |
+        - name: s3
+          state_key: test-tf-cleanup-stale.tfstate
+          tf_dir: tests/terraform/s3
+
+  test_tf_cleanup_stale_find_targeted_missing:
+    uses: ./.github/workflows/tf-cleanup-stale.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_state_bucket: tf-state-911453050078
+      tf_workspace_key_prefix: github-workflows
+      workspace: this-workspace-does-not-exist
+      targets: |
+        - name: s3
+          state_key: test-tf-cleanup-stale.tfstate
+
+  test_tf_cleanup_stale_assert:
+    needs: [test_tf_cleanup_stale_find, test_tf_cleanup_stale_find_targeted_missing]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the found workspaces
+        env:
+          MATRIX: ${{ needs.test_tf_cleanup_stale_find.outputs.matrix }}
+          COUNT: ${{ needs.test_tf_cleanup_stale_find.outputs.count }}
+          MISSING_COUNT: ${{ needs.test_tf_cleanup_stale_find_targeted_missing.outputs.count }}
+          WORKSPACE: tf-cleanup-stale-${{ github.run_id }}
+        run: |
+          echo "$MATRIX" | jq .
+          test "$COUNT" = 1
+          test "$MISSING_COUNT" = 0
+          echo "$MATRIX" | jq -e --arg ws "$WORKSPACE" '.include[0] | .workspace == $ws and .reason == "no-open-pr" and .target.tf_dir == "tests/terraform/s3"'
+
+  test_tf_cleanup_stale_destroy:
+    needs: [test_tf_cleanup_stale_find, test_tf_cleanup_stale_assert]
+    if: needs.test_tf_cleanup_stale_find.outputs.count != '0'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.test_tf_cleanup_stale_find.outputs.matrix) }}
+    uses: ./.github/workflows/tf-cleanup.yaml
+    with:
+      aws_oidc_role_arn: arn:aws:iam::911453050078:role/cicd-iac
+      aws_region: eu-central-1
+      tf_dir: ${{ matrix.target.tf_dir }}
+      tf_workspace: ${{ matrix.workspace }}
+      tf_backend_configs: |
+        bucket=tf-state-911453050078
+        key=${{ matrix.target.state_key }}
+        workspace_key_prefix=github-workflows
+      tf_var_files: tests/terraform/s3/environment/sandbox.tfvars

@@ -1,0 +1,217 @@
+# Finds Terraform workspaces whose feature branch infrastructure should be torn down:
+# workspaces whose branch has had no commit for max_stale_days, and workspaces
+# no live branch maps to any more. It destroys nothing. The caller feeds the
+# matrix output to tf-cleanup.yaml, passing the destroy inputs for each target.
+name: Terraform Stale Workspace Finder
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: "GitHub environment to run in, e.g. when the OIDC role trusts only that environment."
+        type: string
+      aws_account_id:
+        description: "The AWS account ID."
+        type: string
+      aws_region:
+        description: "The AWS region."
+        type: string
+      aws_role_name:
+        description: "The name of the role to assume with OIDC."
+        type: string
+      aws_oidc_role_arn:
+        description: "AWS OIDC IAM role to assume"
+        type: string
+      tf_state_bucket:
+        description: "S3 bucket holding the Terraform state. Defaults to tf-state-<aws_account_id>."
+        type: string
+      tf_workspace_key_prefix:
+        description: "The S3 backend's `workspace_key_prefix`."
+        type: string
+        default: "env:"
+      targets:
+        description: "YAML list of Terraform root modules sharing the workspaces. Each item needs `name` and `state_key` (the backend `key`); any other fields are passed through to the matrix as `matrix.target.<field>`."
+        type: string
+        required: true
+      workspace_from_branch:
+        description: "Shell command that prints the workspace name for the branch in $BRANCH. Runs in the caller's checkout, so it can call a script from the repo."
+        type: string
+        default: printf '%s' "$BRANCH" | sed 's|/|-|g'
+      workspace_pattern:
+        description: "Extended regex a workspace must match to be considered at all."
+        type: string
+        default: ".*"
+      protected_workspaces:
+        description: "Whitespace-separated workspaces that are never selected. Setting it replaces the default list, so include the long-lived workspaces you still need."
+        type: string
+        default: "main master develop development dev staging stage prod production"
+      require_open_pr:
+        description: "Only an open pull request keeps a workspace alive. Set to false when every pushed feature branch gets its own deployment."
+        type: boolean
+        default: true
+      max_stale_days:
+        description: "Days without a commit after which a live branch's workspace is selected."
+        type: number
+        default: 10
+      min_open_prs:
+        description: "Fail when the GitHub API returns fewer open pull requests than this, instead of treating every workspace as orphaned. Only used with `require_open_pr`. Off by default; set it to 1 when the repo always has open pull requests."
+        type: number
+        default: 0
+      workspace:
+        description: "Select only this workspace and skip the branch and age checks. The pattern and protected list still apply."
+        type: string
+      max_targets:
+        description: "Maximum number of matrix entries returned. The rest are picked up by the next run. GitHub caps a matrix at 256."
+        type: number
+        default: 256
+    outputs:
+      matrix:
+        description: "JSON matrix `{\"include\": [{workspace, reason, age_days, target}]}` with one entry per workspace and target."
+        value: ${{ jobs.find.outputs.matrix }}
+      count:
+        description: "Number of matrix entries."
+        value: ${{ jobs.find.outputs.count }}
+jobs:
+  find:
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: read
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment || null }}
+      deployment: false
+    outputs:
+      matrix: ${{ steps.find.outputs.matrix }}
+      count: ${{ steps.find.outputs.count }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        env:
+          ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
+          AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Find stale workspaces
+        id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TF_STATE_BUCKET: ${{ inputs.tf_state_bucket || format('tf-state-{0}', inputs.aws_account_id || vars.aws_account_id) }}
+          TF_WORKSPACE_KEY_PREFIX: ${{ inputs.tf_workspace_key_prefix }}
+          TARGETS: ${{ inputs.targets }}
+          WORKSPACE_FROM_BRANCH: ${{ inputs.workspace_from_branch }}
+          WORKSPACE_PATTERN: ${{ inputs.workspace_pattern }}
+          PROTECTED_WORKSPACES: ${{ inputs.protected_workspaces }}
+          REQUIRE_OPEN_PR: ${{ inputs.require_open_pr }}
+          MAX_STALE_DAYS: ${{ inputs.max_stale_days }}
+          MIN_OPEN_PRS: ${{ inputs.min_open_prs }}
+          ONLY_WORKSPACE: ${{ inputs.workspace }}
+          MAX_TARGETS: ${{ inputs.max_targets }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          targets=$(yq -o=json '.' <<<"$TARGETS")
+          if ! jq -e 'type == "array" and length > 0 and all(.[]; (.name | type) == "string" and (.state_key | type) == "string")' <<<"$targets" >/dev/null; then
+            echo "::error::targets must be a non-empty YAML list of items with name and state_key"
+            exit 1
+          fi
+
+          prefix="$TF_WORKSPACE_KEY_PREFIX/"
+          keys=$(aws s3api list-objects-v2 --bucket "$TF_STATE_BUCKET" --prefix "$prefix" --query 'Contents[].Key' --output json)
+          pairs=$(jq -c --argjson targets "$targets" --arg p "$prefix" '
+            [ (. // [])[] as $k | $targets[] as $t | ("/" + $t.state_key) as $s
+              | select(($k | startswith($p)) and ($k | endswith($s)))
+              | $k[($p | length):(($k | length) - ($s | length))]
+              | select(length > 0 and (contains("/") | not))
+              | {workspace: ., target: $t} ]' <<<"$keys")
+
+          to_workspace() { BRANCH=$1 bash -c "$WORKSPACE_FROM_BRANCH"; }
+
+          declare -A branch_ts
+          while read -r branch ts; do
+            [[ "$branch" == HEAD ]] && continue
+            ws=$(to_workspace "$branch") || continue
+            if [[ -z "${branch_ts[$ws]:-}" ]] || (( ts > branch_ts[$ws] )); then
+              branch_ts[$ws]=$ts
+            fi
+          done < <(git for-each-ref refs/remotes/origin --format='%(refname:lstrip=3) %(committerdate:unix)')
+
+          declare -A live
+          if [[ -n "$ONLY_WORKSPACE" ]]; then
+            :
+          elif [[ "$REQUIRE_OPEN_PR" == true ]]; then
+            prs=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --limit 1000 --json headRefName -q '.[].headRefName')
+            open_count=$(grep -c . <<<"$prs" || true)
+            if (( open_count < MIN_OPEN_PRS )); then
+              echo "::error::Only $open_count open pull request(s) returned, below min_open_prs ($MIN_OPEN_PRS). Not selecting anything."
+              exit 1
+            fi
+            while read -r branch; do
+              [[ -z "$branch" ]] && continue
+              ws=$(to_workspace "$branch") || continue
+              live[$ws]=1
+            done <<<"$prs"
+          else
+            for ws in "${!branch_ts[@]}"; do live[$ws]=1; done
+          fi
+
+          now=$(date +%s)
+          rows=()
+          kept=0
+          for ws in $(jq -r '.[].workspace' <<<"$pairs" | sort -u); do
+            [[ "$ws" =~ $WORKSPACE_PATTERN ]] || continue
+            tr -s '[:space:]' '\n' <<<"$PROTECTED_WORKSPACES" | grep -qxF -- "$ws" && continue
+
+            age=
+            [[ -n "${branch_ts[$ws]:-}" ]] && age=$(( (now - branch_ts[$ws]) / 86400 ))
+
+            if [[ -n "$ONLY_WORKSPACE" ]]; then
+              [[ "$ws" == "$ONLY_WORKSPACE" ]] || continue
+              reason=targeted
+            elif [[ -z "${live[$ws]:-}" ]]; then
+              [[ "$REQUIRE_OPEN_PR" == true ]] && reason=no-open-pr || reason=no-branch
+            elif [[ -z "$age" ]] || (( age < MAX_STALE_DAYS )); then
+              kept=$(( kept + 1 ))
+              continue
+            else
+              reason=stale
+            fi
+            rows+=("$ws"$'\t'"$reason"$'\t'"$age")
+          done
+
+          decisions=$(printf '%s\n' "${rows[@]}" | jq -R -s -c '
+            split("\n") | map(select(length > 0) | split("\t")
+              | {key: .[0], value: {reason: .[1], age_days: (if .[2] == "" then null else (.[2] | tonumber) end)}})
+            | from_entries')
+          include=$(jq -c --argjson d "$decisions" '[.[] | select($d[.workspace]) | . + $d[.workspace]] | sort_by(.workspace, .target.name)' <<<"$pairs")
+
+          total=$(jq length <<<"$include")
+          if (( total > MAX_TARGETS )); then
+            echo "::warning::$total entries selected, returning the first $MAX_TARGETS. Run again for the rest."
+            include=$(jq -c ".[:$MAX_TARGETS]" <<<"$include")
+          fi
+          count=$(jq length <<<"$include")
+
+          {
+            echo "matrix={\"include\":$include}"
+            echo "count=$count"
+          } >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Stale Terraform workspaces"
+            echo
+            echo "Selected $(jq '[.[].workspace] | unique | length' <<<"$include") workspace(s) ($count destroy target(s)), kept $kept with recent activity. Stale after $MAX_STALE_DAYS days."
+            echo
+            if (( count > 0 )); then
+              echo "| Workspace | Reason | Days since last commit | Targets |"
+              echo "| --- | --- | --- | --- |"
+              jq -r 'group_by(.workspace)[] | "| `\(.[0].workspace)` | \(.[0].reason) | \(.[0].age_days // "no branch") | \(map(.target.name) | join(", ")) |"' <<<"$include"
+            fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
