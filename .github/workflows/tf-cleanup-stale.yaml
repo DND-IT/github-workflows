@@ -1,4 +1,4 @@
-# Finds Terraform workspaces whose preview infrastructure should be torn down:
+# Finds Terraform workspaces whose feature branch infrastructure should be torn down:
 # workspaces whose branch has had no commit for max_stale_days, and workspaces
 # no live branch maps to any more. It destroys nothing. The caller feeds the
 # matrix output to tf-cleanup.yaml, passing the destroy inputs for each target.
@@ -45,7 +45,7 @@ on:
         type: string
         default: "main master develop development dev staging stage prod production"
       require_open_pr:
-        description: "Only an open pull request keeps a workspace alive. Set to false when previews are deployed for every pushed branch."
+        description: "Only an open pull request keeps a workspace alive. Set to false when every pushed feature branch gets its own deployment."
         type: boolean
         default: true
       max_stale_days:

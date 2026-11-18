@@ -4,7 +4,7 @@ title: Terraform Stale Workspace Finder
 
 ## Description
 
-Finds the Terraform workspaces of preview environments that should be torn down, and returns them as a matrix for [`tf-cleanup.yaml`](tf-cleanup.md). It destroys nothing itself.
+Finds the Terraform workspaces of feature branch environments that should be torn down, and returns them as a matrix for [`tf-cleanup.yaml`](tf-cleanup.md). It destroys nothing itself.
 
 A workspace is selected when the branch it belongs to has had no commit for `max_stale_days`, or when no open pull request (or, with `require_open_pr: false`, no remote branch) maps to it any more. Workspaces are read from the S3 state bucket, so every workspace that has state for one of the `targets` is checked, including ones the on-close cleanup missed.
 
@@ -26,7 +26,7 @@ Each matrix entry carries `workspace`, `reason` (`stale`, `no-open-pr`, `no-bran
 | `workspace_from_branch` | <p>Shell command that prints the workspace name for the branch in $BRANCH. Runs in the caller's checkout, so it can call a script from the repo.</p> | `string` | `false` | `printf '%s' "$BRANCH" | sed 's|/|-|g'` |
 | `workspace_pattern` | <p>Extended regex a workspace must match to be considered at all.</p> | `string` | `false` | `.*` |
 | `protected_workspaces` | <p>Whitespace-separated workspaces that are never selected. Setting it replaces the default list, so include the long-lived workspaces you still need.</p> | `string` | `false` | `main master develop development dev staging stage prod production` |
-| `require_open_pr` | <p>Only an open pull request keeps a workspace alive. Set to false when previews are deployed for every pushed branch.</p> | `boolean` | `false` | `true` |
+| `require_open_pr` | <p>Only an open pull request keeps a workspace alive. Set to false when every pushed feature branch gets its own deployment.</p> | `boolean` | `false` | `true` |
 | `max_stale_days` | <p>Days without a commit after which a live branch's workspace is selected.</p> | `number` | `false` | `10` |
 | `min_open_prs` | <p>Fail when the GitHub API returns fewer open pull requests than this, instead of treating every workspace as orphaned. Only used with <code>require_open_pr</code>. Off by default; set it to 1 when the repo always has open pull requests.</p> | `number` | `false` | `0` |
 | `workspace` | <p>Select only this workspace and skip the branch and age checks. The pattern and protected list still apply.</p> | `string` | `false` | `""` |
@@ -128,7 +128,7 @@ jobs:
       # Default: main master develop development dev staging stage prod production
 
       require_open_pr:
-      # Only an open pull request keeps a workspace alive. Set to false when previews are deployed for every pushed branch.
+      # Only an open pull request keeps a workspace alive. Set to false when every pushed feature branch gets its own deployment.
       #
       # Type: boolean
       # Required: false
@@ -217,6 +217,6 @@ jobs:
       tf_var_files: ${{ matrix.target.tf_var_files }}
 ```
 
-If previews are deployed for every pushed branch rather than per pull request, set `require_open_pr: false`. If the workspace name is not just the branch name with `/` replaced, pass `workspace_from_branch`, for example `printf 'preview-%s' "$(bash .github/scripts/branch-slug.sh "$BRANCH")"`.
+If every pushed feature branch gets its own deployment rather than only those with a pull request, set `require_open_pr: false`. If the workspace name is not just the branch name with `/` replaced, pass `workspace_from_branch`, for example `printf 'feature-%s' "$(bash .github/scripts/branch-slug.sh "$BRANCH")"`.
 
 ## FAQ
