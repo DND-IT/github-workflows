@@ -21,14 +21,14 @@ Each matrix entry carries `workspace`, `reason` (`stale`, `no-open-pr`, `no-bran
 | `aws_role_name` | <p>The name of the role to assume with OIDC.</p> | `string` | `false` | `""` |
 | `aws_oidc_role_arn` | <p>AWS OIDC IAM role to assume</p> | `string` | `false` | `""` |
 | `tf_state_bucket` | <p>S3 bucket holding the Terraform state. Defaults to tf-state-<aws_account_id>.</p> | `string` | `false` | `""` |
-| `tf_workspace_key_prefix` | <p>The S3 backend's workspace<em>key</em>prefix.</p> | `string` | `false` | `env:` |
+| `tf_workspace_key_prefix` | <p>The S3 backend's <code>workspace_key_prefix</code>.</p> | `string` | `false` | `env:` |
 | `targets` | <p>YAML list of Terraform root modules sharing the workspaces. Each item needs <code>name</code> and <code>state_key</code> (the backend <code>key</code>); any other fields are passed through to the matrix as <code>matrix.target.&lt;field&gt;</code>.</p> | `string` | `true` | `""` |
 | `workspace_from_branch` | <p>Shell command that prints the workspace name for the branch in $BRANCH. Runs in the caller's checkout, so it can call a script from the repo.</p> | `string` | `false` | `printf '%s' "$BRANCH" | sed 's|/|-|g'` |
 | `workspace_pattern` | <p>Extended regex a workspace must match to be considered at all.</p> | `string` | `false` | `.*` |
-| `protected_workspaces` | <p>Whitespace-separated workspaces that are never selected.</p> | `string` | `false` | `default` |
+| `protected_workspaces` | <p>Whitespace-separated workspaces that are never selected. Setting it replaces the default list, so include the long-lived workspaces you still need.</p> | `string` | `false` | `main master develop development dev staging stage prod production` |
 | `require_open_pr` | <p>Only an open pull request keeps a workspace alive. Set to false when previews are deployed for every pushed branch.</p> | `boolean` | `false` | `true` |
 | `max_stale_days` | <p>Days without a commit after which a live branch's workspace is selected.</p> | `number` | `false` | `10` |
-| `min_open_prs` | <p>Fail when the GitHub API returns fewer open pull requests than this, instead of selecting every workspace. Only used with require<em>open</em>pr.</p> | `number` | `false` | `1` |
+| `min_open_prs` | <p>Fail when the GitHub API returns fewer open pull requests than this, instead of treating every workspace as orphaned. Only used with <code>require_open_pr</code>. Off by default; set it to 1 when the repo always has open pull requests.</p> | `number` | `false` | `0` |
 | `workspace` | <p>Select only this workspace and skip the branch and age checks. The pattern and protected list still apply.</p> | `string` | `false` | `""` |
 | `max_targets` | <p>Maximum number of matrix entries returned. The rest are picked up by the next run. GitHub caps a matrix at 256.</p> | `number` | `false` | `256` |
 <!-- action-docs-inputs source=".github/workflows/tf-cleanup-stale.yaml" -->
@@ -93,7 +93,7 @@ jobs:
       # Default: ""
 
       tf_workspace_key_prefix:
-      # The S3 backend's workspace_key_prefix.
+      # The S3 backend's `workspace_key_prefix`.
       #
       # Type: string
       # Required: false
@@ -121,11 +121,11 @@ jobs:
       # Default: .*
 
       protected_workspaces:
-      # Whitespace-separated workspaces that are never selected.
+      # Whitespace-separated workspaces that are never selected. Setting it replaces the default list, so include the long-lived workspaces you still need.
       #
       # Type: string
       # Required: false
-      # Default: default
+      # Default: main master develop development dev staging stage prod production
 
       require_open_pr:
       # Only an open pull request keeps a workspace alive. Set to false when previews are deployed for every pushed branch.
@@ -142,11 +142,11 @@ jobs:
       # Default: 10
 
       min_open_prs:
-      # Fail when the GitHub API returns fewer open pull requests than this, instead of selecting every workspace. Only used with require_open_pr.
+      # Fail when the GitHub API returns fewer open pull requests than this, instead of treating every workspace as orphaned. Only used with `require_open_pr`. Off by default; set it to 1 when the repo always has open pull requests.
       #
       # Type: number
       # Required: false
-      # Default: 1
+      # Default: 0
 
       workspace:
       # Select only this workspace and skip the branch and age checks. The pattern and protected list still apply.
@@ -189,7 +189,6 @@ jobs:
     with:
       aws_account_id: '123456789012'
       aws_role_name: cicd-iac
-      protected_workspaces: default main staging production
       targets: |
         - name: web
           state_key: app/web/terraform.tfstate

@@ -25,7 +25,7 @@ on:
         description: "S3 bucket holding the Terraform state. Defaults to tf-state-<aws_account_id>."
         type: string
       tf_workspace_key_prefix:
-        description: "The S3 backend's workspace_key_prefix."
+        description: "The S3 backend's `workspace_key_prefix`."
         type: string
         default: "env:"
       targets:
@@ -41,9 +41,9 @@ on:
         type: string
         default: ".*"
       protected_workspaces:
-        description: "Whitespace-separated workspaces that are never selected."
+        description: "Whitespace-separated workspaces that are never selected. Setting it replaces the default list, so include the long-lived workspaces you still need."
         type: string
-        default: "default"
+        default: "main master develop development dev staging stage prod production"
       require_open_pr:
         description: "Only an open pull request keeps a workspace alive. Set to false when previews are deployed for every pushed branch."
         type: boolean
@@ -53,9 +53,9 @@ on:
         type: number
         default: 10
       min_open_prs:
-        description: "Fail when the GitHub API returns fewer open pull requests than this, instead of selecting every workspace. Only used with require_open_pr."
+        description: "Fail when the GitHub API returns fewer open pull requests than this, instead of treating every workspace as orphaned. Only used with `require_open_pr`. Off by default; set it to 1 when the repo always has open pull requests."
         type: number
-        default: 1
+        default: 0
       workspace:
         description: "Select only this workspace and skip the branch and age checks. The pattern and protected list still apply."
         type: string

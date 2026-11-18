@@ -54,7 +54,7 @@ ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format
 
 ## Workflow Categories
 
-1. **Terraform**: tf-plan, tf-apply, tf-feature, tf-cleanup, tf-destroy
+1. **Terraform**: tf-plan, tf-apply, tf-feature, tf-cleanup, tf-cleanup-stale, tf-destroy
 2. **Docker**: docker-build, docker-build-push-ecr, docker-buildx-push-ecr, docker-push-ecr
 3. **Lambda**: lambda-nodejs, lambda-python, lambda-build-node
 4. **GitOps**: gitops-image-tag, gitops-helm-diff, gitops-kustomize-diff
