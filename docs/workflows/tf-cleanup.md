@@ -1,14 +1,14 @@
 ---
-title: Terraform Preview Cleanup
+title: Terraform Feature Branch Cleanup
 ---
 
 <!-- action-docs-header source=".github/workflows/tf-cleanup.yaml" -->
-## Terraform Preview Cleanup
+## Terraform Feature Branch Cleanup
 <!-- action-docs-header source=".github/workflows/tf-cleanup.yaml" -->
 
 ## Description
 
-This workflow cleans up the Terraform preview deployments.
+This workflow cleans up the Terraform feature branch deployments.
 
 <!-- action-docs-inputs source=".github/workflows/tf-cleanup.yaml" -->
 ### Inputs
