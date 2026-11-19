@@ -1,14 +1,14 @@
 ---
-title: Terraform Preview Deployment
+title: Terraform Feature Branch Deployment
 ---
 
 <!-- action-docs-header source=".github/workflows/tf-feature.yaml" -->
-## Terraform Preview Deployment
+## Terraform Feature Branch Deployment
 <!-- action-docs-header source=".github/workflows/tf-feature.yaml" -->
 
 ## Description
 
-This workflow deploys a Terraform configuration to a preview environment.
+This workflow deploys a Terraform configuration to a feature branch environment.
 
 <!-- action-docs-inputs source=".github/workflows/tf-feature.yaml" -->
 ### Inputs
