@@ -52,6 +52,15 @@ on:
       tf_workspace:
         description: "Terraform workspace"
         type: string
+      gh_token_broker_url:
+        description: "Token broker exchange URL, such as https://github-sts.example.com/sts/exchange."
+        type: string
+      gh_token_broker_identity:
+        description: "Trust policy name at the token broker (the scope repository holds it as .github/chainguard/IDENTITY.sts.yaml). When set, Terraform gets the broker's GitHub App token as GITHUB_TOKEN, for the integrations/github provider; PR comments keep using the workflow token."
+        type: string
+      gh_token_broker_scope:
+        description: "Repository (owner/repo) the broker token is issued for. Defaults to the current repository."
+        type: string
       tf_version:
         description: "Terraform version to install for the workspace check. Defaults to the version the configuration asks for in required_version."
         type: string
@@ -73,6 +82,9 @@ jobs:
       TF_BACKEND_CONFIG_FILES: ${{ inputs.tf_backend_config_files || vars.tf_backend_config_files }}
       TF_VAR_FILES: ${{ inputs.tf_var_files || vars.tf_var_files }}
       TF_VARS: ${{ inputs.tf_vars || vars.tf_vars }}
+      GH_TOKEN_BROKER_URL: ${{ inputs.gh_token_broker_url || vars.gh_token_broker_url }}
+      GH_TOKEN_BROKER_IDENTITY: ${{ inputs.gh_token_broker_identity || vars.gh_token_broker_identity }}
+      GH_TOKEN_BROKER_SCOPE: ${{ inputs.gh_token_broker_scope || vars.gh_token_broker_scope }}
       TF_VERSION: ${{ inputs.tf_version || vars.tf_version }}
     steps:
       - name: Checkout
@@ -88,6 +100,15 @@ jobs:
         with:
           role-to-assume: ${{ env.ROLE_TO_ASSUME }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get GitHub Token From Broker
+        id: gh_token_broker
+        if: env.GH_TOKEN_BROKER_IDENTITY != ''
+        uses: DND-IT/tamci/actions/token@1159770ed4b5f46cbd125cec5ac5256299e99138 # v0.2.11
+        with:
+          url: ${{ env.GH_TOKEN_BROKER_URL }}
+          identity: ${{ env.GH_TOKEN_BROKER_IDENTITY }}
+          scope: ${{ env.GH_TOKEN_BROKER_SCOPE }}
 
       # The dflook actions run Helm with HOME=/github/home, which is ${{ runner.temp }}/_github_home on the runner.
       - name: Login to Amazon ECR Public
@@ -162,6 +183,9 @@ jobs:
         if: ${{ steps.check_workspace.outputs.exists == 'true' }}
         id: first_try
         env:
+          # dflook comments with TERRAFORM_ACTIONS_GITHUB_TOKEN; the integrations/github provider reads GITHUB_TOKEN.
+          GITHUB_TOKEN: ${{ steps.gh_token_broker.outputs.token || env.GITHUB_TOKEN }}
+          TERRAFORM_ACTIONS_GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
             if [ -z "${{ inputs.tf_pre_run }}" ]; then
@@ -181,6 +205,9 @@ jobs:
         uses: dflook/terraform-destroy-workspace@38065bec09dd2848b6ad209709c8caddd6937e0d # v3
         if: ${{ steps.check_workspace.outputs.exists == 'true' && failure() && steps.first_try.outputs.failure-reason == 'destroy-failed' }}
         env:
+          # dflook comments with TERRAFORM_ACTIONS_GITHUB_TOKEN; the integrations/github provider reads GITHUB_TOKEN.
+          GITHUB_TOKEN: ${{ steps.gh_token_broker.outputs.token || env.GITHUB_TOKEN }}
+          TERRAFORM_ACTIONS_GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
           TERRAFORM_PRE_RUN: |
             AWS_CLI_VERSION=2.15.36
             if [ -z "${{ inputs.tf_pre_run }}" ]; then
