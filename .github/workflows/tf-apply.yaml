@@ -157,7 +157,7 @@ jobs:
 
       - name: Use Workspace
         if: env.TF_WORKSPACE != 'default'
-        uses: dflook/terraform-new-workspace@3b734345e280c48b1d62ecdd3099ce9f52895248 # v3
+        uses: dflook/terraform-new-workspace@a1fb9b9a6928f02145343516fcbd656a955017ee # v3
         with:
           workspace: ${{ env.TF_WORKSPACE }}
           path: ${{ env.TF_DIR }}
@@ -166,7 +166,7 @@ jobs:
 
       - name: Terraform Apply
         id: tf_apply
-        uses: dflook/terraform-apply@9fdc48d2744ee0528495a136ad2cd31ad8208a67 # v3
+        uses: dflook/terraform-apply@c2d5b9ce3fefcaefa4bbd484691457ad7842b4a3 # v3
         env:
           # dflook comments with TERRAFORM_ACTIONS_GITHUB_TOKEN; the integrations/github provider reads GITHUB_TOKEN.
           GITHUB_TOKEN: ${{ steps.gh_token_broker.outputs.token || env.GITHUB_TOKEN }}

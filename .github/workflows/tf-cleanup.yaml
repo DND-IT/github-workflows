@@ -122,7 +122,7 @@ jobs:
       - name: Resolve Terraform Version
         id: tf_version
         if: env.TF_VERSION == ''
-        uses: dflook/terraform-version@8303a2d3c80d7815bde6b2f19cf7cb1054c6ede9 # v3
+        uses: dflook/terraform-version@1fbbfc299e3c1d5f7867163e32faa8709135b2b2 # v3
         with:
           path: ${{ env.TF_DIR }}
           backend_config: ${{ env.TF_BACKEND_CONFIGS }}
@@ -179,7 +179,7 @@ jobs:
         shell: bash
 
       - name: Terraform Destroy
-        uses: dflook/terraform-destroy-workspace@38065bec09dd2848b6ad209709c8caddd6937e0d # v3
+        uses: dflook/terraform-destroy-workspace@3817ddd43b3892d881747d6f4cadcc7669ac4130 # v3
         if: ${{ steps.check_workspace.outputs.exists == 'true' }}
         id: first_try
         env:
@@ -202,7 +202,7 @@ jobs:
           variables: ${{ env.TF_VARS }}
 
       - name: Retry Terraform Destroy
-        uses: dflook/terraform-destroy-workspace@38065bec09dd2848b6ad209709c8caddd6937e0d # v3
+        uses: dflook/terraform-destroy-workspace@3817ddd43b3892d881747d6f4cadcc7669ac4130 # v3
         if: ${{ steps.check_workspace.outputs.exists == 'true' && failure() && steps.first_try.outputs.failure-reason == 'destroy-failed' }}
         env:
           # dflook comments with TERRAFORM_ACTIONS_GITHUB_TOKEN; the integrations/github provider reads GITHUB_TOKEN.

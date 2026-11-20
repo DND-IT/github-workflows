@@ -112,7 +112,7 @@ jobs:
           aws ecr-public get-login-password --region us-east-1 | helm registry login public.ecr.aws --username AWS --password-stdin
 
       - name: Terraform Destroy
-        uses: dflook/terraform-destroy@90d912c5ee23843ead86960fb485ffa0e69b8537 # v3
+        uses: dflook/terraform-destroy@6da7270dfefea4c042664e00ad2a5d2d2a82334f # v3
         id: first_try
         env:
           # dflook comments with TERRAFORM_ACTIONS_GITHUB_TOKEN; the integrations/github provider reads GITHUB_TOKEN.
@@ -133,7 +133,7 @@ jobs:
           variables: ${{ env.TF_VARS }}
 
       - name: Terraform Destroy
-        uses: dflook/terraform-destroy@90d912c5ee23843ead86960fb485ffa0e69b8537 # v3
+        uses: dflook/terraform-destroy@6da7270dfefea4c042664e00ad2a5d2d2a82334f # v3
         if: ${{ failure() && steps.first_try.outputs.failure-reason == 'destroy-failed' }}
         env:
           # dflook comments with TERRAFORM_ACTIONS_GITHUB_TOKEN; the integrations/github provider reads GITHUB_TOKEN.
