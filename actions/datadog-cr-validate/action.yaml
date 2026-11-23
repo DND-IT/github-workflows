@@ -90,7 +90,7 @@ runs:
     - name: Read Datadog keys
       id: dd_keys
       if: ${{ !cancelled() && steps.aws.outcome == 'success' }}
-      uses: aws-actions/aws-secretsmanager-get-secrets@2297f9a879480a9e3af9b293ed15c70caf8e1c88 # v3
+      uses: aws-actions/aws-secretsmanager-get-secrets@e952bd7125c27e5be0060e50955b90a7e5addd99 # v4
       with:
         secret-ids: ",${{ inputs.dd_keys_secret_name }}"
         parse-json-secrets: true
