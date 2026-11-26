@@ -117,7 +117,7 @@ jobs:
           ref: ${{ inputs.gh_checkout_ref }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6
+        uses: aws-actions/configure-aws-credentials@45666896f5d8e0f10ae255413f3a4cdd03bdc8f5 # v6
         env:
           ROLE_TO_ASSUME: ${{ inputs.aws_oidc_role_arn || vars.aws_oidc_role_arn || format('arn:aws:iam::{0}:role/{1}', inputs.aws_account_id, inputs.aws_role_name) }}
           AWS_REGION: ${{ inputs.aws_region || vars.aws_region || 'eu-central-1' }}
@@ -160,7 +160,7 @@ jobs:
       - name: Resolve Terraform Version
         id: tf_version
         if: env.TF_VERSION == ''
-        uses: dflook/terraform-version@8303a2d3c80d7815bde6b2f19cf7cb1054c6ede9 # v3
+        uses: dflook/terraform-version@1fbbfc299e3c1d5f7867163e32faa8709135b2b2 # v3
         with:
           path: ${{ env.TF_DIR }}
           workspace: ${{ env.TF_WORKSPACE }}
@@ -189,7 +189,7 @@ jobs:
 
       - name: Use Workspace
         if: env.TF_WORKSPACE != 'default'
-        uses: dflook/terraform-new-workspace@3b734345e280c48b1d62ecdd3099ce9f52895248 # v3
+        uses: dflook/terraform-new-workspace@a1fb9b9a6928f02145343516fcbd656a955017ee # v3
         with:
           workspace: ${{ env.TF_WORKSPACE }}
           path: ${{ env.TF_DIR }}
@@ -198,7 +198,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        uses: dflook/terraform-plan@738d3a75f0d801d280dca5eb7357b89c8383267f # v3
+        uses: dflook/terraform-plan@a96e6b967241380e532d9059f275b87a1a4060cb # v3
         env:
           # dflook comments with TERRAFORM_ACTIONS_GITHUB_TOKEN; the integrations/github provider reads GITHUB_TOKEN.
           GITHUB_TOKEN: ${{ steps.gh_token_broker.outputs.token || env.GITHUB_TOKEN }}
